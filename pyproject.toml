@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "atelier"
+name = "amatelier"
 version = "0.1.0"
 description = "A self-evolving multi-model AI team skill for Claude Code"
 readme = "README.md"

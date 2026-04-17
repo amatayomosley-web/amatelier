@@ -12,7 +12,7 @@
 
 ## Example: hello world
 
-**Prerequisites:** `pip install atelier`
+**Prerequisites:** `pip install amatelier`
 
 ```python
 from atelier import hello

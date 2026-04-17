@@ -1,4 +1,4 @@
-# GitHub Copilot Instructions — atelier
+# GitHub Copilot Instructions — amatelier
 
 _This file is generated from CLAUDE.md. Do not hand-edit._
 

@@ -1,8 +1,8 @@
 # Atelier
 
 [![CI](https://github.com/amatayomosley-web/atelier/actions/workflows/ci.yml/badge.svg)](https://github.com/amatayomosley-web/atelier/actions/workflows/ci.yml)
-[![PyPI version](https://img.shields.io/pypi/v/atelier.svg)](https://pypi.org/project/atelier/)
-[![Python versions](https://img.shields.io/pypi/pyversions/atelier.svg)](https://pypi.org/project/atelier/)
+[![PyPI version](https://img.shields.io/pypi/v/amatelier.svg)](https://pypi.org/project/amatelier/)
+[![Python versions](https://img.shields.io/pypi/pyversions/amatelier.svg)](https://pypi.org/project/amatelier/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Amatayo Standard](https://img.shields.io/badge/Amatayo%20Standard-v1.0-blueviolet)](https://github.com/amatayomosley-web/atelier/blob/main/CLAUDE.md)
 
@@ -60,7 +60,7 @@ An 8-step workflow, orchestrated by the runner:
 ## Quick Start
 
 ```bash
-pip install atelier
+pip install amatelier
 export GEMINI_API_KEY=<your key from https://aistudio.google.com/apikey>
 atelier roundtable --topic "Your topic here" --budget 3 --summary
 ```

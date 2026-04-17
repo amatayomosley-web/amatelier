@@ -1,5 +1,5 @@
 ---
-description: atelier repository rules (Amatayo Standard)
+description: amatelier repository rules (Amatayo Standard)
 globs: ["**/*"]
 alwaysApply: true
 ---

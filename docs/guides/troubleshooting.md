@@ -22,7 +22,7 @@ pip install --user atelier
 You probably installed with `pip install .` instead of `pip install -e .`. Uninstall and reinstall:
 
 ```bash
-pip uninstall atelier
+pip uninstall amatelier
 pip install -e ".[dev]"
 ```
 

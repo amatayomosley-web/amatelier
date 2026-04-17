@@ -2,24 +2,25 @@
 
 > **Guide** — task-oriented. For a guided walkthrough see [Tutorials](../tutorials/first-run.md). For design rationale see [Explanation](../explanation/architecture.md).
 
+> **Note on naming.** The PyPI package is `amatelier`; the Python import is `atelier`. This is common practice (e.g. `pip install scikit-learn` → `import sklearn`). All code, docs, and tooling in this repo use `atelier` as the import name.
 Three install paths, depending on what you want to do.
 
 ## Consumer — you just want to use it
 
 ```bash
-pip install atelier
+pip install amatelier
 ```
 
 Upgrade:
 
 ```bash
-pip install -U atelier
+pip install -U amatelier
 ```
 
 Uninstall:
 
 ```bash
-pip uninstall atelier
+pip uninstall amatelier
 ```
 
 ## Contributor — you want to hack on it

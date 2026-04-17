@@ -12,7 +12,7 @@ By the end of this tutorial you will have atelier installed and producing output
 ## Step 1 — Install
 
 ```bash
-pip install atelier
+pip install amatelier
 ```
 
 Verify:

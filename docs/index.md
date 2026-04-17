@@ -12,7 +12,7 @@ A self-evolving multi-model AI team skill for Claude Code
 ## Install
 
 ```bash
-pip install atelier
+pip install amatelier
 ```
 
 See the [install guide](guides/install.md) for other options (clone, DevContainer).

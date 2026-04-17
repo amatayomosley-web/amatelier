@@ -1,4 +1,4 @@
-# atelier
+# amatelier
 
 > A self-evolving multi-model AI team skill for Claude Code
 
