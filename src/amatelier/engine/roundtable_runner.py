@@ -43,8 +43,8 @@ logger = logging.getLogger("runner")
 SUITE_ROOT = Path(__file__).resolve().parent.parent
 # Workspace root = where the user runs commands. Defaults to .../skills/claude-suite
 # ancestor at +3 (skill -> skills -> .claude -> project). Override with
-# ATELIER_WORKSPACE env var when the install layout differs.
-_env_workspace = os.environ.get("ATELIER_WORKSPACE", "").strip()
+# AMATELIER_WORKSPACE env var when the install layout differs.
+_env_workspace = os.environ.get("AMATELIER_WORKSPACE", "").strip()
 if _env_workspace:
     WORKSPACE_ROOT = Path(_env_workspace).resolve()
 else:

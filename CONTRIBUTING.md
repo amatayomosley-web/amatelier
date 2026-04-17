@@ -4,15 +4,15 @@ Thanks for your interest in improving this project.
 
 ## Before you start
 
-1. Search [existing issues](https://github.com/amatayomosley-web/atelier/issues) to avoid duplicates
+1. Search [existing issues](https://github.com/amatayomosley-web/amatelier/issues) to avoid duplicates
 2. For significant changes, open an issue first to discuss the approach
 3. Read the [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## Dev setup
 
 ```bash
-git clone https://github.com/amatayomosley-web/atelier
-cd atelier
+git clone https://github.com/amatayomosley-web/amatelier
+cd amatelier
 make setup      # installs package + dev deps editable
 make test       # runs pytest
 make lint       # ruff + mypy

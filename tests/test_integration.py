@@ -33,12 +33,12 @@ if hasattr(sys.stdout, "buffer"):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 # Setup paths — post-Amatayo Standard restructure, engine/ and
-# roundtable-server/ live under src/atelier/. SUITE_ROOT keeps the
+# roundtable-server/ live under src/amatelier/. SUITE_ROOT keeps the
 # original semantic ("where engine and roundtable-server sit") so the
 # rest of this file (which references SUITE_ROOT / "roundtable-server" /
 # "db_client.py") continues to resolve.
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SUITE_ROOT = REPO_ROOT / "src" / "atelier"
+SUITE_ROOT = REPO_ROOT / "src" / "amatelier"
 ENGINE_DIR = SUITE_ROOT / "engine"
 sys.path.insert(0, str(ENGINE_DIR))
 sys.path.insert(0, str(SUITE_ROOT / "store"))

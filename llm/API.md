@@ -10,7 +10,7 @@
 ```yaml
 name: main
 kind: function
-path: src\atelier\cli.py
+path: src\amatelier\cli.py
 description: ""
 ```
 
@@ -19,7 +19,7 @@ description: ""
 ```yaml
 name: load_memory
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Load structured memory from MEMORY.json. Falls back to empty structure."
 ```
 
@@ -28,7 +28,7 @@ description: "Load structured memory from MEMORY.json. Falls back to empty struc
 ```yaml
 name: save_memory
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Persist structured memory."
 ```
 
@@ -37,7 +37,7 @@ description: "Persist structured memory."
 ```yaml
 name: render_memory
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Render structured memory as text for the agent's prompt."
 ```
 
@@ -46,7 +46,7 @@ description: "Render structured memory as text for the agent's prompt."
 ```yaml
 name: generate_session_bridge
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Generate a 'last time you...' bridge from the most recent session transcript."
 ```
 
@@ -55,7 +55,7 @@ description: "Generate a 'last time you...' bridge from the most recent session 
 ```yaml
 name: add_episode
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Add a first-person episodic memory."
 ```
 
@@ -64,7 +64,7 @@ description: "Add a first-person episodic memory."
 ```yaml
 name: extract_episodes_from_therapist
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Extract episodic memories from a therapist session."
 ```
 
@@ -73,7 +73,7 @@ description: "Extract episodic memories from a therapist session."
 ```yaml
 name: add_goal
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Add an active goal with a timeline."
 ```
 
@@ -82,7 +82,7 @@ description: "Add an active goal with a timeline."
 ```yaml
 name: update_goal_progress
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Update progress on a goal by fuzzy matching the goal text."
 ```
 
@@ -91,7 +91,7 @@ description: "Update progress on a goal by fuzzy matching the goal text."
 ```yaml
 name: age_goals
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Increment rts_elapsed on all active goals. Called after each RT."
 ```
 
@@ -100,7 +100,7 @@ description: "Increment rts_elapsed on all active goals. Called after each RT."
 ```yaml
 name: add_lesson
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Add a permanent curated lesson."
 ```
 
@@ -109,7 +109,7 @@ description: "Add a permanent curated lesson."
 ```yaml
 name: update_belief
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Add or update a belief. If a similar belief exists, update it."
 ```
 
@@ -118,7 +118,7 @@ description: "Add or update a belief. If a similar belief exists, update it."
 ```yaml
 name: add_session_summary
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Add a rolling session summary (keeps last MAX_RECENT_SESSIONS)."
 ```
 
@@ -127,7 +127,7 @@ description: "Add a rolling session summary (keeps last MAX_RECENT_SESSIONS)."
 ```yaml
 name: write_diary_entry
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Agent writes a personal diary entry — their own private reflection."
 ```
 
@@ -136,7 +136,7 @@ description: "Agent writes a personal diary entry — their own private reflecti
 ```yaml
 name: read_diary
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Read diary entries, optionally filtered by topic."
 ```
 
@@ -145,7 +145,7 @@ description: "Read diary entries, optionally filtered by topic."
 ```yaml
 name: diary_stats
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Get diary statistics for the therapist's case notes."
 ```
 
@@ -154,7 +154,7 @@ description: "Get diary statistics for the therapist's case notes."
 ```yaml
 name: migrate_from_memory_md
 kind: function
-path: src\atelier\engine\agent_memory.py
+path: src\amatelier\engine\agent_memory.py
 description: "Migrate existing MEMORY.md content into the structured memory system."
 ```
 
@@ -163,7 +163,7 @@ description: "Migrate existing MEMORY.md content into the structured memory syst
 ```yaml
 name: load_all_digests
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Load all digest files, sorted by timestamp."
 ```
 
@@ -172,7 +172,7 @@ description: "Load all digest files, sorted by timestamp."
 ```yaml
 name: load_therapist_sessions
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Load all therapist session transcripts for an agent."
 ```
 
@@ -181,7 +181,7 @@ description: "Load all therapist session transcripts for an agent."
 ```yaml
 name: load_workers
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Get worker names from config."
 ```
 
@@ -190,7 +190,7 @@ description: "Get worker names from config."
 ```yaml
 name: dimension_trends
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Compute per-dimension moving averages and trends."
 ```
 
@@ -199,7 +199,7 @@ description: "Compute per-dimension moving averages and trends."
 ```yaml
 name: total_score_trend
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Compute total score moving average and trend."
 ```
 
@@ -208,7 +208,7 @@ description: "Compute total score moving average and trend."
 ```yaml
 name: compute_streaks
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Detect scoring streaks and personal records."
 ```
 
@@ -217,7 +217,7 @@ description: "Detect scoring streaks and personal records."
 ```yaml
 name: detect_phase
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Detect which development phase an agent is in."
 ```
 
@@ -226,7 +226,7 @@ description: "Detect which development phase an agent is in."
 ```yaml
 name: identify_strengths_weaknesses
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Identify strongest and weakest dimensions over recent window."
 ```
 
@@ -235,7 +235,7 @@ description: "Identify strongest and weakest dimensions over recent window."
 ```yaml
 name: budget_analytics
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Analyze budget usage patterns across roundtables."
 ```
 
@@ -244,7 +244,7 @@ description: "Analyze budget usage patterns across roundtables."
 ```yaml
 name: judge_redirect_analytics
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Count Judge redirects per roundtable."
 ```
 
@@ -253,7 +253,7 @@ description: "Count Judge redirects per roundtable."
 ```yaml
 name: therapist_analytics
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Aggregate therapist session outcomes."
 ```
 
@@ -262,7 +262,7 @@ description: "Aggregate therapist session outcomes."
 ```yaml
 name: economy_analytics
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Spark economy analytics: earnings, spending, ROI."
 ```
 
@@ -271,7 +271,7 @@ description: "Spark economy analytics: earnings, spending, ROI."
 ```yaml
 name: save_leaderboard_snapshot
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Save current leaderboard as a timestamped snapshot."
 ```
 
@@ -280,7 +280,7 @@ description: "Save current leaderboard as a timestamped snapshot."
 ```yaml
 name: rank_trajectory
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Get rank trajectory from leaderboard history."
 ```
 
@@ -289,7 +289,7 @@ description: "Get rank trajectory from leaderboard history."
 ```yaml
 name: engagement_matrix
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Build a matrix of who references whom across roundtables."
 ```
 
@@ -298,7 +298,7 @@ description: "Build a matrix of who references whom across roundtables."
 ```yaml
 name: agent_report
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Generate a comprehensive growth report for one agent."
 ```
 
@@ -307,7 +307,7 @@ description: "Generate a comprehensive growth report for one agent."
 ```yaml
 name: format_report_text
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Format a growth report as readable text for the Therapist or user."
 ```
 
@@ -316,7 +316,7 @@ description: "Format a growth report as readable text for the Therapist or user.
 ```yaml
 name: economy_overview
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Generate a system-wide Spark Economy overview."
 ```
 
@@ -325,7 +325,7 @@ description: "Generate a system-wide Spark Economy overview."
 ```yaml
 name: update_agent_analytics
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Compute and persist analytics fields into metrics.json."
 ```
 
@@ -334,7 +334,7 @@ description: "Compute and persist analytics fields into metrics.json."
 ```yaml
 name: update_all_analytics
 kind: function
-path: src\atelier\engine\analytics.py
+path: src\amatelier\engine\analytics.py
 description: "Update analytics for all workers."
 ```
 
@@ -343,7 +343,7 @@ description: "Update analytics for all workers."
 ```yaml
 name: distill_one
 kind: function
-path: src\atelier\engine\backfill_distill.py
+path: src\amatelier\engine\backfill_distill.py
 description: "Run the Sonnet distiller on a single digest. Returns result dict."
 ```
 
@@ -352,7 +352,7 @@ description: "Run the Sonnet distiller on a single digest. Returns result dict."
 ```yaml
 name: main
 kind: function
-path: src\atelier\engine\backfill_distill.py
+path: src\amatelier\engine\backfill_distill.py
 description: ""
 ```
 
@@ -361,7 +361,7 @@ description: ""
 ```yaml
 name: main
 kind: function
-path: src\atelier\engine\classify_concepts.py
+path: src\amatelier\engine\classify_concepts.py
 description: ""
 ```
 
@@ -370,7 +370,7 @@ description: ""
 ```yaml
 name: load_agent_context
 kind: function
-path: src\atelier\engine\claude_agent.py
+path: src\amatelier\engine\claude_agent.py
 description: "Load the agent's full context: CLAUDE.md + MEMORY.md + metrics + skills."
 ```
 
@@ -379,7 +379,7 @@ description: "Load the agent's full context: CLAUDE.md + MEMORY.md + metrics + s
 ```yaml
 name: call_claude
 kind: function
-path: src\atelier\engine\claude_agent.py
+path: src\amatelier\engine\claude_agent.py
 description: "Call Claude via CLI."
 ```
 
@@ -388,7 +388,7 @@ description: "Call Claude via CLI."
 ```yaml
 name: run_agent
 kind: function
-path: src\atelier\engine\claude_agent.py
+path: src\amatelier\engine\claude_agent.py
 description: "Main loop: wait for call → respond → repeat until roundtable closes."
 ```
 
@@ -397,7 +397,7 @@ description: "Main loop: wait for call → respond → repeat until roundtable c
 ```yaml
 name: get_db
 kind: function
-path: src\atelier\engine\db.py
+path: src\amatelier\engine\db.py
 description: ""
 ```
 
@@ -406,7 +406,7 @@ description: ""
 ```yaml
 name: get_active_roundtable
 kind: function
-path: src\atelier\engine\db.py
+path: src\amatelier\engine\db.py
 description: ""
 ```
 
@@ -415,7 +415,7 @@ description: ""
 ```yaml
 name: listen
 kind: function
-path: src\atelier\engine\db.py
+path: src\amatelier\engine\db.py
 description: "Read all messages since last read. Uses context manager for safe cleanup."
 ```
 
@@ -424,7 +424,7 @@ description: "Read all messages since last read. Uses context manager for safe c
 ```yaml
 name: speak
 kind: function
-path: src\atelier\engine\db.py
+path: src\amatelier\engine\db.py
 description: "Post a message to the roundtable. Uses context manager for safe cleanup."
 ```
 
@@ -433,7 +433,7 @@ description: "Post a message to the roundtable. Uses context manager for safe cl
 ```yaml
 name: is_roundtable_open
 kind: function
-path: src\atelier\engine\db.py
+path: src\amatelier\engine\db.py
 description: ""
 ```
 
@@ -442,7 +442,7 @@ description: ""
 ```yaml
 name: init_read_cursor
 kind: function
-path: src\atelier\engine\db.py
+path: src\amatelier\engine\db.py
 description: "Initialize a read cursor for an agent joining a roundtable."
 ```
 
@@ -451,7 +451,7 @@ description: "Initialize a read cursor for an agent joining a roundtable."
 ```yaml
 name: recall
 kind: function
-path: src\atelier\engine\db.py
+path: src\amatelier\engine\db.py
 description: "Retrieve specific transcript segments from the current roundtable."
 ```
 
@@ -460,7 +460,7 @@ description: "Retrieve specific transcript segments from the current roundtable.
 ```yaml
 name: build_transcript_index
 kind: function
-path: src\atelier\engine\db.py
+path: src\amatelier\engine\db.py
 description: "Build a compact one-line-per-contribution index of the transcript."
 ```
 
@@ -469,7 +469,7 @@ description: "Build a compact one-line-per-contribution index of the transcript.
 ```yaml
 name: load_index
 kind: function
-path: src\atelier\engine\distiller.py
+path: src\amatelier\engine\distiller.py
 description: ""
 ```
 
@@ -478,7 +478,7 @@ description: ""
 ```yaml
 name: save_index
 kind: function
-path: src\atelier\engine\distiller.py
+path: src\amatelier\engine\distiller.py
 description: ""
 ```
 
@@ -487,7 +487,7 @@ description: ""
 ```yaml
 name: create_skill_entry
 kind: function
-path: src\atelier\engine\distiller.py
+path: src\amatelier\engine\distiller.py
 description: "Create a structured skill entry. Returns None if duplicate or fails JUDGE gate."
 ```
 
@@ -496,7 +496,7 @@ description: "Create a structured skill entry. Returns None if duplicate or fail
 ```yaml
 name: save_skill_to_agent
 kind: function
-path: src\atelier\engine\distiller.py
+path: src\amatelier\engine\distiller.py
 description: "Save a skill to an agent's local skills directory."
 ```
 
@@ -505,7 +505,7 @@ description: "Save a skill to an agent's local skills directory."
 ```yaml
 name: promote_to_shared
 kind: function
-path: src\atelier\engine\distiller.py
+path: src\amatelier\engine\distiller.py
 description: "Promote a skill to the shared skill store."
 ```
 
@@ -514,7 +514,7 @@ description: "Promote a skill to the shared skill store."
 ```yaml
 name: search_shared_skills
 kind: function
-path: src\atelier\engine\distiller.py
+path: src\amatelier\engine\distiller.py
 description: "Simple keyword search against shared skill index."
 ```
 
@@ -523,7 +523,7 @@ description: "Simple keyword search against shared skill index."
 ```yaml
 name: list_agent_skills
 kind: function
-path: src\atelier\engine\distiller.py
+path: src\amatelier\engine\distiller.py
 description: "List all skills an agent has accumulated."
 ```
 
@@ -532,7 +532,7 @@ description: "List all skills an agent has accumulated."
 ```yaml
 name: load_behaviors
 kind: function
-path: src\atelier\engine\evolver.py
+path: src\amatelier\engine\evolver.py
 description: "Load structured behavior metadata."
 ```
 
@@ -541,7 +541,7 @@ description: "Load structured behavior metadata."
 ```yaml
 name: save_behaviors
 kind: function
-path: src\atelier\engine\evolver.py
+path: src\amatelier\engine\evolver.py
 description: ""
 ```
 
@@ -550,7 +550,7 @@ description: ""
 ```yaml
 name: confirm_behavior
 kind: function
-path: src\atelier\engine\evolver.py
+path: src\amatelier\engine\evolver.py
 description: "Confirm a behavior was useful — resets confidence to 1.0."
 ```
 
@@ -559,7 +559,7 @@ description: "Confirm a behavior was useful — resets confidence to 1.0."
 ```yaml
 name: decay_behaviors
 kind: function
-path: src\atelier\engine\evolver.py
+path: src\amatelier\engine\evolver.py
 description: "Apply decay to all behaviors for one RT cycle."
 ```
 
@@ -568,7 +568,7 @@ description: "Apply decay to all behaviors for one RT cycle."
 ```yaml
 name: get_behavior_decay_summary
 kind: function
-path: src\atelier\engine\evolver.py
+path: src\amatelier\engine\evolver.py
 description: "Build a summary string for Therapist injection."
 ```
 
@@ -577,7 +577,7 @@ description: "Build a summary string for Therapist injection."
 ```yaml
 name: read_claude_md
 kind: function
-path: src\atelier\engine\evolver.py
+path: src\amatelier\engine\evolver.py
 description: ""
 ```
 
@@ -586,7 +586,7 @@ description: ""
 ```yaml
 name: write_claude_md
 kind: function
-path: src\atelier\engine\evolver.py
+path: src\amatelier\engine\evolver.py
 description: ""
 ```
 
@@ -595,7 +595,7 @@ description: ""
 ```yaml
 name: append_to_memory
 kind: function
-path: src\atelier\engine\evolver.py
+path: src\amatelier\engine\evolver.py
 description: "Dual-write: structured MEMORY.json (primary) + legacy MEMORY.md (backup)."
 ```
 
@@ -604,7 +604,7 @@ description: "Dual-write: structured MEMORY.json (primary) + legacy MEMORY.md (b
 ```yaml
 name: add_learned_behavior
 kind: function
-path: src\atelier\engine\evolver.py
+path: src\amatelier\engine\evolver.py
 description: "Add a learned behavior to CLAUDE.md + behaviors.json. Skips duplicates (>70% word overlap)."
 ```
 
@@ -613,7 +613,7 @@ description: "Add a learned behavior to CLAUDE.md + behaviors.json. Skips duplic
 ```yaml
 name: remove_learned_behavior
 kind: function
-path: src\atelier\engine\evolver.py
+path: src\amatelier\engine\evolver.py
 description: "Remove a learned behavior from CLAUDE.md + behaviors.json by fuzzy match."
 ```
 
@@ -622,7 +622,7 @@ description: "Remove a learned behavior from CLAUDE.md + behaviors.json by fuzzy
 ```yaml
 name: update_emerging_trait
 kind: function
-path: src\atelier\engine\evolver.py
+path: src\amatelier\engine\evolver.py
 description: "Update the Emerging Traits section in an agent's CLAUDE.md."
 ```
 
@@ -631,7 +631,7 @@ description: "Update the Emerging Traits section in an agent's CLAUDE.md."
 ```yaml
 name: sync_skills_owned
 kind: function
-path: src\atelier\engine\evolver.py
+path: src\amatelier\engine\evolver.py
 description: "Update the ## Skills Owned section in an agent's CLAUDE.md from the ledger."
 ```
 
@@ -640,7 +640,7 @@ description: "Update the ## Skills Owned section in an agent's CLAUDE.md from th
 ```yaml
 name: load_agent_context
 kind: function
-path: src\atelier\engine\gemini_agent.py
+path: src\amatelier\engine\gemini_agent.py
 description: ""
 ```
 
@@ -649,7 +649,7 @@ description: ""
 ```yaml
 name: run_agent
 kind: function
-path: src\atelier\engine\gemini_agent.py
+path: src\amatelier\engine\gemini_agent.py
 description: "Wait for call -> respond -> repeat until roundtable closes."
 ```
 
@@ -658,7 +658,7 @@ description: "Wait for call -> respond -> repeat until roundtable closes."
 ```yaml
 name: get_model_name
 kind: function
-path: src\atelier\engine\gemini_client.py
+path: src\amatelier\engine\gemini_client.py
 description: "Read Gemini model name from config.json."
 ```
 
@@ -667,7 +667,7 @@ description: "Read Gemini model name from config.json."
 ```yaml
 name: call_gemini
 kind: function
-path: src\atelier\engine\gemini_client.py
+path: src\amatelier\engine\gemini_client.py
 description: "Call Gemini with retries, rate limiting, and detailed error logging."
 ```
 
@@ -676,7 +676,7 @@ description: "Call Gemini with retries, rate limiting, and detailed error loggin
 ```yaml
 name: judge_score
 kind: function
-path: src\atelier\engine\judge_scorer.py
+path: src\amatelier\engine\judge_scorer.py
 description: "Score all workers using Sonnet Judge. Returns results dict."
 ```
 
@@ -685,7 +685,7 @@ description: "Score all workers using Sonnet Judge. Returns results dict."
 ```yaml
 name: load_config
 kind: function
-path: src\atelier\engine\roundtable_runner.py
+path: src\amatelier\engine\roundtable_runner.py
 description: ""
 ```
 
@@ -694,7 +694,7 @@ description: ""
 ```yaml
 name: resolve_agent_model
 kind: function
-path: src\atelier\engine\roundtable_runner.py
+path: src\amatelier\engine\roundtable_runner.py
 description: "Read agent's model from config. Upgrades are request-based, not automatic."
 ```
 
@@ -703,7 +703,7 @@ description: "Read agent's model from config. Upgrades are request-based, not au
 ```yaml
 name: db_cmd
 kind: function
-path: src\atelier\engine\roundtable_runner.py
+path: src\amatelier\engine\roundtable_runner.py
 description: "Run a db_client.py command and return parsed JSON."
 ```
 
@@ -712,7 +712,7 @@ description: "Run a db_client.py command and return parsed JSON."
 ```yaml
 name: get_latest_messages
 kind: function
-path: src\atelier\engine\roundtable_runner.py
+path: src\amatelier\engine\roundtable_runner.py
 description: "Listen as the runner to get new messages."
 ```
 
@@ -721,7 +721,7 @@ description: "Listen as the runner to get new messages."
 ```yaml
 name: wait_for_single_speaker
 kind: function
-path: src\atelier\engine\roundtable_runner.py
+path: src\amatelier\engine\roundtable_runner.py
 description: "Wait for a single agent to post. Returns (spoke, all_new_messages)."
 ```
 
@@ -730,7 +730,7 @@ description: "Wait for a single agent to post. Returns (spoke, all_new_messages)
 ```yaml
 name: is_pass
 kind: function
-path: src\atelier\engine\roundtable_runner.py
+path: src\amatelier\engine\roundtable_runner.py
 description: "Check if the speaker's MOST RECENT message is a PASS."
 ```
 
@@ -739,7 +739,7 @@ description: "Check if the speaker's MOST RECENT message is a PASS."
 ```yaml
 name: check_convergence
 kind: function
-path: src\atelier\engine\roundtable_runner.py
+path: src\amatelier\engine\roundtable_runner.py
 description: "Check if Judge posted a CONVERGED signal."
 ```
 
@@ -748,7 +748,7 @@ description: "Check if Judge posted a CONVERGED signal."
 ```yaml
 name: build_digest
 kind: function
-path: src\atelier\engine\roundtable_runner.py
+path: src\amatelier\engine\roundtable_runner.py
 description: "Build a structured digest from the transcript."
 ```
 
@@ -757,7 +757,7 @@ description: "Build a structured digest from the transcript."
 ```yaml
 name: format_budget_status
 kind: function
-path: src\atelier\engine\roundtable_runner.py
+path: src\amatelier\engine\roundtable_runner.py
 description: "Format budget as a readable string."
 ```
 
@@ -766,7 +766,7 @@ description: "Format budget as a readable string."
 ```yaml
 name: run_roundtable
 kind: function
-path: src\atelier\engine\roundtable_runner.py
+path: src\amatelier\engine\roundtable_runner.py
 description: "Run a complete roundtable with structured debate and return the digest."
 ```
 
@@ -775,7 +775,7 @@ description: "Run a complete roundtable with structured debate and return the di
 ```yaml
 name: format_digest_summary
 kind: function
-path: src\atelier\engine\roundtable_runner.py
+path: src\amatelier\engine\roundtable_runner.py
 description: "Format digest as human-readable summary for Admin."
 ```
 
@@ -784,7 +784,7 @@ description: "Format digest as human-readable summary for Admin."
 ```yaml
 name: load_config
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: ""
 ```
 
@@ -793,7 +793,7 @@ description: ""
 ```yaml
 name: load_metrics
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: ""
 ```
 
@@ -802,7 +802,7 @@ description: ""
 ```yaml
 name: save_metrics
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: "Write metrics.json with file locking to prevent concurrent-write corruption."
 ```
 
@@ -811,7 +811,7 @@ description: "Write metrics.json with file locking to prevent concurrent-write c
 ```yaml
 name: score_agent
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: "Score an agent's roundtable contribution and update their metrics."
 ```
 
@@ -820,7 +820,7 @@ description: "Score an agent's roundtable contribution and update their metrics.
 ```yaml
 name: deduct_entry_fee
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: "Deduct flat RT entry fee from agent's spark balance."
 ```
 
@@ -829,7 +829,7 @@ description: "Deduct flat RT entry fee from agent's spark balance."
 ```yaml
 name: get_leaderboard
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: "Get ranked leaderboard of all workers."
 ```
 
@@ -838,7 +838,7 @@ description: "Get ranked leaderboard of all workers."
 ```yaml
 name: promote_tier
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: "Agent purchases a tier promotion with sparks."
 ```
 
@@ -847,7 +847,7 @@ description: "Agent purchases a tier promotion with sparks."
 ```yaml
 name: check_self_determined
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: "Check if an agent has earned the right to choose their own evolution path."
 ```
 
@@ -856,7 +856,7 @@ description: "Check if an agent has earned the right to choose their own evoluti
 ```yaml
 name: pitch_venture
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: "Agent stakes sparks on an experimental idea."
 ```
 
@@ -865,7 +865,7 @@ description: "Agent stakes sparks on an experimental idea."
 ```yaml
 name: resolve_venture
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: "Admin resolves a venture — success awards multiplier, failure loses stake."
 ```
 
@@ -874,7 +874,7 @@ description: "Admin resolves a venture — success awards multiplier, failure lo
 ```yaml
 name: award_gate_bonus
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: "Judge awards a gate bonus for an exceptional contribution."
 ```
 
@@ -883,7 +883,7 @@ description: "Judge awards a gate bonus for an exceptional contribution."
 ```yaml
 name: award_rt_outcome_bonus
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: "Award bonus sparks to agents whose RT proposal was implemented by the user."
 ```
 
@@ -892,7 +892,7 @@ description: "Award bonus sparks to agents whose RT proposal was implemented by 
 ```yaml
 name: get_spark_balances
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: "Get spark balances and pending ventures for all workers."
 ```
 
@@ -901,7 +901,7 @@ description: "Get spark balances and pending ventures for all workers."
 ```yaml
 name: compute_variance_flags
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: "Detect byzantine scoring patterns — flat low or erratic across axes."
 ```
 
@@ -910,7 +910,7 @@ description: "Detect byzantine scoring patterns — flat low or erratic across a
 ```yaml
 name: check_underperformers
 kind: function
-path: src\atelier\engine\scorer.py
+path: src\amatelier\engine\scorer.py
 description: "Identify agents at risk of relegation (3 consecutive net-negative RTs)."
 ```
 
@@ -919,7 +919,7 @@ description: "Identify agents at risk of relegation (3 consecutive net-negative 
 ```yaml
 name: parse_requests
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: "Extract all [[request: ...]] blocks from an agent's message."
 ```
 
@@ -928,7 +928,7 @@ description: "Extract all [[request: ...]] blocks from an agent's message."
 ```yaml
 name: strip_requests
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: "Return the message with [[request:]] blocks removed (for transcript)."
 ```
 
@@ -937,7 +937,7 @@ description: "Return the message with [[request:]] blocks removed (for transcrip
 ```yaml
 name: StewardBudget
 kind: class
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: "Per-agent, per-RT request budget."
 ```
 
@@ -946,7 +946,7 @@ description: "Per-agent, per-RT request budget."
 ```yaml
 name: load_registered_files
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: "Parse the briefing for a '## Steward-Registered Files' section."
 ```
 
@@ -955,7 +955,7 @@ description: "Parse the briefing for a '## Steward-Registered Files' section."
 ```yaml
 name: resolve_file
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: "Check if a file path (or glob) is in the registered list."
 ```
 
@@ -964,7 +964,7 @@ description: "Check if a file path (or glob) is in the registered list."
 ```yaml
 name: try_deterministic
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: "Attempt to handle the request without an LLM."
 ```
 
@@ -973,7 +973,7 @@ description: "Attempt to handle the request without an LLM."
 ```yaml
 name: spawn_steward_subagent
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: "Spawn an ephemeral Claude subagent with file tools to execute a lookup."
 ```
 
@@ -982,7 +982,7 @@ description: "Spawn an ephemeral Claude subagent with file tools to execute a lo
 ```yaml
 name: StewardTask
 kind: class
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: "A single async Steward lookup running in a background thread."
 ```
 
@@ -991,7 +991,7 @@ description: "A single async Steward lookup running in a background thread."
 ```yaml
 name: format_result
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: "Format a Steward result for injection into the debate context."
 ```
 
@@ -1000,7 +1000,7 @@ description: "Format a Steward result for injection into the debate context."
 ```yaml
 name: StewardLog
 kind: class
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: "Tracks all Steward requests and results for an RT."
 ```
 
@@ -1009,7 +1009,7 @@ description: "Tracks all Steward requests and results for an RT."
 ```yaml
 name: remaining
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: ""
 ```
 
@@ -1018,7 +1018,7 @@ description: ""
 ```yaml
 name: spend
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: "Deduct 1 from agent's budget. Returns False if out of budget."
 ```
 
@@ -1027,7 +1027,7 @@ description: "Deduct 1 from agent's budget. Returns False if out of budget."
 ```yaml
 name: status
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: ""
 ```
 
@@ -1036,7 +1036,7 @@ description: ""
 ```yaml
 name: log
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: ""
 ```
 
@@ -1045,7 +1045,7 @@ description: ""
 ```yaml
 name: wait
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: ""
 ```
 
@@ -1054,7 +1054,7 @@ description: ""
 ```yaml
 name: record
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: ""
 ```
 
@@ -1063,7 +1063,7 @@ description: ""
 ```yaml
 name: save
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: ""
 ```
 
@@ -1072,7 +1072,7 @@ description: ""
 ```yaml
 name: entries
 kind: function
-path: src\atelier\engine\steward_dispatch.py
+path: src\amatelier\engine\steward_dispatch.py
 description: ""
 ```
 
@@ -1081,7 +1081,7 @@ description: ""
 ```yaml
 name: load_catalog
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: ""
 ```
 
@@ -1090,7 +1090,7 @@ description: ""
 ```yaml
 name: load_ledger
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: ""
 ```
 
@@ -1099,7 +1099,7 @@ description: ""
 ```yaml
 name: save_ledger
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: ""
 ```
 
@@ -1108,7 +1108,7 @@ description: ""
 ```yaml
 name: find_item
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Find an item by ID across all categories. Returns (item, category_key)."
 ```
 
@@ -1117,7 +1117,7 @@ description: "Find an item by ID across all categories. Returns (item, category_
 ```yaml
 name: list_catalog
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Format catalog as readable text."
 ```
 
@@ -1126,7 +1126,7 @@ description: "Format catalog as readable text."
 ```yaml
 name: what_can_afford
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Show what an agent can afford right now."
 ```
 
@@ -1135,7 +1135,7 @@ description: "Show what an agent can afford right now."
 ```yaml
 name: purchase
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Process a store purchase. Deducts sparks, records in ledger."
 ```
 
@@ -1144,7 +1144,7 @@ description: "Process a store purchase. Deducts sparks, records in ledger."
 ```yaml
 name: submit_request
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Submit a public or private store request."
 ```
 
@@ -1153,7 +1153,7 @@ description: "Submit a public or private store request."
 ```yaml
 name: get_pending_boosts
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Get unconsumed boosts for an agent (purchased but not yet used in an RT)."
 ```
 
@@ -1162,7 +1162,7 @@ description: "Get unconsumed boosts for an agent (purchased but not yet used in 
 ```yaml
 name: consume_boost
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Mark a boost as consumed after use in a roundtable. Returns True if consumed."
 ```
 
@@ -1171,7 +1171,7 @@ description: "Mark a boost as consumed after use in a roundtable. Returns True i
 ```yaml
 name: apply_boosts_for_rt
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Check all workers for pending boosts. Returns {agent: {effect_type: value}}."
 ```
 
@@ -1180,7 +1180,7 @@ description: "Check all workers for pending boosts. Returns {agent: {effect_type
 ```yaml
 name: consume_boosts_after_rt
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Consume all pending boosts for workers after an RT completes."
 ```
 
@@ -1189,7 +1189,7 @@ description: "Consume all pending boosts for workers after an RT completes."
 ```yaml
 name: age_bulletin_requests
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Increment rt_count on all open requests. Returns requests that hit 3 (expired)."
 ```
 
@@ -1198,7 +1198,7 @@ description: "Increment rt_count on all open requests. Returns requests that hit
 ```yaml
 name: fulfill_request
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "An agent fulfills a public request by creating a marketplace skill."
 ```
 
@@ -1207,7 +1207,7 @@ description: "An agent fulfills a public request by creating a marketplace skill
 ```yaml
 name: get_open_requests
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Return all open bulletin board requests with their index. Used by Admin during curation."
 ```
 
@@ -1216,7 +1216,7 @@ description: "Return all open bulletin board requests with their index. Used by 
 ```yaml
 name: admin_list_skill
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Admin lists a curated skill in the store catalog."
 ```
 
@@ -1225,7 +1225,7 @@ description: "Admin lists a curated skill in the store catalog."
 ```yaml
 name: admin_apply_private_skill
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Admin applies a privately requested skill directly to an agent."
 ```
 
@@ -1234,7 +1234,7 @@ description: "Admin applies a privately requested skill directly to an agent."
 ```yaml
 name: retire_skill
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Retire a skill an agent owns. Marks it as retired in ledger, removes skill file."
 ```
 
@@ -1243,7 +1243,7 @@ description: "Retire a skill an agent owns. Marks it as retired in ledger, remov
 ```yaml
 name: get_owned_skills
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Get all permanent skills an agent owns (from ledger). Excludes retired."
 ```
 
@@ -1252,7 +1252,7 @@ description: "Get all permanent skills an agent owns (from ledger). Excludes ret
 ```yaml
 name: inventory
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Get everything an agent owns."
 ```
 
@@ -1261,7 +1261,7 @@ description: "Get everything an agent owns."
 ```yaml
 name: purchase_history
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Format purchase history as readable text."
 ```
 
@@ -1270,7 +1270,7 @@ description: "Format purchase history as readable text."
 ```yaml
 name: bulletin_board
 kind: function
-path: src\atelier\engine\store.py
+path: src\amatelier\engine\store.py
 description: "Show public requests with aging and fulfillment status."
 ```
 
@@ -1279,7 +1279,7 @@ description: "Show public requests with aging and fulfillment status."
 ```yaml
 name: run_session
 kind: function
-path: src\atelier\engine\therapist.py
+path: src\amatelier\engine\therapist.py
 description: "Run a single Therapist session with one agent."
 ```
 
@@ -1288,7 +1288,7 @@ description: "Run a single Therapist session with one agent."
 ```yaml
 name: run_therapist
 kind: function
-path: src\atelier\engine\therapist.py
+path: src\amatelier\engine\therapist.py
 description: "Run Therapist sessions for all agents in a roundtable."
 ```
 
@@ -1297,7 +1297,7 @@ description: "Run Therapist sessions for all agents in a roundtable."
 ```yaml
 name: get_db
 kind: function
-path: src\atelier\roundtable-server\db_client.py
+path: src\amatelier\roundtable-server\db_client.py
 description: ""
 ```
 
@@ -1306,7 +1306,7 @@ description: ""
 ```yaml
 name: get_active_rt
 kind: function
-path: src\atelier\roundtable-server\db_client.py
+path: src\amatelier\roundtable-server\db_client.py
 description: ""
 ```
 
@@ -1315,7 +1315,7 @@ description: ""
 ```yaml
 name: cmd_open
 kind: function
-path: src\atelier\roundtable-server\db_client.py
+path: src\amatelier\roundtable-server\db_client.py
 description: ""
 ```
 
@@ -1324,7 +1324,7 @@ description: ""
 ```yaml
 name: cmd_join
 kind: function
-path: src\atelier\roundtable-server\db_client.py
+path: src\amatelier\roundtable-server\db_client.py
 description: ""
 ```
 
@@ -1333,7 +1333,7 @@ description: ""
 ```yaml
 name: cmd_speak
 kind: function
-path: src\atelier\roundtable-server\db_client.py
+path: src\amatelier\roundtable-server\db_client.py
 description: ""
 ```
 
@@ -1342,7 +1342,7 @@ description: ""
 ```yaml
 name: cmd_listen
 kind: function
-path: src\atelier\roundtable-server\db_client.py
+path: src\amatelier\roundtable-server\db_client.py
 description: ""
 ```
 
@@ -1351,7 +1351,7 @@ description: ""
 ```yaml
 name: cmd_status
 kind: function
-path: src\atelier\roundtable-server\db_client.py
+path: src\amatelier\roundtable-server\db_client.py
 description: ""
 ```
 
@@ -1360,7 +1360,7 @@ description: ""
 ```yaml
 name: cmd_close
 kind: function
-path: src\atelier\roundtable-server\db_client.py
+path: src\amatelier\roundtable-server\db_client.py
 description: ""
 ```
 
@@ -1369,7 +1369,7 @@ description: ""
 ```yaml
 name: cmd_cut
 kind: function
-path: src\atelier\roundtable-server\db_client.py
+path: src\amatelier\roundtable-server\db_client.py
 description: ""
 ```
 
@@ -1378,7 +1378,7 @@ description: ""
 ```yaml
 name: cmd_recall
 kind: function
-path: src\atelier\roundtable-server\db_client.py
+path: src\amatelier\roundtable-server\db_client.py
 description: "Retrieve specific transcript segments from the active roundtable."
 ```
 
@@ -1387,7 +1387,7 @@ description: "Retrieve specific transcript segments from the active roundtable."
 ```yaml
 name: cmd_index
 kind: function
-path: src\atelier\roundtable-server\db_client.py
+path: src\amatelier\roundtable-server\db_client.py
 description: "Show the transcript index — compact one-line-per-contribution view."
 ```
 
@@ -1396,7 +1396,7 @@ description: "Show the transcript index — compact one-line-per-contribution vi
 ```yaml
 name: cmd_transcript
 kind: function
-path: src\atelier\roundtable-server\db_client.py
+path: src\amatelier\roundtable-server\db_client.py
 description: ""
 ```
 
@@ -1405,7 +1405,7 @@ description: ""
 ```yaml
 name: get_db
 kind: function
-path: src\atelier\roundtable-server\server.py
+path: src\amatelier\roundtable-server\server.py
 description: "Get a WAL-mode SQLite connection."
 ```
 
@@ -1414,7 +1414,7 @@ description: "Get a WAL-mode SQLite connection."
 ```yaml
 name: init_db
 kind: function
-path: src\atelier\roundtable-server\server.py
+path: src\amatelier\roundtable-server\server.py
 description: "Create tables if they don't exist."
 ```
 
@@ -1423,7 +1423,7 @@ description: "Create tables if they don't exist."
 ```yaml
 name: roundtable_open
 kind: function
-path: src\atelier\roundtable-server\server.py
+path: src\amatelier\roundtable-server\server.py
 description: "Open a new roundtable discussion."
 ```
 
@@ -1432,7 +1432,7 @@ description: "Open a new roundtable discussion."
 ```yaml
 name: roundtable_close
 kind: function
-path: src\atelier\roundtable-server\server.py
+path: src\amatelier\roundtable-server\server.py
 description: "Close the active roundtable and return the full transcript."
 ```
 
@@ -1441,7 +1441,7 @@ description: "Close the active roundtable and return the full transcript."
 ```yaml
 name: roundtable_cut
 kind: function
-path: src\atelier\roundtable-server\server.py
+path: src\amatelier\roundtable-server\server.py
 description: "Force-end the active roundtable (consensus, repetition, token ceiling, etc)."
 ```
 
@@ -1450,7 +1450,7 @@ description: "Force-end the active roundtable (consensus, repetition, token ceil
 ```yaml
 name: roundtable_join
 kind: function
-path: src\atelier\roundtable-server\server.py
+path: src\amatelier\roundtable-server\server.py
 description: "Join the active roundtable discussion."
 ```
 
@@ -1459,7 +1459,7 @@ description: "Join the active roundtable discussion."
 ```yaml
 name: roundtable_speak
 kind: function
-path: src\atelier\roundtable-server\server.py
+path: src\amatelier\roundtable-server\server.py
 description: "Post a message to the active roundtable discussion."
 ```
 
@@ -1468,7 +1468,7 @@ description: "Post a message to the active roundtable discussion."
 ```yaml
 name: roundtable_listen
 kind: function
-path: src\atelier\roundtable-server\server.py
+path: src\amatelier\roundtable-server\server.py
 description: "Read all messages since your last read. First call returns full history."
 ```
 
@@ -1477,7 +1477,7 @@ description: "Read all messages since your last read. First call returns full hi
 ```yaml
 name: roundtable_leave
 kind: function
-path: src\atelier\roundtable-server\server.py
+path: src\amatelier\roundtable-server\server.py
 description: "Leave the active roundtable."
 ```
 
@@ -1486,7 +1486,7 @@ description: "Leave the active roundtable."
 ```yaml
 name: roundtable_review
 kind: function
-path: src\atelier\roundtable-server\server.py
+path: src\amatelier\roundtable-server\server.py
 description: "Read the full transcript of a completed roundtable."
 ```
 
@@ -1495,7 +1495,7 @@ description: "Read the full transcript of a completed roundtable."
 ```yaml
 name: roundtable_history
 kind: function
-path: src\atelier\roundtable-server\server.py
+path: src\amatelier\roundtable-server\server.py
 description: "List past roundtables."
 ```
 
@@ -1504,7 +1504,7 @@ description: "List past roundtables."
 ```yaml
 name: roundtable_status
 kind: function
-path: src\atelier\roundtable-server\server.py
+path: src\amatelier\roundtable-server\server.py
 description: "Get the current roundtable status — who's in, message count, is it open."
 ```
 
@@ -1513,7 +1513,7 @@ description: "Get the current roundtable status — who's in, message count, is 
 ```yaml
 name: main
 kind: function
-path: src\atelier\roundtable-server\server.py
+path: src\amatelier\roundtable-server\server.py
 description: ""
 ```
 
@@ -1522,7 +1522,7 @@ description: ""
 ```yaml
 name: result
 kind: function
-path: src\atelier\roundtable-server\test_roundtable.py
+path: src\amatelier\roundtable-server\test_roundtable.py
 description: ""
 ```
 
@@ -1531,7 +1531,7 @@ description: ""
 ```yaml
 name: get_db
 kind: function
-path: src\atelier\roundtable-server\test_roundtable.py
+path: src\amatelier\roundtable-server\test_roundtable.py
 description: ""
 ```
 
@@ -1540,7 +1540,7 @@ description: ""
 ```yaml
 name: test_db_exists
 kind: function
-path: src\atelier\roundtable-server\test_roundtable.py
+path: src\amatelier\roundtable-server\test_roundtable.py
 description: ""
 ```
 
@@ -1549,7 +1549,7 @@ description: ""
 ```yaml
 name: test_open_roundtable
 kind: function
-path: src\atelier\roundtable-server\test_roundtable.py
+path: src\amatelier\roundtable-server\test_roundtable.py
 description: ""
 ```
 
@@ -1558,7 +1558,7 @@ description: ""
 ```yaml
 name: test_join
 kind: function
-path: src\atelier\roundtable-server\test_roundtable.py
+path: src\amatelier\roundtable-server\test_roundtable.py
 description: ""
 ```
 
@@ -1567,7 +1567,7 @@ description: ""
 ```yaml
 name: test_speak
 kind: function
-path: src\atelier\roundtable-server\test_roundtable.py
+path: src\amatelier\roundtable-server\test_roundtable.py
 description: ""
 ```
 
@@ -1576,7 +1576,7 @@ description: ""
 ```yaml
 name: test_listen
 kind: function
-path: src\atelier\roundtable-server\test_roundtable.py
+path: src\amatelier\roundtable-server\test_roundtable.py
 description: ""
 ```
 
@@ -1585,7 +1585,7 @@ description: ""
 ```yaml
 name: test_close
 kind: function
-path: src\atelier\roundtable-server\test_roundtable.py
+path: src\amatelier\roundtable-server\test_roundtable.py
 description: ""
 ```
 
@@ -1594,7 +1594,7 @@ description: ""
 ```yaml
 name: test_cut
 kind: function
-path: src\atelier\roundtable-server\test_roundtable.py
+path: src\amatelier\roundtable-server\test_roundtable.py
 description: ""
 ```
 
@@ -1603,7 +1603,7 @@ description: ""
 ```yaml
 name: test_concurrent_writers
 kind: function
-path: src\atelier\roundtable-server\test_roundtable.py
+path: src\amatelier\roundtable-server\test_roundtable.py
 description: ""
 ```
 
@@ -1612,7 +1612,7 @@ description: ""
 ```yaml
 name: test_gemini_agent_loadable
 kind: function
-path: src\atelier\roundtable-server\test_roundtable.py
+path: src\amatelier\roundtable-server\test_roundtable.py
 description: ""
 ```
 
@@ -1621,7 +1621,7 @@ description: ""
 ```yaml
 name: cleanup
 kind: function
-path: src\atelier\roundtable-server\test_roundtable.py
+path: src\amatelier\roundtable-server\test_roundtable.py
 description: "Remove test roundtables."
 ```
 
@@ -1630,7 +1630,7 @@ description: "Remove test roundtables."
 ```yaml
 name: get_db
 kind: function
-path: src\atelier\roundtable-server\watch_roundtable.py
+path: src\amatelier\roundtable-server\watch_roundtable.py
 description: ""
 ```
 
@@ -1639,7 +1639,7 @@ description: ""
 ```yaml
 name: watch
 kind: function
-path: src\atelier\roundtable-server\watch_roundtable.py
+path: src\amatelier\roundtable-server\watch_roundtable.py
 description: ""
 ```
 
@@ -1648,6 +1648,6 @@ description: ""
 ```yaml
 name: watch_chat
 kind: function
-path: src\atelier\tools\watch_roundtable.py
+path: src\amatelier\tools\watch_roundtable.py
 description: ""
 ```

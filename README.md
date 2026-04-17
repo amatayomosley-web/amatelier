@@ -1,10 +1,10 @@
-# Atelier
+# Amatelier
 
-[![CI](https://github.com/amatayomosley-web/atelier/actions/workflows/ci.yml/badge.svg)](https://github.com/amatayomosley-web/atelier/actions/workflows/ci.yml)
+[![CI](https://github.com/amatayomosley-web/amatelier/actions/workflows/ci.yml/badge.svg)](https://github.com/amatayomosley-web/amatelier/actions/workflows/ci.yml)
 [![PyPI version](https://img.shields.io/pypi/v/amatelier.svg)](https://pypi.org/project/amatelier/)
 [![Python versions](https://img.shields.io/pypi/pyversions/amatelier.svg)](https://pypi.org/project/amatelier/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Amatayo Standard](https://img.shields.io/badge/Amatayo%20Standard-v1.0-blueviolet)](https://github.com/amatayomosley-web/atelier/blob/main/CLAUDE.md)
+[![Amatayo Standard](https://img.shields.io/badge/Amatayo%20Standard-v1.0-blueviolet)](https://github.com/amatayomosley-web/amatelier/blob/main/CLAUDE.md)
 
 > A self-evolving multi-model AI team skill for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
@@ -12,9 +12,9 @@
 
 Ten agents with distinct personalities compete in structured roundtable discussions, earn sparks, buy skills, and evolve through therapist-led debrief sessions. Cross-model — Claude Sonnet, Claude Haiku, and Gemini Flash — with a live Judge moderator who intervenes in real time.
 
-The name **Atelier** is the project identity. The skill installs as `~/.claude/skills/claude-suite/` to match the internal path references agents use to find each other.
+The name **Amatelier** is the project identity. The skill installs as `~/.claude/skills/claude-suite/` to match the internal path references agents use to find each other.
 
-**Full documentation:** [amatayomosley-web.github.io/atelier](https://amatayomosley-web.github.io/atelier/) · **LLM context:** [llms-full.txt](https://raw.githubusercontent.com/amatayomosley-web/atelier/main/llms-full.txt)
+**Full documentation:** [amatayomosley-web.github.io/amatelier](https://amatayomosley-web.github.io/amatelier/) · **LLM context:** [llms-full.txt](https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llms-full.txt)
 
 ---
 
@@ -62,7 +62,7 @@ An 8-step workflow, orchestrated by the runner:
 ```bash
 pip install amatelier
 export GEMINI_API_KEY=<your key from https://aistudio.google.com/apikey>
-atelier roundtable --topic "Your topic here" --budget 3 --summary
+amatelier roundtable --topic "Your topic here" --budget 3 --summary
 ```
 
 The runner opens a SQLite-backed chat, spawns the workers + Judge as subprocesses, and prints a human-readable summary when the roundtable completes.
@@ -72,8 +72,8 @@ See [install guide](docs/guides/install.md) for DevContainer and source-install 
 ## Develop from source
 
 ```bash
-git clone https://github.com/amatayomosley-web/atelier
-cd atelier
+git clone https://github.com/amatayomosley-web/amatelier
+cd amatelier
 pip install -e ".[dev]"
 make test
 ```

@@ -1,4 +1,4 @@
-# Atelier — Agent Instructions
+# Amatelier — Agent Instructions
 
 Generic instructions for any AI agent or coding assistant working in this repository. (Claude Code, Cursor, Copilot, Aider, Codex, or others.)
 
@@ -10,7 +10,7 @@ A self-evolving multi-model AI team skill for Claude Code
 
 | Path | Purpose |
 |---|---|
-| `src/atelier/` | Shipped package — canonical code |
+| `src/amatelier/` | Shipped package — canonical code |
 | `tests/` | Mirror of `src/` |
 | `examples/first_run/` | Zero-config demo |
 | `docs/` | Human-facing documentation |
@@ -33,4 +33,4 @@ A self-evolving multi-model AI team skill for Claude Code
 3. `llm/SPEC.md` — canonical machine-readable description
 4. The specific file you're editing
 
-For deep context in one shot: `curl https://raw.githubusercontent.com/amatayomosley-web/atelier/main/llms-full.txt`
+For deep context in one shot: `curl https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llms-full.txt`

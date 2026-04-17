@@ -10,7 +10,7 @@ A self-evolving multi-model AI team skill for Claude Code
 
 ## Repo layout
 
-- `src/atelier/` — shipped package (the canonical code)
+- `src/amatelier/` — shipped package (the canonical code)
 - `tests/` — mirrors `src/` structure
 - `examples/first_run/` — zero-config runnable demo
 - `docs/` — human documentation (MkDocs, Diátaxis tiers)

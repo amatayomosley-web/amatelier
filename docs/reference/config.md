@@ -1,14 +1,14 @@
 # Configuration Reference
 
-> **Reference** — every config key, every file layout, every public data shape. Generated from `src/atelier/` schemas by `dual-docs-architect`.
+> **Reference** — every config key, every file layout, every public data shape. Generated from `src/amatelier/` schemas by `dual-docs-architect`.
 
 ## Configuration file location
 
-By default, atelier reads configuration from:
+By default, amatelier reads configuration from:
 
-- `./atelier.config.json` (project-local)
-- `~/.config/atelier/config.json` (user-global)
-- `/etc/atelier/config.json` (system)
+- `./amatelier.config.json` (project-local)
+- `~/.config/amatelier/config.json` (user-global)
+- `/etc/amatelier/config.json` (system)
 
 First match wins.
 

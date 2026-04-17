@@ -1,13 +1,13 @@
 # Architecture
 
-Technical reference for Atelier's internals. If you want a conceptual overview, read [README](../../README.md) first.
+Technical reference for Amatelier's internals. If you want a conceptual overview, read [README](../../README.md) first.
 
 ---
 
 ## Repository Layout
 
 ```
-atelier/
+amatelier/
 ├── engine/                    Python orchestrators (runner, therapist, scorer, etc.)
 │   └── migrations/            SQL schema migrations, applied in order
 ├── roundtable-server/         Live SQLite chat layer (db_client, server)

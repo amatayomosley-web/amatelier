@@ -1,4 +1,4 @@
-# Atelier
+# Amatelier
 
 A self-evolving multi-model AI team skill for Claude Code
 
@@ -19,10 +19,10 @@ See the [install guide](guides/install.md) for other options (clone, DevContaine
 
 ## Quick links
 
-- [GitHub repository](https://github.com/amatayomosley-web/atelier)
-- [Changelog](https://github.com/amatayomosley-web/atelier/blob/main/CHANGELOG.md)
-- [Report an issue](https://github.com/amatayomosley-web/atelier/issues)
+- [GitHub repository](https://github.com/amatayomosley-web/amatelier)
+- [Changelog](https://github.com/amatayomosley-web/amatelier/blob/main/CHANGELOG.md)
+- [Report an issue](https://github.com/amatayomosley-web/amatelier/issues)
 
 ---
 
-_This site is generated from the `docs/` directory using MkDocs Material. For the machine-readable companion surface, see `llm/` in the repository or fetch [llms-full.txt](https://raw.githubusercontent.com/amatayomosley-web/atelier/main/llms-full.txt)._
+_This site is generated from the `docs/` directory using MkDocs Material. For the machine-readable companion surface, see `llm/` in the repository or fetch [llms-full.txt](https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llms-full.txt)._

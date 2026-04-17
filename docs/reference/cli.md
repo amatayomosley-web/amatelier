@@ -1,11 +1,11 @@
 # CLI Reference
 
-> **Reference** — exhaustive lookup. Generated from `src/atelier/` by `dual-docs-architect`. Do not hand-edit this file when the generator is in place.
+> **Reference** — exhaustive lookup. Generated from `src/amatelier/` by `dual-docs-architect`. Do not hand-edit this file when the generator is in place.
 
 ## Synopsis
 
 ```bash
-atelier [OPTIONS] COMMAND [ARGS]...
+amatelier [OPTIONS] COMMAND [ARGS]...
 ```
 
 ## Global options

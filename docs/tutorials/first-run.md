@@ -2,7 +2,7 @@
 
 > **Tutorial** — guided walkthrough from zero to a working first run. If you already know what you want to do, see [Guides](../guides/install.md) instead.
 
-By the end of this tutorial you will have atelier installed and producing output on your machine.
+By the end of this tutorial you will have amatelier installed and producing output on your machine.
 
 ## Prerequisites
 
@@ -18,13 +18,13 @@ pip install amatelier
 Verify:
 
 ```bash
-atelier --version
+amatelier --version
 ```
 
 ## Step 2 — Run the demo
 
 ```bash
-atelier --help
+amatelier --help
 ```
 
 Expected output: a help message listing the available commands.

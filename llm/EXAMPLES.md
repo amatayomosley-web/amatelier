@@ -15,7 +15,7 @@
 **Prerequisites:** `pip install amatelier`
 
 ```python
-from atelier import hello
+from amatelier import hello
 
 print(hello("world"))
 ```

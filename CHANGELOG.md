@@ -10,4 +10,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial scaffold
 
-[Unreleased]: https://github.com/amatayomosley-web/atelier/compare/v0.0.0...HEAD
+[Unreleased]: https://github.com/amatayomosley-web/amatelier/compare/v0.0.0...HEAD

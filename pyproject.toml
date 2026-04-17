@@ -30,15 +30,15 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/amatayomosley-web/atelier"
-Issues = "https://github.com/amatayomosley-web/atelier/issues"
-Changelog = "https://github.com/amatayomosley-web/atelier/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/amatayomosley-web/amatelier"
+Issues = "https://github.com/amatayomosley-web/amatelier/issues"
+Changelog = "https://github.com/amatayomosley-web/amatelier/blob/main/CHANGELOG.md"
 
 [project.scripts]
-atelier = "atelier.cli:main"
+amatelier = "amatelier.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/atelier"]
+packages = ["src/amatelier"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

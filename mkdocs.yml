@@ -1,8 +1,8 @@
 site_name: Atelier
 site_description: A self-evolving multi-model AI team skill for Claude Code
-site_url: https://amatayomosley-web.github.io/atelier/
-repo_url: https://github.com/amatayomosley-web/atelier
-repo_name: amatayomosley-web/atelier
+site_url: https://amatayomosley-web.github.io/amatelier/
+repo_url: https://github.com/amatayomosley-web/amatelier
+repo_name: amatayomosley-web/amatelier
 edit_uri: edit/main/docs/
 
 theme:
@@ -77,4 +77,4 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/amatayomosley-web/atelier
+      link: https://github.com/amatayomosley-web/amatelier

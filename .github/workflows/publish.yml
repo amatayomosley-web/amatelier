@@ -4,7 +4,7 @@
 # 1. Create the project on PyPI (or claim existing)
 # 2. PyPI project → Publishing → Add a pending publisher
 #    - Owner: amatayomosley-web
-#    - Repository: atelier
+#    - Repository: amatelier
 #    - Workflow filename: publish.yml
 #    - Environment: pypi
 # 3. In this repo: Settings → Environments → New environment → "pypi"

@@ -29,8 +29,8 @@ SUITE_ROOT = ENGINE_DIR.parent
 # Workspace root = where the user actually runs commands from. When installed
 # at .claude/skills/claude-suite, ascending three levels from SUITE_ROOT lands
 # in the project workspace (skill -> skills -> .claude -> project). The
-# ATELIER_WORKSPACE env var overrides this when the layout differs.
-_env_workspace = os.environ.get("ATELIER_WORKSPACE", "").strip()
+# AMATELIER_WORKSPACE env var overrides this when the layout differs.
+_env_workspace = os.environ.get("AMATELIER_WORKSPACE", "").strip()
 if _env_workspace:
     WORKSPACE_ROOT = Path(_env_workspace).resolve()
 else:

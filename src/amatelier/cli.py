@@ -13,9 +13,9 @@ from __future__ import annotations
 
 import sys
 
-# Importing `atelier` runs __init__.py which sets up sys.path for
+# Importing `amatelier` runs __init__.py which sets up sys.path for
 # engine/ and store/ so bare imports inside engine modules resolve.
-import atelier  # noqa: F401  (side-effect import — sys.path shim)
+import amatelier  # noqa: F401  (side-effect import — sys.path shim)
 
 
 def _usage() -> int:
@@ -23,12 +23,12 @@ def _usage() -> int:
         "atelier — self-evolving multi-model AI team for Claude Code\n"
         "\n"
         "Usage:\n"
-        "  atelier roundtable [--topic TEXT --briefing PATH --budget N ...]\n"
-        "  atelier watch                Watch the live roundtable chat\n"
-        "  atelier therapist [...]      Run a therapist debrief cycle\n"
-        "  atelier analytics [...]      Print analytics across roundtables\n"
-        "  atelier --version\n"
-        "  atelier --help\n",
+        "  amatelier roundtable [--topic TEXT --briefing PATH --budget N ...]\n"
+        "  amatelier watch                Watch the live roundtable chat\n"
+        "  amatelier therapist [...]      Run a therapist debrief cycle\n"
+        "  amatelier analytics [...]      Print analytics across roundtables\n"
+        "  amatelier --version\n"
+        "  amatelier --help\n",
         file=sys.stderr,
     )
     return 2
@@ -41,7 +41,7 @@ def main(argv: list[str] | None = None) -> int:
         return _usage()
 
     if argv[0] == "--version":
-        from atelier import __version__
+        from amatelier import __version__
         print(__version__)
         return 0
 
@@ -56,7 +56,7 @@ def main(argv: list[str] | None = None) -> int:
         return int(run() or 0)
 
     if cmd == "watch":
-        from atelier.tools import watch_roundtable
+        from amatelier.tools import watch_roundtable
         return int(getattr(watch_roundtable, "main", lambda: 0)() or 0)
 
     if cmd == "therapist":

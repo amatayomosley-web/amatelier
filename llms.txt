@@ -4,17 +4,17 @@
 
 ## Canonical sources
 
-- [API](https://raw.githubusercontent.com/amatayomosley-web/atelier/main/llm/API.md)
-- [EXAMPLES](https://raw.githubusercontent.com/amatayomosley-web/atelier/main/llm/EXAMPLES.md)
-- [SCHEMA](https://raw.githubusercontent.com/amatayomosley-web/atelier/main/llm/SCHEMA.md)
-- [SPEC](https://raw.githubusercontent.com/amatayomosley-web/atelier/main/llm/SPEC.md)
-- [WORKFLOWS](https://raw.githubusercontent.com/amatayomosley-web/atelier/main/llm/WORKFLOWS.md)
+- [API](https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llm/API.md)
+- [EXAMPLES](https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llm/EXAMPLES.md)
+- [SCHEMA](https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llm/SCHEMA.md)
+- [SPEC](https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llm/SPEC.md)
+- [WORKFLOWS](https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llm/WORKFLOWS.md)
 
 ## Full context (one-shot load)
 
-- [llms-full.txt](https://raw.githubusercontent.com/amatayomosley-web/atelier/main/llms-full.txt)
+- [llms-full.txt](https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llms-full.txt)
 
 ## Tool-specific instructions
 
-- [CLAUDE.md](https://raw.githubusercontent.com/amatayomosley-web/atelier/main/CLAUDE.md)
-- [AGENTS.md](https://raw.githubusercontent.com/amatayomosley-web/atelier/main/AGENTS.md)
+- [CLAUDE.md](https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/CLAUDE.md)
+- [AGENTS.md](https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/AGENTS.md)

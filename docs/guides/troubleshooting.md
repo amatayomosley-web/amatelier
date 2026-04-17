@@ -2,18 +2,18 @@
 
 > **Guide** — lookup table of common errors and fixes.
 
-## `command not found: atelier`
+## `command not found: amatelier`
 
 Pip installed the package but the CLI isn't on your `PATH`. Check:
 
 ```bash
-python -m atelier --version
+python -m amatelier --version
 ```
 
 If that works, the script location isn't on `PATH`. Usually fixed by:
 
 ```bash
-pip install --user atelier
+pip install --user amatelier
 # and then ensure ~/.local/bin is on PATH
 ```
 
@@ -36,5 +36,5 @@ pip install -e ".[dev]"
 
 ## Still stuck
 
-- Search [existing issues](https://github.com/amatayomosley-web/atelier/issues)
+- Search [existing issues](https://github.com/amatayomosley-web/amatelier/issues)
 - Open a new issue with the bug report template
