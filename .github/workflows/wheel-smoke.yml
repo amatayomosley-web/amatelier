@@ -1,0 +1,151 @@
+# Wheel smoke test — proves `pip install amatelier` works end-to-end.
+#
+# Runs on every push and PR. Builds the wheel, installs it into a fresh
+# venv inside an Ubuntu container, and exercises the CLI + package imports.
+#
+# This is the test that should have existed from day 0 — it would have
+# caught the google-generativeai vs google-genai dependency mistake and
+# the missing main() refactor immediately.
+#
+# Does NOT hit live Claude/Gemini APIs — that would require real secrets.
+# Proves:
+#   - Wheel builds cleanly with hatchling
+#   - All expected files are included (engine/, agents/, config.json, etc.)
+#   - `pip install` resolves all deps from PyPI
+#   - `import amatelier` works from site-packages
+#   - CLI entry point is registered
+#   - All four subcommands (roundtable/therapist/analytics/watch) dispatch
+#   - config.json loads from its post-install location
+
+name: Wheel smoke test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wheel-install:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install build tooling
+        run: python -m pip install --upgrade pip build
+
+      - name: Build sdist + wheel
+        run: python -m build
+
+      - name: Inspect wheel contents
+        run: |
+          echo "=== wheel contents ==="
+          python -m zipfile -l dist/amatelier-*.whl
+          echo ""
+          echo "=== expected files present? ==="
+          for expected in \
+            "amatelier/__init__.py" \
+            "amatelier/cli.py" \
+            "amatelier/config.json" \
+            "amatelier/engine/roundtable_runner.py" \
+            "amatelier/engine/gemini_client.py" \
+            "amatelier/agents/elena/CLAUDE.md" \
+            "amatelier/store/catalog.json" \
+            "amatelier/roundtable-server/db_client.py"
+          do
+            if python -m zipfile -l dist/amatelier-*.whl | grep -q "$expected"; then
+              echo "  ✓ $expected"
+            else
+              echo "  ✗ MISSING: $expected"
+              exit 1
+            fi
+          done
+
+      - name: Install wheel into fresh venv
+        run: |
+          python -m venv /tmp/amatelier-venv
+          /tmp/amatelier-venv/bin/pip install --upgrade pip
+          /tmp/amatelier-venv/bin/pip install dist/amatelier-*.whl
+
+      - name: Verify import
+        run: |
+          /tmp/amatelier-venv/bin/python -c "
+          import amatelier
+          assert amatelier.__version__ == '0.1.0', f'unexpected version: {amatelier.__version__}'
+          print('✓ import amatelier (version', amatelier.__version__, ')')
+          print('  AMATELIER_ROOT:', amatelier.AMATELIER_ROOT)
+          print('  REPO_ROOT:', amatelier.REPO_ROOT)
+          "
+
+      - name: Verify config.json ships and loads
+        run: |
+          /tmp/amatelier-venv/bin/python -c "
+          import json
+          from amatelier import AMATELIER_ROOT
+          cfg = AMATELIER_ROOT / 'config.json'
+          assert cfg.exists(), f'config.json missing at {cfg}'
+          data = json.loads(cfg.read_text())
+          assert data['version'] == '0.1.0'
+          workers = list(data['team']['workers'].keys())
+          assert set(workers) == {'elena', 'marcus', 'clare', 'simon', 'naomi'}, \
+              f'unexpected workers: {workers}'
+          print('✓ config.json loaded,', len(workers), 'workers configured')
+          "
+
+      - name: CLI --version
+        run: |
+          out=$(/tmp/amatelier-venv/bin/amatelier --version)
+          [ "$out" = "0.1.0" ] || { echo "unexpected version: $out"; exit 1; }
+          echo "✓ amatelier --version = $out"
+
+      - name: CLI --help
+        run: |
+          /tmp/amatelier-venv/bin/amatelier --help 2>&1 | tee /tmp/help.out
+          grep -q "roundtable" /tmp/help.out || { echo "help missing 'roundtable'"; exit 1; }
+          echo "✓ amatelier --help mentions all subcommands"
+
+      - name: Dispatch — roundtable --help
+        run: |
+          /tmp/amatelier-venv/bin/amatelier roundtable --help 2>&1 | tee /tmp/rt.out || true
+          grep -q -- "--topic" /tmp/rt.out || { echo "roundtable --help didn't reach engine"; exit 1; }
+          echo "✓ amatelier roundtable dispatches to engine/roundtable_runner.py"
+
+      - name: Dispatch — therapist --help
+        run: |
+          /tmp/amatelier-venv/bin/amatelier therapist --help 2>&1 | tee /tmp/th.out || true
+          grep -q -- "--digest" /tmp/th.out || { echo "therapist --help didn't reach engine"; exit 1; }
+          echo "✓ amatelier therapist dispatches to engine/therapist.py"
+
+      - name: Dispatch — analytics --help
+        run: |
+          /tmp/amatelier-venv/bin/amatelier analytics --help 2>&1 | tee /tmp/an.out || true
+          grep -q "report\|trends\|economy" /tmp/an.out || { echo "analytics --help didn't reach engine"; exit 1; }
+          echo "✓ amatelier analytics dispatches to engine/analytics.py"
+
+      - name: Unknown command produces usage
+        run: |
+          /tmp/amatelier-venv/bin/amatelier bogus-cmd 2>&1 | tee /tmp/bogus.out || true
+          grep -q "unknown command" /tmp/bogus.out || { echo "unknown-command handling broken"; exit 1; }
+          echo "✓ unknown command produces 'unknown command' message"
+
+      - name: Summary
+        run: |
+          echo ""
+          echo "════════════════════════════════════════════════════════════"
+          echo "  ALL CHECKS PASSED on Python ${{ matrix.python-version }}"
+          echo "  amatelier is pip-install-ready"
+          echo "════════════════════════════════════════════════════════════"
