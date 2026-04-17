@@ -4,18 +4,32 @@ After ``pip install amatelier`` this is invoked as::
 
     amatelier <command> [args...]
 
-Commands dispatch to the corresponding engine module. The engine preserves
-its original argparse surfaces; this wrapper just routes to the right one
-and ensures the package sys.path shim is applied first.
+Commands dispatch to the corresponding engine module by running it as if
+invoked via ``python -m <module>``. The engine modules preserve their
+original script-style argparse surfaces — they expect to be executed,
+not imported as a library.
 """
 
 from __future__ import annotations
 
+import runpy
 import sys
 
 # Importing `amatelier` runs __init__.py which sets up sys.path for
 # engine/ and store/ so bare imports inside engine modules resolve.
 import amatelier  # noqa: F401  (side-effect import — sys.path shim)
+
+# Map CLI subcommands to the module name that implements them. Each
+# module runs as `__main__` via runpy so its `if __name__ == "__main__"`
+# block fires. These module names resolve against the sys.path entries
+# installed by `amatelier.__init__` (amatelier/engine/, amatelier/store/),
+# so the bare names work without fully-qualified paths.
+DISPATCH = {
+    "roundtable": "roundtable_runner",
+    "therapist": "therapist",
+    "analytics": "analytics",
+    "watch": "watch_roundtable",
+}
 
 
 def _usage() -> int:
@@ -48,27 +62,26 @@ def main(argv: list[str] | None = None) -> int:
     cmd = argv[0]
     rest = argv[1:]
 
-    # Re-mount argv for the invoked module so its argparse sees the right args.
-    sys.argv = [cmd, *rest]
+    module_name = DISPATCH.get(cmd)
+    if module_name is None:
+        print(f"amatelier: unknown command: {cmd}", file=sys.stderr)
+        return _usage()
 
-    if cmd == "roundtable":
-        from roundtable_runner import main as run  # type: ignore[import-not-found]
-        return int(run() or 0)
-
+    # `watch_roundtable` lives in amatelier/tools/, not on the bare sys.path.
+    # Resolve it through the package import path.
     if cmd == "watch":
-        from amatelier.tools import watch_roundtable
-        return int(getattr(watch_roundtable, "main", lambda: 0)() or 0)
+        module_name = "amatelier.tools.watch_roundtable"
 
-    if cmd == "therapist":
-        from therapist import main as run  # type: ignore[import-not-found]
-        return int(run() or 0)
+    # Re-mount argv so the target module's argparse sees the subcommand args.
+    sys.argv = [module_name, *rest]
 
-    if cmd == "analytics":
-        from analytics import main as run  # type: ignore[import-not-found]
-        return int(run() or 0)
-
-    print(f"amatelier: unknown command: {cmd}", file=sys.stderr)
-    return _usage()
+    try:
+        runpy.run_module(module_name, run_name="__main__", alter_sys=True)
+        return 0
+    except SystemExit as e:
+        # argparse / sys.exit in the target module bubbles up as SystemExit;
+        # propagate the exit code.
+        return int(e.code or 0) if isinstance(e.code, (int, type(None))) else 1
 
 
 if __name__ == "__main__":

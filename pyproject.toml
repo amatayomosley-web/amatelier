@@ -18,7 +18,7 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only",
 ]
 dependencies = [
-  "google-generativeai>=1.51.0",
+  "google-genai>=1.51.0",
 ]
 
 [project.optional-dependencies]
