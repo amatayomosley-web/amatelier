@@ -1,4 +1,4 @@
-# Your first run with Atelier
+# Your first run with Amatelier
 
 > **Tutorial** — guided walkthrough from zero to a working first run. If you already know what you want to do, see [Guides](../guides/install.md) instead.
 

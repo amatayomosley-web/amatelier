@@ -1,4 +1,4 @@
-# Contributing to Atelier
+# Contributing to Amatelier
 
 Thanks for your interest in improving this project.
 

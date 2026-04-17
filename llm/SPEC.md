@@ -5,7 +5,7 @@
 ## Identity
 
 - **Name:** amatelier
-- **Display name:** Atelier
+- **Display name:** Amatelier
 - **One-liner:** A self-evolving multi-model AI team skill for Claude Code
 - **Author:** Maximillian
 - **License:** MIT

@@ -1,8 +1,8 @@
-"""Atelier command-line entry point.
+"""Amatelier command-line entry point.
 
-After ``pip install atelier`` this is invoked as::
+After ``pip install amatelier`` this is invoked as::
 
-    atelier <command> [args...]
+    amatelier <command> [args...]
 
 Commands dispatch to the corresponding engine module. The engine preserves
 its original argparse surfaces; this wrapper just routes to the right one
@@ -20,7 +20,7 @@ import amatelier  # noqa: F401  (side-effect import — sys.path shim)
 
 def _usage() -> int:
     print(
-        "atelier — self-evolving multi-model AI team for Claude Code\n"
+        "amatelier — self-evolving multi-model AI team for Claude Code\n"
         "\n"
         "Usage:\n"
         "  amatelier roundtable [--topic TEXT --briefing PATH --budget N ...]\n"
@@ -67,7 +67,7 @@ def main(argv: list[str] | None = None) -> int:
         from analytics import main as run  # type: ignore[import-not-found]
         return int(run() or 0)
 
-    print(f"atelier: unknown command: {cmd}", file=sys.stderr)
+    print(f"amatelier: unknown command: {cmd}", file=sys.stderr)
     return _usage()
 
 

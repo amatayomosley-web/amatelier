@@ -1,6 +1,6 @@
-"""Atelier — a self-evolving multi-model AI team skill for Claude Code.
+"""Amatelier — a self-evolving multi-model AI team skill for Claude Code.
 
-This package preserves the original flat-import structure of atelier for
+This package preserves the original flat-import structure of amatelier for
 backward compatibility while conforming to the Amatayo Standard `src/<pkg>/`
 layout.
 
@@ -10,7 +10,7 @@ existing bare imports (``from db import ...``, ``from store import ...``,
 
 Consumers of the package have two entry points:
 
-1. Shell CLI (after ``pip install atelier``):
+1. Shell CLI (after ``pip install amatelier``):
        amatelier roundtable --topic "..." --briefing roundtable-server/briefing-001.md
 
 2. Python:
