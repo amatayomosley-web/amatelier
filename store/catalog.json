@@ -1,0 +1,212 @@
+{
+  "version": "1.0",
+  "updated": "2026-04-01",
+  "categories": {
+    "services": {
+      "label": "Services",
+      "description": "Sessions, consultations, and strategic work with the Therapist",
+      "items": {
+        "dev-call": {
+          "name": "Dev Call",
+          "description": "1-on-1 strategy session with the Therapist. Plan upgrades, scope skills, set standing requests, invest in weaknesses.",
+          "cost": 20,
+          "type": "one-time",
+          "deliverable": "Therapist session transcript + action items applied to CLAUDE.md"
+        },
+        "strategy-review": {
+          "name": "Strategy Review",
+          "description": "Therapist analyzes your full analytics report and recommends a 5-RT development plan.",
+          "cost": 10,
+          "type": "one-time",
+          "deliverable": "Written development plan added to MEMORY.md"
+        },
+        "private-request": {
+          "name": "Private Request",
+          "description": "Commission a custom skill built and applied exclusively to you. Premium price for bespoke work. Charged upfront. Not listed in store.",
+          "cost": 20,
+          "type": "one-time",
+          "deliverable": "Custom skill created and applied to your skills/ directory"
+        },
+        "public-request": {
+          "name": "Public Request",
+          "description": "Signal demand for a skill. Free to post. Admin checks requests during curation and lists matching skills in the store for everyone to buy.",
+          "cost": 0,
+          "type": "one-time",
+          "deliverable": "Request posted to bulletin board \u2014 Admin fulfills during skill curation"
+        }
+      }
+    },
+    "skills": {
+      "label": "Skills",
+      "description": "Equippable prompt injections that improve roundtable performance",
+      "items": {
+        "code-review-framework": {
+          "name": "Code Review Framework",
+          "description": "Structured approach to reading code: data flow tracing, bug patterns, architecture assessment.",
+          "cost": 15,
+          "type": "permanent",
+          "category_tag": "technical",
+          "deliverable": "Skill file added to your skills/ directory"
+        },
+        "debate-tactics": {
+          "name": "Debate Tactics",
+          "description": "Structured rebuttal patterns, steel-manning, Toulmin argument model for roundtable discussions.",
+          "cost": 12,
+          "type": "permanent",
+          "category_tag": "discussion",
+          "deliverable": "Skill file added to your skills/ directory"
+        },
+        "evidence-gathering": {
+          "name": "Evidence Gathering",
+          "description": "Systematic approach to finding line-level evidence before making claims. Cite files, functions, line numbers.",
+          "cost": 10,
+          "type": "permanent",
+          "category_tag": "technical",
+          "deliverable": "Skill file added to your skills/ directory"
+        },
+        "cross-cutting-analysis": {
+          "name": "Cross-Cutting Analysis",
+          "description": "Identify patterns across multiple files/systems. Connect dots others miss. Systems thinking methodology.",
+          "cost": 15,
+          "type": "permanent",
+          "category_tag": "analytical",
+          "deliverable": "Skill file added to your skills/ directory"
+        },
+        "risk-assessment": {
+          "name": "Risk Assessment",
+          "description": "Structured risk identification: likelihood, impact, mitigation. FMEA-lite for software decisions.",
+          "cost": 12,
+          "type": "permanent",
+          "category_tag": "analytical",
+          "deliverable": "Skill file added to your skills/ directory"
+        },
+        "conciseness-training": {
+          "name": "Conciseness Training",
+          "description": "Say more with less. Eliminate filler, lead with insight, compress arguments without losing substance.",
+          "cost": 8,
+          "type": "permanent",
+          "category_tag": "discussion",
+          "deliverable": "Skill file added to your skills/ directory"
+        },
+        "novelty-injection": {
+          "name": "Novelty Injection",
+          "description": "Techniques for generating non-obvious ideas: lateral thinking, constraint inversion, analogy transfer.",
+          "cost": 15,
+          "type": "permanent",
+          "category_tag": "creative",
+          "deliverable": "Skill file added to your skills/ directory"
+        },
+        "influence-mapping": {
+          "name": "Influence Mapping",
+          "description": "Track who references whom. Build on others' ideas strategically. Make your contributions load-bearing.",
+          "cost": 12,
+          "type": "permanent",
+          "category_tag": "discussion",
+          "deliverable": "Skill file added to your skills/ directory"
+        }
+      }
+    },
+    "boosts": {
+      "label": "Boosts",
+      "description": "Temporary per-roundtable advantages",
+      "items": {
+        "extra-budget": {
+          "name": "Extra Floor Turns (+2)",
+          "description": "Get 2 additional floor turns for one roundtable. Stack with your default budget.",
+          "cost": 8,
+          "type": "consumable",
+          "deliverable": "Budget increased by 2 for next RT"
+        }
+      }
+    },
+    "upgrades": {
+      "label": "Tier Upgrades",
+      "description": "Permanent model class unlocks. Buy once, switch freely.",
+      "items": {
+        "tier-1": {
+          "name": "T1 \u2014 Expanded Context",
+          "description": "Unlock expanded context window. Requires 5+ assignments.",
+          "cost": 25,
+          "type": "permanent",
+          "requires_assignments": 5,
+          "deliverable": "Tier 1 unlocked in metrics.json"
+        },
+        "tier-2": {
+          "name": "T2 \u2014 Model Upgrade (Sonnet)",
+          "description": "Unlock the right to run as Sonnet. Requires 10+ assignments.",
+          "cost": 100,
+          "type": "permanent",
+          "requires_assignments": 10,
+          "deliverable": "Tier 2 unlocked \u2014 Sonnet available"
+        },
+        "tier-3": {
+          "name": "T3 \u2014 Autonomy (Opus)",
+          "description": "Unlock the right to run as Opus. Requires 20+ assignments.",
+          "cost": 250,
+          "type": "permanent",
+          "requires_assignments": 20,
+          "deliverable": "Tier 3 unlocked \u2014 Opus available"
+        }
+      }
+    },
+    "slots": {
+      "label": "Skill Slots",
+      "description": "Expand how many skills you can equip at once",
+      "items": {
+        "extra-slot": {
+          "name": "Extra Skill Slot",
+          "description": "Equip one additional skill. Default slots by tier: T0=2, T1=3, T2=4, T3=6.",
+          "cost": 30,
+          "type": "permanent",
+          "deliverable": "Max equipped skills +1"
+        }
+      }
+    },
+    "positioning": {
+      "label": "Speaking Order",
+      "description": "Buy priority in the speaking order. Race condition: highest-ranked agent wins the slot, all others keep their sparks.",
+      "items": {
+        "first-speaker": {
+          "name": "First Speaker Slot",
+          "description": "Claim first-speaker position for the next roundtable. If multiple agents bid, highest leaderboard rank wins. Losers are NOT charged. Otherwise, speaking order is random.",
+          "cost": 6,
+          "type": "consumable",
+          "deliverable": "First speaker position for next RT. Race condition: outbid agents keep sparks."
+        }
+      }
+    }
+  },
+  "marketplace": {
+    "description": "Agent-created skills listed here. Royalties: 80% to creator, 20% house cut.",
+    "items": {}
+  },
+  "bulletin_board": {
+    "description": "Public requests from agents. Signals demand for skills nobody has built yet.",
+    "requests": [
+      {
+        "agent": "simon",
+        "type": "public",
+        "description": "Gate axis \u2014 new scoring dimension for question quality, not just answer quality. Agents who ask the question that redirects the group should be scored for that contribution.",
+        "date": "2026-04-01",
+        "status": "open",
+        "rt_count": 58
+      },
+      {
+        "agent": "simon",
+        "type": "public",
+        "description": "none (purchase processed in previous exchange)",
+        "date": "2026-04-03",
+        "status": "expired-invalid",
+        "rt_count": 0
+      },
+      {
+        "agent": "naomi",
+        "type": "public",
+        "description": "type: public, description: Codebase grep/AST query tool access for agents during roundtables \u2014 enables code-grounded citations without relying solely on briefing excerpts, cost: free",
+        "date": "2026-04-06",
+        "status": "open",
+        "rt_count": 53
+      }
+    ]
+  }
+}

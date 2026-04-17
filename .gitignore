@@ -1,0 +1,41 @@
+__pycache__/
+*.pyc
+*.db
+.env
+
+# User data (generated at runtime)
+roundtable-server/digest-*.json
+roundtable-server/briefing-*.md
+roundtable-server/logs/*
+!roundtable-server/logs/.gitkeep
+roundtable-server/steward-log-*.json
+roundtable-server/runner-*.log
+roundtable-server/rt-*/
+roundtable-server/transcript-*.txt
+roundtable-server/latest-result.md
+
+# Agent state (generated at runtime)
+agents/*/MEMORY.md
+agents/*/MEMORY.json
+agents/*/metrics.json
+agents/*/behaviors.json
+agents/*/sessions/*
+!agents/*/sessions/.gitkeep
+agents/*/skills/*
+!agents/*/skills/.gitkeep
+agents/therapist/case_notes/*
+!agents/therapist/case_notes/.gitkeep
+agents/judge/trace/*
+!agents/judge/trace/.gitkeep
+
+# Runtime data
+benchmarks/*
+!benchmarks/.gitkeep
+novel_concepts.json
+shared-skills/index.json
+notes.md
+.memsearch/
+.claude-flow/
+_digest_*.json
+_transcript_*.txt
+store/ledger.json

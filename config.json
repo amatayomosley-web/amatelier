@@ -1,0 +1,107 @@
+{
+  "version": "0.1.0",
+  "team": {
+    "admin": {
+      "name": "Opus Admin",
+      "model": "claude-opus-4-6",
+      "stage": 1,
+      "projects_completed": 0
+    },
+    "runner": {
+      "note": "roundtable_runner.py — replaced Haiku Assistant. Deterministic mechanics, no LLM needed."
+    },
+    "therapist": {
+      "name": "Opus Therapist",
+      "model": "claude-opus-4-6",
+      "stage": 1,
+      "debriefs_completed": 0
+    },
+    "judge": {
+      "name": "Judge",
+      "model": "claude-sonnet-4-6",
+      "stage": 1,
+      "roundtables_judged": 0
+    },
+    "workers": {
+      "elena": { "model": "claude-sonnet-4-20250514", "assignments": 0 },
+      "marcus": { "model": "claude-sonnet-4-20250514", "assignments": 0 },
+      "clare": { "model": "claude-haiku-4-5-20251001", "assignments": 0 },
+      "simon": { "model": "claude-haiku-4-5-20251001", "assignments": 0 },
+      "naomi": { "model": "gemini-3-flash-preview", "assignments": 0 }
+    }
+  },
+  "roundtable": {
+    "token_budget": 15000,
+    "max_rounds": 3,
+    "context_limit": 8000,
+    "db_path": "roundtable-server/roundtable.db"
+  },
+  "competition": {
+    "scoring": {
+      "model": "absolute",
+      "axes": ["novelty", "accuracy", "impact", "challenge"],
+      "scale": [0, 1, 2, 3, 10],
+      "grand_insight_value": 10,
+      "scorer": "judge-sonnet",
+      "calibration": "A score of 2 means genuinely good — not baseline. Most contributions should score 1. Reserve 2 for clearly above-average work. 3 is exceptional and rare. Average RT total should be 4-6, not 8+.",
+      "note": "Each axis scored 0-3 (normal) or 10 (grand insight). No 4-9. Judge must quote the discontinuity message to award 10."
+    },
+    "entry_fees": {
+      "haiku": 5,
+      "flash": 5,
+      "sonnet": 8,
+      "opus": 15,
+      "note": "Flat fee per RT, not per-round. Deducted at RT start. V5: raised from 3/3/6/12 — agents were netting too easily."
+    },
+    "gate_bonus": {
+      "enabled": true,
+      "max_per_rt": 3,
+      "sparks_per_gate": 3
+    },
+    "penalties": {
+      "redundancy": -3,
+      "hallucination": -5,
+      "off_directive": -5,
+      "note": "Deducted from RT earnings. Floor is 0 gross — can't go negative from penalties alone. Operating fee still applies."
+    },
+    "relegation": {
+      "trigger": "net_negative_consecutive",
+      "threshold": 3,
+      "options": ["relegation", "deletion"],
+      "passive_income": 2,
+      "note": "3 consecutive net-negative RTs (gross - entry_fee < 0) triggers relegation choice. Agent decides: bench with passive income, or permanent deletion."
+    },
+    "rt_outcome_bonus": {
+      "implemented": 5,
+      "note": "Bonus sparks awarded when an RT proposal is accepted and implemented by the user"
+    },
+    "upgrades": {
+      "note": "Model upgrades are request-based. Agents request via therapist, user approves."
+    },
+    "ventures": {
+      "scout":    { "stake": 5,  "multiplier": 3.0 },
+      "venture":  { "stake": 12, "multiplier": 3.5 },
+      "moonshot": { "stake": 30, "multiplier": 4.0 }
+    }
+  },
+  "self_determined_thresholds": {
+    "admin": 3,
+    "judge": 30,
+    "therapist": 30,
+    "worker": 20
+  },
+  "gemini": {
+    "api_key_env": "GEMINI_API_KEY",
+    "model": "gemini-3-flash-preview",
+    "temperature": 1.0
+  },
+  "steward": {
+    "enabled": true,
+    "budget_per_agent": 3,
+    "timeout_seconds": 120,
+    "max_response_tokens": 2000,
+    "haiku_model": "claude-haiku-4-5-20251001",
+    "sonnet_model": "claude-sonnet-4-20250514",
+    "note": "Ephemeral subagent spawned by runner on [[request:]] tags. Judge dispatches and routes. Not a roster member."
+  }
+}
