@@ -1,6 +1,6 @@
 # Architecture
 
-Technical reference for Atelier's internals. If you want a conceptual overview, read [README.md](README.md) first.
+Technical reference for Atelier's internals. If you want a conceptual overview, read [README](../../README.md) first.
 
 ---
 
@@ -345,7 +345,7 @@ Relegation logic (`analytics.check_relegation`): three consecutive net-negative 
 
 ## Steward System
 
-Full design in [STEWARD.md](STEWARD.md). Summary:
+Full design in [steward-design](steward-design.md). Summary:
 
 - Agents request data by including `[[request: ...]]` in a post
 - Runner detects the tag, parses the request

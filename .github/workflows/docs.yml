@@ -1,0 +1,69 @@
+# Builds the human docs site (MkDocs Material) and regenerates LLM-facing
+# derivatives on every push to main. Also runs on PRs as a dry-build to catch
+# doc errors before merge.
+
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install MkDocs + plugins
+        run: |
+          pip install \
+            mkdocs-material \
+            mkdocs-awesome-pages-plugin \
+            pymdown-extensions
+
+      - name: Build MkDocs site
+        run: mkdocs build --strict
+
+      # dual-docs-architect provides a regenerate script at scripts/regen_llm.py
+      # It reads src/, docs/, examples/ and writes llm/API.md, llm/SCHEMA.md,
+      # llms.txt, llms-full.txt, .cursor/rules/*, .github/copilot-instructions.md.
+      # If the script doesn't exist yet, this step is a no-op.
+      - name: Regenerate LLM surface
+        run: |
+          if [ -f scripts/regen_llm.py ]; then
+            python scripts/regen_llm.py
+          else
+            echo "scripts/regen_llm.py not present yet — skipping regeneration"
+          fi
+
+      - name: Check for unsynced derivatives
+        if: github.event_name == 'pull_request'
+        run: |
+          if ! git diff --exit-code; then
+            echo "::error::Generated files are out of sync. Run 'make docs' locally and commit."
+            exit 1
+          fi
+
+      - name: Deploy to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site

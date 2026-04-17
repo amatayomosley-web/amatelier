@@ -1,0 +1,1790 @@
+================================================================================
+FILE: llm/SPEC.md
+================================================================================
+
+# Atelier — Specification
+
+> Canonical machine-readable description. This file is hand-written and authoritative. `llm/API.md` and `llm/SCHEMA.md` are generated from source code; this file is not.
+
+## Identity
+
+- **Name:** atelier
+- **Display name:** Atelier
+- **One-liner:** A self-evolving multi-model AI team skill for Claude Code
+- **Author:** Maximillian
+- **License:** MIT
+- **Standard:** Amatayo Standard v1.0
+
+## Repository
+
+- **Source:** https://github.com/amatayomosley-web/atelier
+- **Docs (human):** https://amatayomosley-web.github.io/atelier/
+- **Docs (LLM):** https://raw.githubusercontent.com/amatayomosley-web/atelier/main/llms-full.txt
+
+## Top-level components
+
+_Populate this section after the first implementation pass. Each component should be exhaustively listed with:_
+
+```yaml
+- name: <component>
+  path: src/atelier/<path>
+  purpose: <one line>
+  public_api: [list of exported symbols]
+  depends_on: [other components]
+```
+
+## Invariants
+
+1. The package is pip-installable (Python) or npm-installable (Node); never clone-required
+2. `llm/` directory is flat — no subdirectories
+3. Generated files (`llm/API.md`, `llm/SCHEMA.md`, `llms.txt`, `llms-full.txt`, `.cursor/rules/*`, `.github/copilot-instructions.md`) are rebuilt by CI from canonical sources
+4. Public symbols in `src/atelier/` must be documented in this file
+5. CLI flags must appear in both `docs/reference/cli.md` (human) and `llm/API.md` (machine, auto-generated)
+
+## Glossary
+
+_Define project-specific terms here so LLMs consume them deterministically._
+
+================================================================================
+FILE: llm/API.md
+================================================================================
+
+# API
+
+> **Generated.** Do not hand-edit. Regenerate with `python scripts/regen_llm.py`.
+
+
+## Public symbols
+
+### `main`
+
+```yaml
+name: main
+kind: function
+path: src\atelier\cli.py
+description: ""
+```
+
+### `load_memory`
+
+```yaml
+name: load_memory
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Load structured memory from MEMORY.json. Falls back to empty structure."
+```
+
+### `save_memory`
+
+```yaml
+name: save_memory
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Persist structured memory."
+```
+
+### `render_memory`
+
+```yaml
+name: render_memory
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Render structured memory as text for the agent's prompt."
+```
+
+### `generate_session_bridge`
+
+```yaml
+name: generate_session_bridge
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Generate a 'last time you...' bridge from the most recent session transcript."
+```
+
+### `add_episode`
+
+```yaml
+name: add_episode
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Add a first-person episodic memory."
+```
+
+### `extract_episodes_from_therapist`
+
+```yaml
+name: extract_episodes_from_therapist
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Extract episodic memories from a therapist session."
+```
+
+### `add_goal`
+
+```yaml
+name: add_goal
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Add an active goal with a timeline."
+```
+
+### `update_goal_progress`
+
+```yaml
+name: update_goal_progress
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Update progress on a goal by fuzzy matching the goal text."
+```
+
+### `age_goals`
+
+```yaml
+name: age_goals
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Increment rts_elapsed on all active goals. Called after each RT."
+```
+
+### `add_lesson`
+
+```yaml
+name: add_lesson
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Add a permanent curated lesson."
+```
+
+### `update_belief`
+
+```yaml
+name: update_belief
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Add or update a belief. If a similar belief exists, update it."
+```
+
+### `add_session_summary`
+
+```yaml
+name: add_session_summary
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Add a rolling session summary (keeps last MAX_RECENT_SESSIONS)."
+```
+
+### `write_diary_entry`
+
+```yaml
+name: write_diary_entry
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Agent writes a personal diary entry — their own private reflection."
+```
+
+### `read_diary`
+
+```yaml
+name: read_diary
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Read diary entries, optionally filtered by topic."
+```
+
+### `diary_stats`
+
+```yaml
+name: diary_stats
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Get diary statistics for the therapist's case notes."
+```
+
+### `migrate_from_memory_md`
+
+```yaml
+name: migrate_from_memory_md
+kind: function
+path: src\atelier\engine\agent_memory.py
+description: "Migrate existing MEMORY.md content into the structured memory system."
+```
+
+### `load_all_digests`
+
+```yaml
+name: load_all_digests
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Load all digest files, sorted by timestamp."
+```
+
+### `load_therapist_sessions`
+
+```yaml
+name: load_therapist_sessions
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Load all therapist session transcripts for an agent."
+```
+
+### `load_workers`
+
+```yaml
+name: load_workers
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Get worker names from config."
+```
+
+### `dimension_trends`
+
+```yaml
+name: dimension_trends
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Compute per-dimension moving averages and trends."
+```
+
+### `total_score_trend`
+
+```yaml
+name: total_score_trend
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Compute total score moving average and trend."
+```
+
+### `compute_streaks`
+
+```yaml
+name: compute_streaks
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Detect scoring streaks and personal records."
+```
+
+### `detect_phase`
+
+```yaml
+name: detect_phase
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Detect which development phase an agent is in."
+```
+
+### `identify_strengths_weaknesses`
+
+```yaml
+name: identify_strengths_weaknesses
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Identify strongest and weakest dimensions over recent window."
+```
+
+### `budget_analytics`
+
+```yaml
+name: budget_analytics
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Analyze budget usage patterns across roundtables."
+```
+
+### `judge_redirect_analytics`
+
+```yaml
+name: judge_redirect_analytics
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Count Judge redirects per roundtable."
+```
+
+### `therapist_analytics`
+
+```yaml
+name: therapist_analytics
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Aggregate therapist session outcomes."
+```
+
+### `economy_analytics`
+
+```yaml
+name: economy_analytics
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Spark economy analytics: earnings, spending, ROI."
+```
+
+### `save_leaderboard_snapshot`
+
+```yaml
+name: save_leaderboard_snapshot
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Save current leaderboard as a timestamped snapshot."
+```
+
+### `rank_trajectory`
+
+```yaml
+name: rank_trajectory
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Get rank trajectory from leaderboard history."
+```
+
+### `engagement_matrix`
+
+```yaml
+name: engagement_matrix
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Build a matrix of who references whom across roundtables."
+```
+
+### `agent_report`
+
+```yaml
+name: agent_report
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Generate a comprehensive growth report for one agent."
+```
+
+### `format_report_text`
+
+```yaml
+name: format_report_text
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Format a growth report as readable text for the Therapist or user."
+```
+
+### `economy_overview`
+
+```yaml
+name: economy_overview
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Generate a system-wide Spark Economy overview."
+```
+
+### `update_agent_analytics`
+
+```yaml
+name: update_agent_analytics
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Compute and persist analytics fields into metrics.json."
+```
+
+### `update_all_analytics`
+
+```yaml
+name: update_all_analytics
+kind: function
+path: src\atelier\engine\analytics.py
+description: "Update analytics for all workers."
+```
+
+### `distill_one`
+
+```yaml
+name: distill_one
+kind: function
+path: src\atelier\engine\backfill_distill.py
+description: "Run the Sonnet distiller on a single digest. Returns result dict."
+```
+
+### `main`
+
+```yaml
+name: main
+kind: function
+path: src\atelier\engine\backfill_distill.py
+description: ""
+```
+
+### `main`
+
+```yaml
+name: main
+kind: function
+path: src\atelier\engine\classify_concepts.py
+description: ""
+```
+
+### `load_agent_context`
+
+```yaml
+name: load_agent_context
+kind: function
+path: src\atelier\engine\claude_agent.py
+description: "Load the agent's full context: CLAUDE.md + MEMORY.md + metrics + skills."
+```
+
+### `call_claude`
+
+```yaml
+name: call_claude
+kind: function
+path: src\atelier\engine\claude_agent.py
+description: "Call Claude via CLI."
+```
+
+### `run_agent`
+
+```yaml
+name: run_agent
+kind: function
+path: src\atelier\engine\claude_agent.py
+description: "Main loop: wait for call → respond → repeat until roundtable closes."
+```
+
+### `get_db`
+
+```yaml
+name: get_db
+kind: function
+path: src\atelier\engine\db.py
+description: ""
+```
+
+### `get_active_roundtable`
+
+```yaml
+name: get_active_roundtable
+kind: function
+path: src\atelier\engine\db.py
+description: ""
+```
+
+### `listen`
+
+```yaml
+name: listen
+kind: function
+path: src\atelier\engine\db.py
+description: "Read all messages since last read. Uses context manager for safe cleanup."
+```
+
+### `speak`
+
+```yaml
+name: speak
+kind: function
+path: src\atelier\engine\db.py
+description: "Post a message to the roundtable. Uses context manager for safe cleanup."
+```
+
+### `is_roundtable_open`
+
+```yaml
+name: is_roundtable_open
+kind: function
+path: src\atelier\engine\db.py
+description: ""
+```
+
+### `init_read_cursor`
+
+```yaml
+name: init_read_cursor
+kind: function
+path: src\atelier\engine\db.py
+description: "Initialize a read cursor for an agent joining a roundtable."
+```
+
+### `recall`
+
+```yaml
+name: recall
+kind: function
+path: src\atelier\engine\db.py
+description: "Retrieve specific transcript segments from the current roundtable."
+```
+
+### `build_transcript_index`
+
+```yaml
+name: build_transcript_index
+kind: function
+path: src\atelier\engine\db.py
+description: "Build a compact one-line-per-contribution index of the transcript."
+```
+
+### `load_index`
+
+```yaml
+name: load_index
+kind: function
+path: src\atelier\engine\distiller.py
+description: ""
+```
+
+### `save_index`
+
+```yaml
+name: save_index
+kind: function
+path: src\atelier\engine\distiller.py
+description: ""
+```
+
+### `create_skill_entry`
+
+```yaml
+name: create_skill_entry
+kind: function
+path: src\atelier\engine\distiller.py
+description: "Create a structured skill entry. Returns None if duplicate or fails JUDGE gate."
+```
+
+### `save_skill_to_agent`
+
+```yaml
+name: save_skill_to_agent
+kind: function
+path: src\atelier\engine\distiller.py
+description: "Save a skill to an agent's local skills directory."
+```
+
+### `promote_to_shared`
+
+```yaml
+name: promote_to_shared
+kind: function
+path: src\atelier\engine\distiller.py
+description: "Promote a skill to the shared skill store."
+```
+
+### `search_shared_skills`
+
+```yaml
+name: search_shared_skills
+kind: function
+path: src\atelier\engine\distiller.py
+description: "Simple keyword search against shared skill index."
+```
+
+### `list_agent_skills`
+
+```yaml
+name: list_agent_skills
+kind: function
+path: src\atelier\engine\distiller.py
+description: "List all skills an agent has accumulated."
+```
+
+### `load_behaviors`
+
+```yaml
+name: load_behaviors
+kind: function
+path: src\atelier\engine\evolver.py
+description: "Load structured behavior metadata."
+```
+
+### `save_behaviors`
+
+```yaml
+name: save_behaviors
+kind: function
+path: src\atelier\engine\evolver.py
+description: ""
+```
+
+### `confirm_behavior`
+
+```yaml
+name: confirm_behavior
+kind: function
+path: src\atelier\engine\evolver.py
+description: "Confirm a behavior was useful — resets confidence to 1.0."
+```
+
+### `decay_behaviors`
+
+```yaml
+name: decay_behaviors
+kind: function
+path: src\atelier\engine\evolver.py
+description: "Apply decay to all behaviors for one RT cycle."
+```
+
+### `get_behavior_decay_summary`
+
+```yaml
+name: get_behavior_decay_summary
+kind: function
+path: src\atelier\engine\evolver.py
+description: "Build a summary string for Therapist injection."
+```
+
+### `read_claude_md`
+
+```yaml
+name: read_claude_md
+kind: function
+path: src\atelier\engine\evolver.py
+description: ""
+```
+
+### `write_claude_md`
+
+```yaml
+name: write_claude_md
+kind: function
+path: src\atelier\engine\evolver.py
+description: ""
+```
+
+### `append_to_memory`
+
+```yaml
+name: append_to_memory
+kind: function
+path: src\atelier\engine\evolver.py
+description: "Dual-write: structured MEMORY.json (primary) + legacy MEMORY.md (backup)."
+```
+
+### `add_learned_behavior`
+
+```yaml
+name: add_learned_behavior
+kind: function
+path: src\atelier\engine\evolver.py
+description: "Add a learned behavior to CLAUDE.md + behaviors.json. Skips duplicates (>70% word overlap)."
+```
+
+### `remove_learned_behavior`
+
+```yaml
+name: remove_learned_behavior
+kind: function
+path: src\atelier\engine\evolver.py
+description: "Remove a learned behavior from CLAUDE.md + behaviors.json by fuzzy match."
+```
+
+### `update_emerging_trait`
+
+```yaml
+name: update_emerging_trait
+kind: function
+path: src\atelier\engine\evolver.py
+description: "Update the Emerging Traits section in an agent's CLAUDE.md."
+```
+
+### `sync_skills_owned`
+
+```yaml
+name: sync_skills_owned
+kind: function
+path: src\atelier\engine\evolver.py
+description: "Update the ## Skills Owned section in an agent's CLAUDE.md from the ledger."
+```
+
+### `load_agent_context`
+
+```yaml
+name: load_agent_context
+kind: function
+path: src\atelier\engine\gemini_agent.py
+description: ""
+```
+
+### `run_agent`
+
+```yaml
+name: run_agent
+kind: function
+path: src\atelier\engine\gemini_agent.py
+description: "Wait for call -> respond -> repeat until roundtable closes."
+```
+
+### `get_model_name`
+
+```yaml
+name: get_model_name
+kind: function
+path: src\atelier\engine\gemini_client.py
+description: "Read Gemini model name from config.json."
+```
+
+### `call_gemini`
+
+```yaml
+name: call_gemini
+kind: function
+path: src\atelier\engine\gemini_client.py
+description: "Call Gemini with retries, rate limiting, and detailed error logging."
+```
+
+### `judge_score`
+
+```yaml
+name: judge_score
+kind: function
+path: src\atelier\engine\judge_scorer.py
+description: "Score all workers using Sonnet Judge. Returns results dict."
+```
+
+### `load_config`
+
+```yaml
+name: load_config
+kind: function
+path: src\atelier\engine\roundtable_runner.py
+description: ""
+```
+
+### `resolve_agent_model`
+
+```yaml
+name: resolve_agent_model
+kind: function
+path: src\atelier\engine\roundtable_runner.py
+description: "Read agent's model from config. Upgrades are request-based, not automatic."
+```
+
+### `db_cmd`
+
+```yaml
+name: db_cmd
+kind: function
+path: src\atelier\engine\roundtable_runner.py
+description: "Run a db_client.py command and return parsed JSON."
+```
+
+### `get_latest_messages`
+
+```yaml
+name: get_latest_messages
+kind: function
+path: src\atelier\engine\roundtable_runner.py
+description: "Listen as the runner to get new messages."
+```
+
+### `wait_for_single_speaker`
+
+```yaml
+name: wait_for_single_speaker
+kind: function
+path: src\atelier\engine\roundtable_runner.py
+description: "Wait for a single agent to post. Returns (spoke, all_new_messages)."
+```
+
+### `is_pass`
+
+```yaml
+name: is_pass
+kind: function
+path: src\atelier\engine\roundtable_runner.py
+description: "Check if the speaker's MOST RECENT message is a PASS."
+```
+
+### `check_convergence`
+
+```yaml
+name: check_convergence
+kind: function
+path: src\atelier\engine\roundtable_runner.py
+description: "Check if Judge posted a CONVERGED signal."
+```
+
+### `build_digest`
+
+```yaml
+name: build_digest
+kind: function
+path: src\atelier\engine\roundtable_runner.py
+description: "Build a structured digest from the transcript."
+```
+
+### `format_budget_status`
+
+```yaml
+name: format_budget_status
+kind: function
+path: src\atelier\engine\roundtable_runner.py
+description: "Format budget as a readable string."
+```
+
+### `run_roundtable`
+
+```yaml
+name: run_roundtable
+kind: function
+path: src\atelier\engine\roundtable_runner.py
+description: "Run a complete roundtable with structured debate and return the digest."
+```
+
+### `format_digest_summary`
+
+```yaml
+name: format_digest_summary
+kind: function
+path: src\atelier\engine\roundtable_runner.py
+description: "Format digest as human-readable summary for Admin."
+```
+
+### `load_config`
+
+```yaml
+name: load_config
+kind: function
+path: src\atelier\engine\scorer.py
+description: ""
+```
+
+### `load_metrics`
+
+```yaml
+name: load_metrics
+kind: function
+path: src\atelier\engine\scorer.py
+description: ""
+```
+
+### `save_metrics`
+
+```yaml
+name: save_metrics
+kind: function
+path: src\atelier\engine\scorer.py
+description: "Write metrics.json with file locking to prevent concurrent-write corruption."
+```
+
+### `score_agent`
+
+```yaml
+name: score_agent
+kind: function
+path: src\atelier\engine\scorer.py
+description: "Score an agent's roundtable contribution and update their metrics."
+```
+
+### `deduct_entry_fee`
+
+```yaml
+name: deduct_entry_fee
+kind: function
+path: src\atelier\engine\scorer.py
+description: "Deduct flat RT entry fee from agent's spark balance."
+```
+
+### `get_leaderboard`
+
+```yaml
+name: get_leaderboard
+kind: function
+path: src\atelier\engine\scorer.py
+description: "Get ranked leaderboard of all workers."
+```
+
+### `promote_tier`
+
+```yaml
+name: promote_tier
+kind: function
+path: src\atelier\engine\scorer.py
+description: "Agent purchases a tier promotion with sparks."
+```
+
+### `check_self_determined`
+
+```yaml
+name: check_self_determined
+kind: function
+path: src\atelier\engine\scorer.py
+description: "Check if an agent has earned the right to choose their own evolution path."
+```
+
+### `pitch_venture`
+
+```yaml
+name: pitch_venture
+kind: function
+path: src\atelier\engine\scorer.py
+description: "Agent stakes sparks on an experimental idea."
+```
+
+### `resolve_venture`
+
+```yaml
+name: resolve_venture
+kind: function
+path: src\atelier\engine\scorer.py
+description: "Admin resolves a venture — success awards multiplier, failure loses stake."
+```
+
+### `award_gate_bonus`
+
+```yaml
+name: award_gate_bonus
+kind: function
+path: src\atelier\engine\scorer.py
+description: "Judge awards a gate bonus for an exceptional contribution."
+```
+
+### `award_rt_outcome_bonus`
+
+```yaml
+name: award_rt_outcome_bonus
+kind: function
+path: src\atelier\engine\scorer.py
+description: "Award bonus sparks to agents whose RT proposal was implemented by the user."
+```
+
+### `get_spark_balances`
+
+```yaml
+name: get_spark_balances
+kind: function
+path: src\atelier\engine\scorer.py
+description: "Get spark balances and pending ventures for all workers."
+```
+
+### `compute_variance_flags`
+
+```yaml
+name: compute_variance_flags
+kind: function
+path: src\atelier\engine\scorer.py
+description: "Detect byzantine scoring patterns — flat low or erratic across axes."
+```
+
+### `check_underperformers`
+
+```yaml
+name: check_underperformers
+kind: function
+path: src\atelier\engine\scorer.py
+description: "Identify agents at risk of relegation (3 consecutive net-negative RTs)."
+```
+
+### `parse_requests`
+
+```yaml
+name: parse_requests
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: "Extract all [[request: ...]] blocks from an agent's message."
+```
+
+### `strip_requests`
+
+```yaml
+name: strip_requests
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: "Return the message with [[request:]] blocks removed (for transcript)."
+```
+
+### `StewardBudget`
+
+```yaml
+name: StewardBudget
+kind: class
+path: src\atelier\engine\steward_dispatch.py
+description: "Per-agent, per-RT request budget."
+```
+
+### `load_registered_files`
+
+```yaml
+name: load_registered_files
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: "Parse the briefing for a '## Steward-Registered Files' section."
+```
+
+### `resolve_file`
+
+```yaml
+name: resolve_file
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: "Check if a file path (or glob) is in the registered list."
+```
+
+### `try_deterministic`
+
+```yaml
+name: try_deterministic
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: "Attempt to handle the request without an LLM."
+```
+
+### `spawn_steward_subagent`
+
+```yaml
+name: spawn_steward_subagent
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: "Spawn an ephemeral Claude subagent with file tools to execute a lookup."
+```
+
+### `StewardTask`
+
+```yaml
+name: StewardTask
+kind: class
+path: src\atelier\engine\steward_dispatch.py
+description: "A single async Steward lookup running in a background thread."
+```
+
+### `format_result`
+
+```yaml
+name: format_result
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: "Format a Steward result for injection into the debate context."
+```
+
+### `StewardLog`
+
+```yaml
+name: StewardLog
+kind: class
+path: src\atelier\engine\steward_dispatch.py
+description: "Tracks all Steward requests and results for an RT."
+```
+
+### `remaining`
+
+```yaml
+name: remaining
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: ""
+```
+
+### `spend`
+
+```yaml
+name: spend
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: "Deduct 1 from agent's budget. Returns False if out of budget."
+```
+
+### `status`
+
+```yaml
+name: status
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: ""
+```
+
+### `log`
+
+```yaml
+name: log
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: ""
+```
+
+### `wait`
+
+```yaml
+name: wait
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: ""
+```
+
+### `record`
+
+```yaml
+name: record
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: ""
+```
+
+### `save`
+
+```yaml
+name: save
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: ""
+```
+
+### `entries`
+
+```yaml
+name: entries
+kind: function
+path: src\atelier\engine\steward_dispatch.py
+description: ""
+```
+
+### `load_catalog`
+
+```yaml
+name: load_catalog
+kind: function
+path: src\atelier\engine\store.py
+description: ""
+```
+
+### `load_ledger`
+
+```yaml
+name: load_ledger
+kind: function
+path: src\atelier\engine\store.py
+description: ""
+```
+
+### `save_ledger`
+
+```yaml
+name: save_ledger
+kind: function
+path: src\atelier\engine\store.py
+description: ""
+```
+
+### `find_item`
+
+```yaml
+name: find_item
+kind: function
+path: src\atelier\engine\store.py
+description: "Find an item by ID across all categories. Returns (item, category_key)."
+```
+
+### `list_catalog`
+
+```yaml
+name: list_catalog
+kind: function
+path: src\atelier\engine\store.py
+description: "Format catalog as readable text."
+```
+
+### `what_can_afford`
+
+```yaml
+name: what_can_afford
+kind: function
+path: src\atelier\engine\store.py
+description: "Show what an agent can afford right now."
+```
+
+### `purchase`
+
+```yaml
+name: purchase
+kind: function
+path: src\atelier\engine\store.py
+description: "Process a store purchase. Deducts sparks, records in ledger."
+```
+
+### `submit_request`
+
+```yaml
+name: submit_request
+kind: function
+path: src\atelier\engine\store.py
+description: "Submit a public or private store request."
+```
+
+### `get_pending_boosts`
+
+```yaml
+name: get_pending_boosts
+kind: function
+path: src\atelier\engine\store.py
+description: "Get unconsumed boosts for an agent (purchased but not yet used in an RT)."
+```
+
+### `consume_boost`
+
+```yaml
+name: consume_boost
+kind: function
+path: src\atelier\engine\store.py
+description: "Mark a boost as consumed after use in a roundtable. Returns True if consumed."
+```
+
+### `apply_boosts_for_rt`
+
+```yaml
+name: apply_boosts_for_rt
+kind: function
+path: src\atelier\engine\store.py
+description: "Check all workers for pending boosts. Returns {agent: {effect_type: value}}."
+```
+
+### `consume_boosts_after_rt`
+
+```yaml
+name: consume_boosts_after_rt
+kind: function
+path: src\atelier\engine\store.py
+description: "Consume all pending boosts for workers after an RT completes."
+```
+
+### `age_bulletin_requests`
+
+```yaml
+name: age_bulletin_requests
+kind: function
+path: src\atelier\engine\store.py
+description: "Increment rt_count on all open requests. Returns requests that hit 3 (expired)."
+```
+
+### `fulfill_request`
+
+```yaml
+name: fulfill_request
+kind: function
+path: src\atelier\engine\store.py
+description: "An agent fulfills a public request by creating a marketplace skill."
+```
+
+### `get_open_requests`
+
+```yaml
+name: get_open_requests
+kind: function
+path: src\atelier\engine\store.py
+description: "Return all open bulletin board requests with their index. Used by Admin during curation."
+```
+
+### `admin_list_skill`
+
+```yaml
+name: admin_list_skill
+kind: function
+path: src\atelier\engine\store.py
+description: "Admin lists a curated skill in the store catalog."
+```
+
+### `admin_apply_private_skill`
+
+```yaml
+name: admin_apply_private_skill
+kind: function
+path: src\atelier\engine\store.py
+description: "Admin applies a privately requested skill directly to an agent."
+```
+
+### `retire_skill`
+
+```yaml
+name: retire_skill
+kind: function
+path: src\atelier\engine\store.py
+description: "Retire a skill an agent owns. Marks it as retired in ledger, removes skill file."
+```
+
+### `get_owned_skills`
+
+```yaml
+name: get_owned_skills
+kind: function
+path: src\atelier\engine\store.py
+description: "Get all permanent skills an agent owns (from ledger). Excludes retired."
+```
+
+### `inventory`
+
+```yaml
+name: inventory
+kind: function
+path: src\atelier\engine\store.py
+description: "Get everything an agent owns."
+```
+
+### `purchase_history`
+
+```yaml
+name: purchase_history
+kind: function
+path: src\atelier\engine\store.py
+description: "Format purchase history as readable text."
+```
+
+### `bulletin_board`
+
+```yaml
+name: bulletin_board
+kind: function
+path: src\atelier\engine\store.py
+description: "Show public requests with aging and fulfillment status."
+```
+
+### `run_session`
+
+```yaml
+name: run_session
+kind: function
+path: src\atelier\engine\therapist.py
+description: "Run a single Therapist session with one agent."
+```
+
+### `run_therapist`
+
+```yaml
+name: run_therapist
+kind: function
+path: src\atelier\engine\therapist.py
+description: "Run Therapist sessions for all agents in a roundtable."
+```
+
+### `get_db`
+
+```yaml
+name: get_db
+kind: function
+path: src\atelier\roundtable-server\db_client.py
+description: ""
+```
+
+### `get_active_rt`
+
+```yaml
+name: get_active_rt
+kind: function
+path: src\atelier\roundtable-server\db_client.py
+description: ""
+```
+
+### `cmd_open`
+
+```yaml
+name: cmd_open
+kind: function
+path: src\atelier\roundtable-server\db_client.py
+description: ""
+```
+
+### `cmd_join`
+
+```yaml
+name: cmd_join
+kind: function
+path: src\atelier\roundtable-server\db_client.py
+description: ""
+```
+
+### `cmd_speak`
+
+```yaml
+name: cmd_speak
+kind: function
+path: src\atelier\roundtable-server\db_client.py
+description: ""
+```
+
+### `cmd_listen`
+
+```yaml
+name: cmd_listen
+kind: function
+path: src\atelier\roundtable-server\db_client.py
+description: ""
+```
+
+### `cmd_status`
+
+```yaml
+name: cmd_status
+kind: function
+path: src\atelier\roundtable-server\db_client.py
+description: ""
+```
+
+### `cmd_close`
+
+```yaml
+name: cmd_close
+kind: function
+path: src\atelier\roundtable-server\db_client.py
+description: ""
+```
+
+### `cmd_cut`
+
+```yaml
+name: cmd_cut
+kind: function
+path: src\atelier\roundtable-server\db_client.py
+description: ""
+```
+
+### `cmd_recall`
+
+```yaml
+name: cmd_recall
+kind: function
+path: src\atelier\roundtable-server\db_client.py
+description: "Retrieve specific transcript segments from the active roundtable."
+```
+
+### `cmd_index`
+
+```yaml
+name: cmd_index
+kind: function
+path: src\atelier\roundtable-server\db_client.py
+description: "Show the transcript index — compact one-line-per-contribution view."
+```
+
+### `cmd_transcript`
+
+```yaml
+name: cmd_transcript
+kind: function
+path: src\atelier\roundtable-server\db_client.py
+description: ""
+```
+
+### `get_db`
+
+```yaml
+name: get_db
+kind: function
+path: src\atelier\roundtable-server\server.py
+description: "Get a WAL-mode SQLite connection."
+```
+
+### `init_db`
+
+```yaml
+name: init_db
+kind: function
+path: src\atelier\roundtable-server\server.py
+description: "Create tables if they don't exist."
+```
+
+### `roundtable_open`
+
+```yaml
+name: roundtable_open
+kind: function
+path: src\atelier\roundtable-server\server.py
+description: "Open a new roundtable discussion."
+```
+
+### `roundtable_close`
+
+```yaml
+name: roundtable_close
+kind: function
+path: src\atelier\roundtable-server\server.py
+description: "Close the active roundtable and return the full transcript."
+```
+
+### `roundtable_cut`
+
+```yaml
+name: roundtable_cut
+kind: function
+path: src\atelier\roundtable-server\server.py
+description: "Force-end the active roundtable (consensus, repetition, token ceiling, etc)."
+```
+
+### `roundtable_join`
+
+```yaml
+name: roundtable_join
+kind: function
+path: src\atelier\roundtable-server\server.py
+description: "Join the active roundtable discussion."
+```
+
+### `roundtable_speak`
+
+```yaml
+name: roundtable_speak
+kind: function
+path: src\atelier\roundtable-server\server.py
+description: "Post a message to the active roundtable discussion."
+```
+
+### `roundtable_listen`
+
+```yaml
+name: roundtable_listen
+kind: function
+path: src\atelier\roundtable-server\server.py
+description: "Read all messages since your last read. First call returns full history."
+```
+
+### `roundtable_leave`
+
+```yaml
+name: roundtable_leave
+kind: function
+path: src\atelier\roundtable-server\server.py
+description: "Leave the active roundtable."
+```
+
+### `roundtable_review`
+
+```yaml
+name: roundtable_review
+kind: function
+path: src\atelier\roundtable-server\server.py
+description: "Read the full transcript of a completed roundtable."
+```
+
+### `roundtable_history`
+
+```yaml
+name: roundtable_history
+kind: function
+path: src\atelier\roundtable-server\server.py
+description: "List past roundtables."
+```
+
+### `roundtable_status`
+
+```yaml
+name: roundtable_status
+kind: function
+path: src\atelier\roundtable-server\server.py
+description: "Get the current roundtable status — who's in, message count, is it open."
+```
+
+### `main`
+
+```yaml
+name: main
+kind: function
+path: src\atelier\roundtable-server\server.py
+description: ""
+```
+
+### `result`
+
+```yaml
+name: result
+kind: function
+path: src\atelier\roundtable-server\test_roundtable.py
+description: ""
+```
+
+### `get_db`
+
+```yaml
+name: get_db
+kind: function
+path: src\atelier\roundtable-server\test_roundtable.py
+description: ""
+```
+
+### `test_db_exists`
+
+```yaml
+name: test_db_exists
+kind: function
+path: src\atelier\roundtable-server\test_roundtable.py
+description: ""
+```
+
+### `test_open_roundtable`
+
+```yaml
+name: test_open_roundtable
+kind: function
+path: src\atelier\roundtable-server\test_roundtable.py
+description: ""
+```
+
+### `test_join`
+
+```yaml
+name: test_join
+kind: function
+path: src\atelier\roundtable-server\test_roundtable.py
+description: ""
+```
+
+### `test_speak`
+
+```yaml
+name: test_speak
+kind: function
+path: src\atelier\roundtable-server\test_roundtable.py
+description: ""
+```
+
+### `test_listen`
+
+```yaml
+name: test_listen
+kind: function
+path: src\atelier\roundtable-server\test_roundtable.py
+description: ""
+```
+
+### `test_close`
+
+```yaml
+name: test_close
+kind: function
+path: src\atelier\roundtable-server\test_roundtable.py
+description: ""
+```
+
+### `test_cut`
+
+```yaml
+name: test_cut
+kind: function
+path: src\atelier\roundtable-server\test_roundtable.py
+description: ""
+```
+
+### `test_concurrent_writers`
+
+```yaml
+name: test_concurrent_writers
+kind: function
+path: src\atelier\roundtable-server\test_roundtable.py
+description: ""
+```
+
+### `test_gemini_agent_loadable`
+
+```yaml
+name: test_gemini_agent_loadable
+kind: function
+path: src\atelier\roundtable-server\test_roundtable.py
+description: ""
+```
+
+### `cleanup`
+
+```yaml
+name: cleanup
+kind: function
+path: src\atelier\roundtable-server\test_roundtable.py
+description: "Remove test roundtables."
+```
+
+### `get_db`
+
+```yaml
+name: get_db
+kind: function
+path: src\atelier\roundtable-server\watch_roundtable.py
+description: ""
+```
+
+### `watch`
+
+```yaml
+name: watch
+kind: function
+path: src\atelier\roundtable-server\watch_roundtable.py
+description: ""
+```
+
+### `watch_chat`
+
+```yaml
+name: watch_chat
+kind: function
+path: src\atelier\tools\watch_roundtable.py
+description: ""
+```
+
+================================================================================
+FILE: llm/SCHEMA.md
+================================================================================
+
+# Schema
+
+> **Generated.** Do not hand-edit. Regenerate with `python scripts/regen_llm.py`.
+
+
+## Config keys
+
+_No pydantic models or JSON schemas detected in this repo. Populate by implementing the schema-walking logic in `find_schemas()` when pydantic/dataclass usage appears._
+
+================================================================================
+FILE: llm/WORKFLOWS.md
+================================================================================
+
+# Workflows
+
+> Turn-by-turn orchestration paths. Hand-written. Copied from `docs/explanation/` narrative into this deterministic form by `dual-docs-architect`.
+
+## Conventions
+
+- Each workflow is a named section
+- Steps are numbered
+- Each step names the file and function responsible
+- Inputs and outputs are explicit
+- Failure modes are listed at the end of each workflow
+
+## Workflow: primary user path
+
+_Populate after initial implementation._
+
+```yaml
+name: <workflow-name>
+trigger: <what starts it>
+steps:
+  - step: 1
+    actor: <file:function>
+    input: <inputs>
+    output: <outputs>
+    description: <one line>
+  # ...
+failure_modes:
+  - condition: <what goes wrong>
+    behavior: <how it surfaces>
+    recovery: <what to do>
+```
+
+================================================================================
+FILE: llm/EXAMPLES.md
+================================================================================
+
+# Examples
+
+> Tested, copy-runnable examples covering the full API surface. Hand-written. CI extracts code blocks and executes them — broken example = red build.
+
+## Conventions
+
+- Each example is a named heading
+- Each example is self-contained (can be copy-pasted and run without other context)
+- Code blocks have the language tag so the extractor can route them correctly
+- Expected output is shown in a second code block tagged `text`
+- Prerequisites are listed at the top of each example
+
+## Example: hello world
+
+**Prerequisites:** `pip install atelier`
+
+```python
+from atelier import hello
+
+print(hello("world"))
+```
+
+Expected output:
+
+```text
+Hello, world!
+```
+
+## Example: _add more examples covering every public symbol_
+
+_At scaffold time only the hello-world example ships. dual-docs-architect ensures coverage parity with `llm/API.md`._
+

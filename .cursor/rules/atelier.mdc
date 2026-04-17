@@ -1,0 +1,50 @@
+---
+description: atelier repository rules (Amatayo Standard)
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Atelier — Claude Code Instructions
+
+Instructions for working on this repository inside Claude Code.
+
+## What this project is
+
+A self-evolving multi-model AI team skill for Claude Code
+
+## Repo layout
+
+- `src/atelier/` — shipped package (the canonical code)
+- `tests/` — mirrors `src/` structure
+- `examples/first_run/` — zero-config runnable demo
+- `docs/` — human documentation (MkDocs, Diátaxis tiers)
+- `llm/` — LLM-facing documentation (flat, exhaustive, machine-readable)
+- `scripts/` — shell and one-off utility scripts
+- `.github/workflows/` — CI, publish, release, docs workflows
+
+## Rules
+
+1. **Amatayo Standard.** This repo follows the Amatayo Standard. Structure is enforced by CI.
+2. **Dual-docs invariant.** Every change that adds a public symbol, CLI flag, or config key must update `llm/SPEC.md` and the relevant `docs/reference/*` file. The `llm/API.md` and `llm/SCHEMA.md` files are generated — don't hand-edit them.
+3. **`llm/` is flat.** Never create subdirectories in `llm/`. Flat is the invariant.
+4. **Tests required.** New code requires new tests. `make test` must pass before PR.
+5. **Conventional commits.** `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`. Releases are driven by commit history.
+6. **No secrets.** `.env.example` documents variables; real values never committed.
+
+## Common commands
+
+```bash
+make setup        # install package + dev deps
+make test         # run test suite
+make lint         # ruff + mypy (or eslint + prettier)
+make demo         # run examples/first_run/
+make docs         # build docs site locally
+```
+
+## When editing docs
+
+Use the `dual-docs-architect` skill. It classifies every write (tutorial / guide / reference / explanation × human / LLM / both) and routes to the correct file.
+
+## When scaffolding new repos
+
+Use the `repo-architect` skill. Don't copy this file by hand — let the skill render it.

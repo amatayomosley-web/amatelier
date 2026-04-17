@@ -3,39 +3,61 @@ __pycache__/
 *.db
 .env
 
+# Build / distribution
+build/
+dist/
+*.egg-info/
+*.egg
+.venv/
+venv/
+
+# Docs site
+site/
+
+# Test / lint caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Staging (never commit; per CLAUDE.md safe-deletion protocol)
+staging/
+
 # User data (generated at runtime)
-roundtable-server/digest-*.json
-roundtable-server/briefing-*.md
-roundtable-server/logs/*
-!roundtable-server/logs/.gitkeep
-roundtable-server/steward-log-*.json
-roundtable-server/runner-*.log
-roundtable-server/rt-*/
-roundtable-server/transcript-*.txt
-roundtable-server/latest-result.md
+src/atelier/roundtable_server/digest-*.json
+src/atelier/roundtable_server/briefing-*.md
+src/atelier/roundtable_server/logs/*
+!src/atelier/roundtable_server/logs/.gitkeep
+src/atelier/roundtable_server/steward-log-*.json
+src/atelier/roundtable_server/runner-*.log
+src/atelier/roundtable_server/rt-*/
+src/atelier/roundtable_server/transcript-*.txt
+src/atelier/roundtable_server/latest-result.md
 
 # Agent state (generated at runtime)
-agents/*/MEMORY.md
-agents/*/MEMORY.json
-agents/*/metrics.json
-agents/*/behaviors.json
-agents/*/sessions/*
-!agents/*/sessions/.gitkeep
-agents/*/skills/*
-!agents/*/skills/.gitkeep
+src/atelier/agents/*/MEMORY.md
+src/atelier/agents/*/MEMORY.json
+src/atelier/agents/*/metrics.json
+src/atelier/agents/*/behaviors.json
+src/atelier/agents/*/sessions/*
+!src/atelier/agents/*/sessions/.gitkeep
+src/atelier/agents/*/skills/*
+!src/atelier/agents/*/skills/.gitkeep
 agents/therapist/case_notes/*
 !agents/therapist/case_notes/.gitkeep
 agents/judge/trace/*
 !agents/judge/trace/.gitkeep
 
 # Runtime data
-benchmarks/*
-!benchmarks/.gitkeep
+src/atelier/benchmarks/*
+!src/atelier/benchmarks/.gitkeep
 novel_concepts.json
-shared-skills/index.json
+src/atelier/shared_skills/index.json
 notes.md
 .memsearch/
 .claude-flow/
 _digest_*.json
 _transcript_*.txt
-store/ledger.json
+src/atelier/store/ledger.json

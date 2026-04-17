@@ -1,0 +1,48 @@
+# Publishes to PyPI via trusted publishing (OIDC — no API token required).
+#
+# Setup:
+# 1. Create the project on PyPI (or claim existing)
+# 2. PyPI project → Publishing → Add a pending publisher
+#    - Owner: amatayomosley-web
+#    - Repository: atelier
+#    - Workflow filename: publish.yml
+#    - Environment: pypi
+# 3. In this repo: Settings → Environments → New environment → "pypi"
+# 4. Push a tag: git tag v0.1.0 && git push --tags
+
+name: Publish to PyPI
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build
+      - run: python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
