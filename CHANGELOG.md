@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Steward credential denylist.** `read_file()` and `grep()` now refuse
+  to read filenames matching credential patterns even when they live
+  inside `WORKSPACE_ROOT`. Blocks `.env`, `.env.local/.production/...`
+  (templates like `.env.example` remain readable), `id_rsa`/`id_ed25519`,
+  `.ssh/`, `.aws/`, `.gnupg/`, `.npmrc`, `.netrc`, `.pypirc`, `*.pem`,
+  `*.key`, `*.p12`, `*.pfx`, anything matching `*_token*`/`*_secret*`.
+  Defends against the in-sandbox attack chain identified in security
+  audit RT `digest-afd96c74180e` (Elena's Grand Insight: "path
+  containment and sensitive-file access are orthogonal concerns").
+- **Steward result truncation.** `format_result()` caps each Steward
+  payload at 4096 chars before injection into the RT transcript /
+  digest. Prevents durable persistence of credential material if the
+  denylist is bypassed by a renamed secret file.
+- **Runtime consent gate.** `amatelier roundtable` now requires
+  affirmative consent before the first Steward dispatch. Set
+  `AMATELIER_STEWARD_CONSENT=1` in CI / automation. Interactive users
+  see a one-time disclosure prompt per process. Implements GDPR
+  Article 13 (disclosure before processing event).
+- **Fixed `.env.example` typo** — `AMAMATELIER_WORKSPACE` was a no-op
+  env var that silently fell through to default workspace resolution.
+  Now `AMATELIER_WORKSPACE` as documented.
+
 ## [0.2.0] — 2026-04-17
 
 ### Added

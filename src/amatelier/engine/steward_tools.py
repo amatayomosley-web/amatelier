@@ -127,6 +127,102 @@ def _safe_resolve(workspace_root: Path, raw_path: str) -> Path:
     return p
 
 
+# Credential denylist — defends against the in-sandbox attack chain
+# identified in Security RT digest-afd96c74180e (Elena's Grand Insight):
+# "path containment and sensitive-file access are orthogonal concerns".
+# Blocks read_file() and grep() against well-known credential-bearing files
+# even though they live inside WORKSPACE_ROOT by design.
+_SECRET_FILENAMES = frozenset({
+    ".env",
+    ".netrc",
+    ".npmrc",
+    ".pypirc",
+    "credentials",
+    "credentials.json",
+    "id_rsa",
+    "id_ed25519",
+    "id_ecdsa",
+    "id_dsa",
+    "config",  # only in .ssh and .aws
+    "known_hosts",
+    "authorized_keys",
+})
+
+_SECRET_SUFFIXES = (
+    ".pem",
+    ".key",
+    ".p12",
+    ".pfx",
+    ".keystore",
+    ".jks",
+    ".asc",
+    ".gpg",
+)
+
+_SECRET_NAME_PATTERNS = (
+    "_token",
+    "_secret",
+    "_apikey",
+    "_api_key",
+    ".env.",  # .env.local, .env.production, etc.
+)
+
+_SECRET_DIR_PARENTS = frozenset({
+    ".ssh",
+    ".aws",
+    ".gnupg",
+    ".docker",
+    ".kube",
+})
+
+
+# Template/example files that LOOK like secrets but are intentionally public.
+# .env.example, secrets.template, etc. — readable so the Steward can audit them.
+_TEMPLATE_SUFFIXES = (".example", ".template", ".sample", ".dist")
+
+
+def _is_secret_path(p: Path) -> bool:
+    """Return True if `p` looks like a credential or secret-bearing file.
+
+    Filename-based heuristic. Defends in-sandbox secrets even though path
+    containment passes. Conservative: blocks more than a strict CVE list
+    because false-positive cost (refused read) is much lower than false-
+    negative cost (leaked credential into RT digest)."""
+    name = p.name
+    name_lower = name.lower()
+
+    # Public template files (e.g. .env.example) are not secrets
+    if name_lower.endswith(_TEMPLATE_SUFFIXES):
+        return False
+
+    # Anything inside a credential-bearing parent directory
+    parts_lower = {part.lower() for part in p.parts}
+    if parts_lower & _SECRET_DIR_PARENTS:
+        return True
+
+    if name_lower in _SECRET_FILENAMES:
+        return True
+
+    if name_lower.endswith(_SECRET_SUFFIXES):
+        return True
+
+    if any(token in name_lower for token in _SECRET_NAME_PATTERNS):
+        return True
+
+    return False
+
+
+def _block_message(p: Path, workspace_root: Path) -> str:
+    try:
+        rel = p.relative_to(workspace_root).as_posix()
+    except ValueError:
+        rel = p.name
+    return (
+        f"Error: blocked secret-path '{rel}' (Steward credential denylist). "
+        f"This file matches a known credential pattern and cannot be read."
+    )
+
+
 def read_file(
     workspace_root: Path,
     path: str,
@@ -135,6 +231,8 @@ def read_file(
 ) -> str:
     """Read a file with optional line range, bounded by MAX_FILE_BYTES."""
     p = _safe_resolve(workspace_root, path)
+    if _is_secret_path(p):
+        return _block_message(p, workspace_root)
     if not p.exists():
         return f"Error: file not found: {path}"
     if not p.is_file():
@@ -199,6 +297,9 @@ def grep(
     for q in candidates:
         if len(matches) >= MAX_GREP_RESULTS:
             break
+        # Skip credential-bearing files even if they match the glob
+        if _is_secret_path(q):
+            continue
         try:
             with q.open("r", encoding="utf-8", errors="replace") as fh:
                 for n, line in enumerate(fh, 1):

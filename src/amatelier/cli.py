@@ -256,6 +256,69 @@ def _run_config(args: list[str]) -> int:
     return 0
 
 
+_CONSENT_ENV = "AMATELIER_STEWARD_CONSENT"
+_CONSENT_TRUTHY = frozenset({"1", "yes", "true", "y"})
+
+_CONSENT_DISCLOSURE = """\
+
+amatelier roundtable will spawn worker agents that may emit
+[[request: ...]] tags. When that happens, the Steward subagent reads
+files from your project workspace and sends excerpts to:
+
+  - the Anthropic API (claude-code mode and anthropic-sdk mode), or
+  - the OpenAI-compatible endpoint you've configured
+
+These excerpts become part of the durable RT digest and message log.
+A credential denylist (~/.env, .ssh keys, .aws/credentials, etc.) is
+applied at read time, but renamed or non-standard secret files are
+not detected. Truncation caps each excerpt at 4 KB.
+
+By proceeding, you confirm that:
+  1. The current workspace does not contain unmanaged secrets, AND
+  2. You consent to file excerpts being transmitted to the configured
+     LLM provider for the duration of this RT.
+
+Set AMATELIER_STEWARD_CONSENT=1 in your environment to skip this
+prompt in CI / automation.
+"""
+
+
+def _check_steward_consent() -> int:
+    """Return 0 if consent is granted, non-zero exit code if not.
+
+    Honored env var: AMATELIER_STEWARD_CONSENT (1/yes/true/y → granted).
+    Otherwise prints disclosure and prompts y/n. Sets the env var on accept
+    so that this process's subprocess children (the runner, agents,
+    Steward) all inherit the granted state without re-prompting.
+    """
+    existing = (os.environ.get(_CONSENT_ENV, "") or "").strip().lower()
+    if existing in _CONSENT_TRUTHY:
+        return 0
+
+    # Non-interactive (no TTY) and no env var → refuse rather than block on input
+    if not sys.stdin.isatty():
+        sys.stderr.write(_CONSENT_DISCLOSURE)
+        sys.stderr.write(
+            "\n[refusing] Non-interactive session and "
+            f"{_CONSENT_ENV} not set. Set it to '1' in your CI env to proceed.\n"
+        )
+        return 2
+
+    sys.stdout.write(_CONSENT_DISCLOSURE)
+    sys.stdout.write("\nProceed? [y/N]: ")
+    sys.stdout.flush()
+    try:
+        answer = input().strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        sys.stdout.write("\n[cancelled]\n")
+        return 130
+    if answer not in _CONSENT_TRUTHY:
+        sys.stdout.write("[declined] Steward dispatch will not run.\n")
+        return 1
+    os.environ[_CONSENT_ENV] = "1"
+    return 0
+
+
 def _run_engine_module(cmd: str, rest: list[str]) -> int:
     """Run an engine-side module via runpy, preserving its argparse surface."""
     module_name = DISPATCH_ENGINE[cmd]
@@ -287,6 +350,12 @@ def main(argv: list[str] | None = None) -> int:
     if cmd == "refresh-seeds":
         return _run_refresh_seeds(rest)
     if cmd in DISPATCH_ENGINE:
+        # Steward consent gate fires before the runner spawns workers.
+        # GDPR Article 13 requires disclosure before processing event.
+        if cmd == "roundtable":
+            consent_exit = _check_steward_consent()
+            if consent_exit != 0:
+                return consent_exit
         return _run_engine_module(cmd, rest)
 
     print(f"amatelier: unknown command: {cmd}", file=sys.stderr)

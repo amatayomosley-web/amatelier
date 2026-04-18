@@ -483,16 +483,37 @@ class StewardTask:
 # Result formatting
 # ---------------------------------------------------------------------------
 
+# Truncation cap for Steward results before they enter the durable RT
+# transcript. Defends against credential exfiltration via persisted digests
+# (Security RT mitigation #3, digest-afd96c74180e). 4096 chars ~ 1024 tokens
+# — large enough for normal lookups, small enough to bound any single leak.
+MAX_RESULT_CHARS = 4096
+
+
 def format_result(agent: str, request: str, result: dict) -> str:
-    """Format a Steward result for injection into the debate context."""
+    """Format a Steward result for injection into the debate context.
+
+    Truncates `result['result']` to MAX_RESULT_CHARS before injection. This
+    cap appears in the runner-broadcast message that lands in the digest +
+    messages-table — making truncation the last line of defense against
+    credential leakage when the read_file denylist is bypassed by a renamed
+    or relocated secret file.
+    """
     model = result.get("model", "unknown")
     elapsed = result.get("elapsed_s", 0)
     status = result.get("status", "error")
 
     if status == "success":
+        body = result.get("result", "") or ""
+        if len(body) > MAX_RESULT_CHARS:
+            body = (
+                body[:MAX_RESULT_CHARS]
+                + f"\n... [truncated: result was {len(result['result'])} chars, "
+                  f"capped at {MAX_RESULT_CHARS}]"
+            )
         return (
             f"[Research result for {agent} | {model} | {elapsed:.1f}s]:\n"
-            f"{result['result']}"
+            f"{body}"
         )
     elif status == "timeout":
         return (
