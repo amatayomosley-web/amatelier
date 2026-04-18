@@ -39,22 +39,30 @@ HEADER_SCHEMA = """# Schema
 
 
 def find_public_symbols(src_dir: pathlib.Path) -> list[dict]:
-    """Walk src/ for public symbols. Returns list of dicts with name, kind, path."""
+    """Walk src/ for public symbols. Returns list of dicts with name, kind, path.
+
+    Deterministic across platforms: files are iterated in sorted order
+    (filesystem walk order differs between Linux/macOS/Windows).
+    """
     symbols = []
-    for py_file in src_dir.rglob("*.py"):
+    # Sort so Windows (dev) and Linux (CI) produce byte-identical output.
+    # Use POSIX paths in the sort key + output so path separators match
+    # across platforms (backslash on Windows vs forward slash on Linux).
+    for py_file in sorted(src_dir.rglob("*.py"), key=lambda p: p.as_posix()):
         if py_file.name == "__init__.py":
             continue
         try:
             tree = ast.parse(py_file.read_text(encoding="utf-8"))
         except SyntaxError:
             continue
+        rel_posix = py_file.relative_to(src_dir.parent).as_posix()
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 if not node.name.startswith("_"):
                     symbols.append({
                         "name": node.name,
                         "kind": "class" if isinstance(node, ast.ClassDef) else "function",
-                        "path": str(py_file.relative_to(src_dir.parent)),
+                        "path": rel_posix,
                         "docstring": ast.get_docstring(node) or "",
                     })
     return symbols

@@ -8,7 +8,14 @@
 
 > A self-evolving multi-model AI team. Runs in [Claude Code](https://docs.anthropic.com/en/docs/claude-code) **or** with any API you bring.
 
-<!-- DEMO_PLACEHOLDER: drop a GIF of a live roundtable here. 1280×640 PNG/JPG is ideal. -->
+<p align="center">
+  <img src="examples/sessions/2026-04-18-self-host-vs-api/screenshots/02-gate.svg" width="800" alt="Live roundtable watcher showing a Judge GATE moment">
+</p>
+
+<p align="center"><em>
+  A real roundtable — the Judge awards <strong>marcus</strong> a GATE mid-debate for reframing the self-host decision around ownable fine-tuned weights.<br/>
+  See the full <a href="examples/sessions/2026-04-18-self-host-vs-api/">recorded session</a> (transcript, digest, four screenshots, briefing).
+</em></p>
 
 Ten agents with distinct personalities compete in structured roundtable discussions, earn sparks, buy skills, and evolve through therapist-led debrief sessions. Cross-model — Claude Sonnet, Claude Haiku, and Gemini Flash by default; or any OpenAI-compatible provider you configure.
 

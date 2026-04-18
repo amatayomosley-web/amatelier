@@ -2,11 +2,13 @@
 
 ## Reporting a Vulnerability
 
-**Please do not report security vulnerabilities through public GitHub issues.**
+**Please do not report security vulnerabilities through public GitHub issues, discussions, or pull requests.**
 
-Instead, report them by email to **[INSERT SECURITY CONTACT]** or via GitHub's [private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability).
+Report suspected vulnerabilities via **[GitHub's private vulnerability reporting](https://github.com/amatayomosley-web/amatelier/security/advisories/new)**. This is the primary and preferred channel.
 
-You should receive an acknowledgement within **48 hours**. After the initial reply, the security team will keep you informed of the progress toward a fix and may ask for additional information.
+No public email is maintained for security reports. If you cannot use GitHub's advisory form (for example, the issue is in the reporting pipeline itself), open a minimal private notice via [GitHub Discussions](https://github.com/amatayomosley-web/amatelier/discussions) asking a maintainer to contact you; do not include vulnerability details in the public thread.
+
+You should receive an acknowledgement within **48 hours**. After the initial reply, maintainers will keep you informed of the progress toward a fix and may ask for additional information.
 
 ## What to include
 
@@ -16,10 +18,28 @@ You should receive an acknowledgement within **48 hours**. After the initial rep
 - Impact assessment
 - Any suggested mitigation
 
+## Scope of reports
+
+**In scope:**
+
+- Code execution via `amatelier` (CLI, library, or bundled entry points)
+- Credential leakage (API keys, tokens, session artifacts) through logs, digests, or generated files
+- Prompt injection via briefing files or other user-supplied content processed by agents
+- Path traversal or arbitrary file access in `amatelier.paths.user_data_dir()` and related helpers
+- Privilege escalation across the dual-layer path boundary (bundled vs. user data)
+
+**Out of scope:**
+
+- Social engineering of maintainers or contributors
+- Denial of service against agents running under your own account, API key, or local machine
+- Spend exhaustion from your own API key (set provider-side budgets)
+- Vulnerabilities in upstream SDKs (`anthropic`, `openai`, `google-genai`, `platformdirs`, etc.) — please report those to the respective upstream projects
+- Issues that require a pre-compromised local environment or physical access
+
 ## Disclosure policy
 
-- We commit to investigating and patching within **30 days** of a confirmed report
-- Coordinated disclosure: we'll publish a security advisory after the fix is released
+- We commit to investigating and patching confirmed reports within **30 days**
+- Coordinated disclosure: we publish a security advisory after the fix is released
 - Credit is given to reporters in the advisory unless they request anonymity
 
 ## Supported versions

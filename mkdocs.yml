@@ -42,6 +42,7 @@ nav:
       - tutorials/first-run.md
   - Guides:
       - guides/install.md
+      - guides/configure-backend.md
       - guides/troubleshooting.md
   - Reference:
       - reference/cli.md

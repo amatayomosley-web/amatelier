@@ -2,48 +2,477 @@
 FILE: llm/SPEC.md
 ================================================================================
 
-# Amatelier — Specification
+# amatelier — Specification
 
-> Canonical machine-readable description. This file is hand-written and authoritative. `llm/API.md` and `llm/SCHEMA.md` are generated from source code; this file is not.
+> Canonical machine-readable description. This file is hand-written. llm/API.md is auto-generated from src/ introspection; llm/SCHEMA.md is auto-generated from config schemas; this file is not.
 
 ## Identity
 
-- **Name:** amatelier
-- **Display name:** Amatelier
-- **One-liner:** A self-evolving multi-model AI team skill for Claude Code
-- **Author:** Maximillian
-- **License:** MIT
-- **Standard:** Amatayo Standard v1.0
+```yaml
+name: amatelier
+display_name: Amatelier
+version: 0.2.0
+license: MIT
+author: Maximillian
+standard: Amatayo Standard v1.0
+python_required: ">=3.10"
+homepage: https://github.com/amatayomosley-web/amatelier
+pypi: https://pypi.org/project/amatelier/
+docs: https://amatayomosley-web.github.io/amatelier/
+llm_context: https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llms-full.txt
+entry_script: amatelier
+entry_module: amatelier.cli:main
+```
 
-## Repository
+## Purpose
 
-- **Source:** https://github.com/amatayomosley-web/amatelier
-- **Docs (human):** https://amatayomosley-web.github.io/amatelier/
-- **Docs (LLM):** https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llms-full.txt
+A self-evolving multi-model AI team. Ten persona agents debate topics in a SQLite-backed chat, earn sparks on a 0-3-10 scoring rubric, buy skills from a store, and evolve persona seeds through therapist-led debriefs. Cross-model by design — Claude Sonnet, Claude Haiku, and Gemini Flash by default, with full support for any OpenAI-compatible provider. Ships as a single pip-installable package that runs inside Claude Code or standalone against an API.
+
+## Modes
+
+```yaml
+- name: claude-code
+  detection: shutil.which("claude") is not None
+  prereqs: claude CLI binary on PATH
+  provider: subprocess call to claude CLI
+  implementation: amatelier.llm_backend.ClaudeCLIBackend
+  default_model_map: {sonnet: claude-sonnet-4-20250514, haiku: claude-haiku-4-5-20251001, opus: claude-opus-4-20250514}
+
+- name: anthropic-sdk
+  detection: bool(os.environ["ANTHROPIC_API_KEY"])
+  prereqs: ANTHROPIC_API_KEY env var, anthropic>=0.40.0 package
+  provider: direct Anthropic HTTP API
+  implementation: amatelier.llm_backend.AnthropicSDKBackend
+  default_model_map: {sonnet: claude-sonnet-4-20250514, haiku: claude-haiku-4-5-20251001, opus: claude-opus-4-20250514}
+
+- name: openai-compat
+  detection: bool(os.environ["OPENAI_API_KEY"]) or bool(os.environ["OPENROUTER_API_KEY"])
+  prereqs: OPENAI_API_KEY or OPENROUTER_API_KEY env var, openai>=1.0 package
+  provider: any OpenAI-compatible Chat Completions endpoint
+  implementation: amatelier.llm_backend.OpenAICompatBackend
+  default_base_url_openai: https://api.openai.com/v1
+  default_base_url_openrouter: https://openrouter.ai/api/v1
+  default_model_map_openai: {sonnet: gpt-4o, haiku: gpt-4o-mini, opus: gpt-4o}
+  default_model_map_openrouter: {sonnet: anthropic/claude-sonnet-4, haiku: anthropic/claude-haiku-4-5, opus: anthropic/claude-opus-4}
+```
+
+```yaml
+selection_order:
+  1: AMATELIER_MODE env var (explicit override)
+  2: config.json llm.mode (if not "auto")
+  3: auto-detect — claude-code > anthropic-sdk > openai-compat (first available wins)
+  4: raise BackendUnavailable with setup guidance
+```
+
+```yaml
+naomi_provider:
+  note: Naomi always runs via Gemini regardless of worker-mode selection
+  env_var: GEMINI_API_KEY
+  package: google-genai>=1.51.0
+  default_model: gemini-3-flash-preview
+  implementation: amatelier.engine.gemini_client
+  bypass_flag: --skip-naomi
+```
 
 ## Top-level components
 
-_Populate this section after the first implementation pass. Each component should be exhaustively listed with:_
+```yaml
+- name: amatelier.paths
+  path: src/amatelier/paths.py
+  purpose: Amatayo Standard dual-layer filesystem contract — bundled (read-only, in wheel) vs user_data (read-write, platformdirs)
+  public_api: [APP_NAME, bundled_assets_dir, bundled_docs_dir, bundled_agent_dir, bundled_store_catalog, bundled_config, user_data_dir, user_agent_dir, user_db_path, user_logs_dir, user_digest_dir, user_briefing_dir, user_store_ledger, user_novel_concepts, user_shared_skills_index, user_config_override, ensure_user_data]
+  depends_on: [platformdirs]
+  override_env: AMATELIER_WORKSPACE
+  bootstrap_sentinel: ".bootstrap-complete"
+  invariants:
+    - user_data_dir is writable; bundled_assets_dir is read-only post-install
+    - ensure_user_data() is idempotent and lazy (no writes at import time)
+    - Override via AMATELIER_WORKSPACE env var replaces platformdirs resolution
+
+- name: amatelier.llm_backend
+  path: src/amatelier/llm_backend.py
+  purpose: Three-backend abstraction with singleton resolver and role-based model mapping
+  public_api: [Completion, LLMBackend, BackendUnavailable, ClaudeCLIBackend, AnthropicSDKBackend, OpenAICompatBackend, get_backend, resolve_mode, describe_environment, call_claude]
+  depends_on: [amatelier.paths, anthropic, openai]
+  config_section: llm
+  role_tokens: [sonnet, haiku, opus]
+  back_compat: call_claude(system_prompt, prompt, agent_name, model) delegates to get_backend()
+
+- name: amatelier.cli
+  path: src/amatelier/cli.py
+  purpose: Shell entry point; subcommand dispatcher
+  public_api: [main]
+  subcommands:
+    - roundtable: dispatches to amatelier.engine.roundtable_runner via runpy
+    - watch: dispatches to amatelier.tools.watch_roundtable
+    - therapist: dispatches to amatelier.engine.therapist via runpy
+    - analytics: dispatches to amatelier.engine.analytics via runpy
+    - refresh-seeds: in-process — re-copies bundled persona seeds into user_data_dir
+    - docs: in-process — prints bundled docs to stdout
+    - config: in-process — diagnoses LLM backend + paths (supports --json)
+    - --version: prints amatelier.__version__
+  stdout_reconfigure: utf-8 with errors="replace" for Windows console safety
+
+- name: amatelier.engine.roundtable_runner
+  path: src/amatelier/engine/roundtable_runner.py
+  purpose: Primary orchestrator — opens RT, spawns worker processes, runs structured debate, closes, triggers scoring/distillation/therapist
+  public_api: [run_roundtable, build_digest, format_digest_summary]
+  depends_on: [amatelier.engine.db (via db_client.py subprocess), amatelier.engine.steward_dispatch, amatelier.engine.judge_scorer (subprocess), amatelier.engine.scorer (subprocess), amatelier.engine.distiller, amatelier.engine.analytics (subprocess), amatelier.engine.evolver, amatelier.engine.store, amatelier.engine.agent_memory, amatelier.engine.therapist (subprocess)]
+  cli_flags: [--topic REQUIRED, --briefing REQUIRED, --workers CSV, --max-rounds INT, --skip-naomi, --speaker-timeout INT, --budget INT (default 3), --skip-post, --summary]
+  default_workers: [elena, marcus, clare, simon]
+  default_max_rounds: 3
+  worker_spawn_strategy: subprocess.Popen with inherited env; each agent connects to SQLite and polls for turns
+
+- name: amatelier.engine.claude_agent
+  path: src/amatelier/engine/claude_agent.py
+  purpose: Worker subprocess for Claude-backed agents; reads DB, assembles context, calls LLM backend, posts response
+  cli_flags: [--agent NAME, --model sonnet|haiku|opus]
+  consumes: agents/<name>/CLAUDE.md, agents/<name>/IDENTITY.md, agents/<name>/MEMORY.md, agents/<name>/MEMORY.json, agents/<name>/behaviors.json
+
+- name: amatelier.engine.gemini_client
+  path: src/amatelier/engine/gemini_client.py
+  purpose: Thin wrapper over google-genai SDK for Naomi
+  env_required: GEMINI_API_KEY
+
+- name: amatelier.engine.gemini_agent
+  path: src/amatelier/engine/gemini_agent.py
+  purpose: Naomi worker subprocess; same chat-loop contract as claude_agent but uses gemini_client
+  cli_flags: [--agent naomi]
+
+- name: amatelier.engine.db
+  path: src/amatelier/engine/db.py
+  purpose: SQLite access layer for roundtable chat (WAL mode, busy_timeout, auto-migration)
+  public_api: [get_db, open_roundtable, close_roundtable, speak, listen, get_transcript, get_cursor, set_cursor]
+  db_path: user_data_dir()/roundtable-server/roundtable.db
+  migrations_dir: src/amatelier/engine/migrations/
+  invocation: via db_client.py subprocess wrapper from runner
+
+- name: amatelier.engine.scorer
+  path: src/amatelier/engine/scorer.py
+  purpose: Score aggregation, fee deduction, gate bonuses, Byzantine variance detection, leaderboard
+  public_api: [score, deduct_fee, gate, leaderboard, compute_variance_flags]
+  cli_subcommands: [score, deduct-fee, gate, leaderboard]
+
+- name: amatelier.engine.judge_scorer
+  path: src/amatelier/engine/judge_scorer.py
+  purpose: Runs Judge LLM on full transcript to emit per-agent per-axis scores
+  public_api: [judge_score]
+  axes: [novelty, accuracy, impact, challenge]
+  scale: [0, 1, 2, 3, 10]
+  effort: max
+
+- name: amatelier.engine.therapist
+  path: src/amatelier/engine/therapist.py
+  purpose: Post-RT debrief — 2-3 turn Opus-led interview per agent; emits behaviors/memory/session updates
+  public_api: [run_session, run_therapist]
+  cli_flags: [--digest REQUIRED, --agents CSV, --turns INT (default 2)]
+  writes: agents/<name>/MEMORY.md, MEMORY.json, behaviors.json, sessions/<rt_id>.md; agents/therapist/case_notes/<name>.json
+  frameworks: [GROW+AAR, SBI, OARS]
+
+- name: amatelier.engine.distiller
+  path: src/amatelier/engine/distiller.py
+  purpose: Skill extraction from transcripts; index and shared-skills promotion
+  public_api: [create_skill_entry, save_skill_to_agent, promote_to_shared, search_shared_skills, load_index, save_index, list_agent_skills]
+  types: [CAPTURE, FIX, DERIVE]
+  output: user_data_dir()/shared-skills/entries/*.md, shared-skills/index.json
+
+- name: amatelier.engine.evolver
+  path: src/amatelier/engine/evolver.py
+  purpose: Apply therapist behavior deltas; sync skills_owned from ledger; decay unconfirmed behaviors
+  public_api: [apply_behavior_delta, sync_skills_owned, decay_behaviors, prune_faded_behaviors]
+  decay_rate: 0.05
+  fade_threshold: 0.5
+
+- name: amatelier.engine.steward_dispatch
+  path: src/amatelier/engine/steward_dispatch.py
+  purpose: Parse [[request:]] tags; dispatch ephemeral file-access subagent; format and inject result
+  public_api: [parse_requests, strip_requests, format_result, StewardBudget, StewardTask, StewardLog, load_registered_files]
+  execution_paths: [deterministic (JSON/grep, no LLM), subagent (claude -p with Read/Grep/Glob)]
+  default_budget_per_agent_per_rt: 3
+  research_window_budget: 3 free pre-debate requests
+
+- name: amatelier.engine.store
+  path: src/amatelier/engine/store.py
+  purpose: Spark economy — purchases, delivery, boost application, consumable lifecycle, bulletin-board
+  public_api: [attempt_purchase, apply_boosts_for_rt, consume_boosts_after_rt, deliver_skill, age_bulletin_requests, list_requests]
+  catalog: src/amatelier/store/catalog.json
+  skill_templates: src/amatelier/store/skill_templates.py
+  ledger: user_data_dir()/store/ledger.json (pending purchases and consumable state)
+  balance_source: spark_ledger table in SQLite (SUM by agent)
+
+- name: amatelier.engine.agent_memory
+  path: src/amatelier/engine/agent_memory.py
+  purpose: MEMORY.json structured access — goals, session summaries, episode aging, session bridges
+  public_api: [render_memory, age_goals, generate_session_bridge, append_session_summary, add_goal, add_episode]
+```
+
+## The 10 agents
 
 ```yaml
-- name: <component>
-  path: src/amatelier/<path>
-  purpose: <one line>
-  public_api: [list of exported symbols]
-  depends_on: [other components]
+registry:
+  - name: elena
+    tier: sonnet
+    role: worker — synthesis and architecture
+    scoring: yes
+    sparks: yes
+    seed: src/amatelier/agents/elena/
+    persona_files: [CLAUDE.md, IDENTITY.md]
+    runtime_state_dir: user_data_dir()/agents/elena/
+  - name: marcus
+    tier: sonnet
+    role: worker — challenge and exploit detection
+    scoring: yes
+    sparks: yes
+    seed: src/amatelier/agents/marcus/
+  - name: clare
+    tier: haiku
+    role: worker — concise structural analysis
+    scoring: yes
+    sparks: yes
+    seed: src/amatelier/agents/clare/
+  - name: simon
+    tier: haiku
+    role: worker — triage and fix sequencing
+    scoring: yes
+    sparks: yes
+    seed: src/amatelier/agents/simon/
+  - name: naomi
+    tier: gemini-flash
+    role: worker — cross-model blind-spot catcher
+    scoring: yes
+    sparks: yes
+    seed: src/amatelier/agents/naomi/
+    provider: gemini (google-genai)
+    bypass_flag: --skip-naomi
+  - name: judge
+    tier: sonnet
+    role: live moderator — in-chat referee; scores others post-RT
+    scoring: no (is the scorer)
+    sparks: no
+    seed: src/amatelier/agents/judge/
+  - name: therapist
+    tier: haiku
+    role: post-RT interviewer; writes behaviors/memory/sessions
+    scoring: no
+    sparks: no
+    seed: src/amatelier/agents/therapist/
+  - name: opus-admin
+    tier: opus
+    role: strategy, directives, final sign-off; user-facing
+    scoring: no
+    sparks: no
+    seed: src/amatelier/agents/opus-admin/
+  - name: opus-therapist
+    tier: opus
+    role: meta-therapist, persona coach, scoring supervision
+    scoring: no
+    sparks: no
+    seed: src/amatelier/agents/opus-therapist/
+  - name: haiku-assistant
+    tier: haiku
+    role: deprecated in 0.2.0 — mechanics replaced by roundtable_runner.py
+    scoring: no
+    sparks: no
+    seed: src/amatelier/agents/haiku-assistant/
 ```
 
 ## Invariants
 
-1. The package is pip-installable (Python) or npm-installable (Node); never clone-required
-2. `llm/` directory is flat — no subdirectories
-3. Generated files (`llm/API.md`, `llm/SCHEMA.md`, `llms.txt`, `llms-full.txt`, `.cursor/rules/*`, `.github/copilot-instructions.md`) are rebuilt by CI from canonical sources
-4. Public symbols in `src/amatelier/` must be documented in this file
-5. CLI flags must appear in both `docs/reference/cli.md` (human) and `llm/API.md` (machine, auto-generated)
+```yaml
+- id: 1
+  statement: llm/ directory is flat (no subdirectories)
+  rationale: scripts/regen_full.py globs llm/*.md; subdirectories break the one-shot concatenation
+
+- id: 2
+  statement: user_data_dir() holds all mutable state; bundled_assets_dir() is read-only post-install
+  rationale: pip upgrades must never clobber evolved agent state
+
+- id: 3
+  statement: ensure_user_data() is idempotent and gated by .bootstrap-complete sentinel
+  rationale: import-time call in __init__.py must be cheap on repeat invocations
+
+- id: 4
+  statement: Engine reads persona seeds from user_data_dir(); refresh-seeds re-copies from bundled
+  rationale: User edits to CLAUDE.md/IDENTITY.md persist across pip upgrades unless --force is passed
+
+- id: 5
+  statement: Worker agents run as subprocesses and communicate only via SQLite chat
+  rationale: No in-process imports from runner to worker; crash isolation and language-agnostic workers
+
+- id: 6
+  statement: llm_backend.get_backend() is cached via functools.lru_cache(maxsize=1)
+  rationale: Single instantiation per process; mode flip-flop requires process restart
+
+- id: 7
+  statement: Scoring axes are novelty, accuracy, impact, challenge; scale is 0/1/2/3/10 (no 4-9)
+  rationale: 10 is a discontinuity ("grand insight"), not the top of a gradient
+
+- id: 8
+  statement: Sparks are derived from spark_ledger table — current balance = SUM(amount) WHERE agent_name = X
+  rationale: Append-only ledger is source of truth; metrics.json is cached view
+
+- id: 9
+  statement: Briefing path is resolved first against user_data_dir()/roundtable-server/, then as-is
+  rationale: Briefings can live in the workspace or be passed by absolute path
+
+- id: 10
+  statement: roundtable_runner.WORKSPACE_ROOT resolves from AMATELIER_WORKSPACE env var, else SUITE_ROOT.parent.parent.parent
+  rationale: Subprocess cwd stability across pip-install vs clone layouts
+
+- id: 11
+  statement: Steward requests require entries in briefing ## Steward-Registered Files section
+  rationale: File tool access is scoped; undeclared paths are rejected
+
+- id: 12
+  statement: Entry fees are deducted per-RT at open; floor is 0 gross (penalties never push below 0)
+  rationale: Calibration; operating fee still applies
+
+- id: 13
+  statement: Naomi always uses google-genai regardless of worker-mode resolution
+  rationale: Cross-model blind-spot catching is Naomi's reason to exist
+
+- id: 14
+  statement: scripts/regen_full.py orders llm/*.md as SPEC > API > SCHEMA > WORKFLOWS > EXAMPLES > alphabetical
+  rationale: Deterministic llms-full.txt layout for downstream consumers
+
+- id: 15
+  statement: Distillation runs in --skip-post mode; therapist and cleanup are skipped
+  rationale: Faster iteration during development; distillation is cheap and always informative
+```
+
+## Spark economy (summary, full rules in docs/reference/protocols/spark-economy.md)
+
+```yaml
+entry_fees:
+  haiku: 5
+  flash: 5
+  sonnet: 8
+  opus: 15
+  note: flat per-RT, deducted at open
+penalties:
+  redundancy: -3
+  hallucination: -5
+  off_directive: -5
+  floor: 0 gross (cannot go negative from penalties alone)
+bonuses:
+  gate_bonus: 3 sparks per Judge GATE signal (max 3 per RT)
+  rt_outcome_bonus: 5 sparks when extracted proposal is implemented
+relegation:
+  trigger: 3 consecutive net-negative RTs (gross - entry_fee < 0)
+  options: [bench (passive 2 sparks/RT), deletion]
+  decision_owner: agent
+ventures:
+  scout:    {stake: 5,  multiplier: 3.0}
+  venture:  {stake: 12, multiplier: 3.5}
+  moonshot: {stake: 30, multiplier: 4.0}
+```
+
+## Scoring
+
+```yaml
+axes: [novelty, accuracy, impact, challenge]
+scale: [0, 1, 2, 3, 10]
+calibration:
+  - most_contributions_score: 1
+  - average_rt_total: 4-6
+  - score_2_means: clearly above-average
+  - score_3_means: exceptional and rare
+  - score_10_means: grand insight — discontinuity, judge must quote the message and describe before/after shift
+scorer: judge-sonnet (effort=max)
+axis_name_invariant: field is "impact" (not net_impact or influence)
+persistence: scores table in roundtable.db (migration 002)
+```
+
+## File lifecycle
+
+```yaml
+bundled_read_only:
+  - src/amatelier/config.json
+  - src/amatelier/agents/<name>/CLAUDE.md
+  - src/amatelier/agents/<name>/IDENTITY.md
+  - src/amatelier/store/catalog.json
+  - src/amatelier/store/skill_templates.py
+  - docs/ (force-included into wheel as amatelier/docs/)
+
+user_data_writable:
+  root: platformdirs user_data_dir("amatelier") or $AMATELIER_WORKSPACE
+  - roundtable-server/roundtable.db (SQLite, WAL)
+  - roundtable-server/briefing-*.md (user-authored)
+  - roundtable-server/digest-<rt_id>.json (runner output)
+  - roundtable-server/latest-result.md (completion notification)
+  - roundtable-server/logs/gemini_errors.log (Naomi runtime errors)
+  - agents/<name>/CLAUDE.md (seeded from bundled; user- and therapist-editable)
+  - agents/<name>/IDENTITY.md (seeded from bundled; therapist-editable)
+  - agents/<name>/MEMORY.md (evolving, written by therapist)
+  - agents/<name>/MEMORY.json (structured — goals, skills_owned, sessions)
+  - agents/<name>/behaviors.json (therapist-proposed deltas)
+  - agents/<name>/metrics.json (cached sparks, rank, trait state)
+  - agents/<name>/sessions/<rt_id>.md (per-RT debrief)
+  - agents/<name>/skills/<skill_id>.md (purchased skill files)
+  - agents/therapist/case_notes/<name>.json (therapist's clinical notes)
+  - store/ledger.json (pending/consumed purchase state)
+  - shared-skills/index.json (curated skill index)
+  - shared-skills/entries/*.md (promoted skills)
+  - novel_concepts.json (DERIVE skills with taxonomy)
+  - benchmarks/leaderboard.json (post-RT snapshot)
+  - .bootstrap-complete (sentinel)
+  - config.json (optional user override of bundled config)
+
+auto_generated:
+  - llm/API.md: by scripts/regen_llm.py (from src/ introspection)
+  - llm/SCHEMA.md: by scripts/regen_llm.py (stub; generator enhancement pending)
+  - llms.txt: by scripts/regen_full.py (concatenated llm/*.md index)
+  - llms-full.txt: by scripts/regen_full.py (concatenated llm/*.md full body)
+  - .cursor/rules/*: by scripts/regen_tool_rules.py
+  - .github/copilot-instructions.md: by scripts/regen_tool_rules.py
+```
 
 ## Glossary
 
-_Define project-specific terms here so LLMs consume them deterministically._
+```yaml
+spark: unit of the competitive economy; earned via scoring/gate/outcome, spent on store items
+gate: Judge-issued "GATE: agent — reason" signal in chat; awards 3 bonus sparks to named agent (max 3 per RT)
+grand_insight: score of 10 on a single axis; requires quotable discontinuity message
+digest: structured JSON summary of a completed RT (contributions, final positions, budget usage, convergence reason)
+briefing: user-authored markdown file describing topic, context, constraints, and optional ## Steward-Registered Files
+roundtable: single debate session; one row in roundtables table; append-only messages, scored once post-close
+steward: ephemeral subagent that fulfills [[request:]] tags; no persona, no persistence, no spark balance
+distillation: post-RT extraction of 10-15 skill candidates from transcript via separate Sonnet call
+CAPTURE: skill type — observed reusable technique
+FIX: skill type — anti-pattern correction
+DERIVE: skill type — synthesized concept from multiple contributions; requires agent_dynamic field
+episode: memory entry; goals and session summaries age each RT
+session: per-RT 2-3 turn therapist interview for one agent; output writes to sessions/<rt_id>.md
+venture: spark-staking contract extracted from <VENTURE>/<MOONSHOT>/<SCOUT> tags in transcript
+research_window: pre-debate Round 0 — 3 free Steward requests per agent, budget-exempt
+floor_phase: optional extra turns per round, costs 1 budget per contribution (default 3 per RT)
+speak_phase: mandatory first-post phase per round; all workers speak once
+rebuttal_phase: mandatory second-post phase per round; reverse order
+judge_gate: after rebuttals — Judge emits CONVERGED or CONTINUE; CONVERGED ends round loop
+skip_post: runner flag — stops after scoring/distillation, skips therapist + cleanup (for iteration)
+workspace: AMATELIER_WORKSPACE env var — overrides platformdirs user_data_dir resolution
+```
+
+## Canonical references
+
+```yaml
+spark_economy: docs/reference/protocols/spark-economy.md
+competition_rubric: docs/reference/protocols/competition.md
+distillation_flow: docs/reference/protocols/distillation.md
+debrief_framework: docs/reference/protocols/debrief.md
+research_protocol: docs/reference/protocols/research.md
+roundtable_protocol: docs/reference/protocols/roundtable.md
+learning_protocol: docs/reference/protocols/learning.md
+memory_tiers: docs/reference/protocols/memory-tiers.md
+verification: docs/reference/protocols/verification.md
+sparc_phases: docs/reference/protocols/sparc-phases.md
+gemini_bridge: docs/reference/protocols/gemini-bridge.md
+architecture_essay: docs/explanation/architecture.md
+steward_design: docs/explanation/steward-design.md
+cli_reference: docs/reference/cli.md
+config_reference: docs/reference/config.md
+breaking_changes_0_2_0: CHANGELOG.md
+```
 
 ================================================================================
 FILE: llm/API.md
@@ -61,305 +490,8 @@ FILE: llm/API.md
 ```yaml
 name: main
 kind: function
-path: src\amatelier\cli.py
+path: src/amatelier/cli.py
 description: ""
-```
-
-### `BackendUnavailable`
-
-```yaml
-name: BackendUnavailable
-kind: class
-path: src\amatelier\llm_backend.py
-description: "Raised when no backend can satisfy the current environment."
-```
-
-### `Completion`
-
-```yaml
-name: Completion
-kind: class
-path: src\amatelier\llm_backend.py
-description: ""
-```
-
-### `LLMBackend`
-
-```yaml
-name: LLMBackend
-kind: class
-path: src\amatelier\llm_backend.py
-description: ""
-```
-
-### `ClaudeCLIBackend`
-
-```yaml
-name: ClaudeCLIBackend
-kind: class
-path: src\amatelier\llm_backend.py
-description: ""
-```
-
-### `AnthropicSDKBackend`
-
-```yaml
-name: AnthropicSDKBackend
-kind: class
-path: src\amatelier\llm_backend.py
-description: ""
-```
-
-### `OpenAICompatBackend`
-
-```yaml
-name: OpenAICompatBackend
-kind: class
-path: src\amatelier\llm_backend.py
-description: ""
-```
-
-### `describe_environment`
-
-```yaml
-name: describe_environment
-kind: function
-path: src\amatelier\llm_backend.py
-description: "Diagnostic snapshot — used by ``amatelier config``."
-```
-
-### `resolve_mode`
-
-```yaml
-name: resolve_mode
-kind: function
-path: src\amatelier\llm_backend.py
-description: "Resolve the mode to use."
-```
-
-### `get_backend`
-
-```yaml
-name: get_backend
-kind: function
-path: src\amatelier\llm_backend.py
-description: "Return a singleton backend instance configured for the current env."
-```
-
-### `call_claude`
-
-```yaml
-name: call_claude
-kind: function
-path: src\amatelier\llm_backend.py
-description: "Backward-compatible shim matching the original claude_agent.call_claude API."
-```
-
-### `complete`
-
-```yaml
-name: complete
-kind: function
-path: src\amatelier\llm_backend.py
-description: ""
-```
-
-### `available`
-
-```yaml
-name: available
-kind: function
-path: src\amatelier\llm_backend.py
-description: ""
-```
-
-### `complete`
-
-```yaml
-name: complete
-kind: function
-path: src\amatelier\llm_backend.py
-description: ""
-```
-
-### `available`
-
-```yaml
-name: available
-kind: function
-path: src\amatelier\llm_backend.py
-description: ""
-```
-
-### `complete`
-
-```yaml
-name: complete
-kind: function
-path: src\amatelier\llm_backend.py
-description: ""
-```
-
-### `available`
-
-```yaml
-name: available
-kind: function
-path: src\amatelier\llm_backend.py
-description: ""
-```
-
-### `complete`
-
-```yaml
-name: complete
-kind: function
-path: src\amatelier\llm_backend.py
-description: ""
-```
-
-### `bundled_assets_dir`
-
-```yaml
-name: bundled_assets_dir
-kind: function
-path: src\amatelier\paths.py
-description: "The read-only bundled-assets root. Inside the installed package."
-```
-
-### `bundled_docs_dir`
-
-```yaml
-name: bundled_docs_dir
-kind: function
-path: src\amatelier\paths.py
-description: "The bundled human docs (Diátaxis tree) shipped inside the wheel."
-```
-
-### `bundled_agent_dir`
-
-```yaml
-name: bundled_agent_dir
-kind: function
-path: src\amatelier\paths.py
-description: "Seed persona directory for an agent (ships in wheel, read-only)."
-```
-
-### `bundled_store_catalog`
-
-```yaml
-name: bundled_store_catalog
-kind: function
-path: src\amatelier\paths.py
-description: "Default skill template catalog."
-```
-
-### `bundled_config`
-
-```yaml
-name: bundled_config
-kind: function
-path: src\amatelier\paths.py
-description: "Default config.json."
-```
-
-### `user_data_dir`
-
-```yaml
-name: user_data_dir
-kind: function
-path: src\amatelier\paths.py
-description: "The user-writable root for runtime state."
-```
-
-### `user_agent_dir`
-
-```yaml
-name: user_agent_dir
-kind: function
-path: src\amatelier\paths.py
-description: "Per-agent mutable state (MEMORY, metrics, behaviors, sessions, skills)."
-```
-
-### `user_db_path`
-
-```yaml
-name: user_db_path
-kind: function
-path: src\amatelier\paths.py
-description: "SQLite database for the roundtable chat."
-```
-
-### `user_logs_dir`
-
-```yaml
-name: user_logs_dir
-kind: function
-path: src\amatelier\paths.py
-description: "Runtime logs (gemini_errors, runner logs, etc.)."
-```
-
-### `user_digest_dir`
-
-```yaml
-name: user_digest_dir
-kind: function
-path: src\amatelier\paths.py
-description: "Where ``digest-<rt_id>.json`` and related transcripts land."
-```
-
-### `user_briefing_dir`
-
-```yaml
-name: user_briefing_dir
-kind: function
-path: src\amatelier\paths.py
-description: "Where user-authored briefing-*.md files are expected."
-```
-
-### `user_store_ledger`
-
-```yaml
-name: user_store_ledger
-kind: function
-path: src\amatelier\paths.py
-description: "Spark economy ledger (evolves as agents earn and spend)."
-```
-
-### `user_novel_concepts`
-
-```yaml
-name: user_novel_concepts
-kind: function
-path: src\amatelier\paths.py
-description: "DERIVE skill concepts accumulated across roundtables."
-```
-
-### `user_shared_skills_index`
-
-```yaml
-name: user_shared_skills_index
-kind: function
-path: src\amatelier\paths.py
-description: "Curated shared skills from Admin distillation."
-```
-
-### `user_config_override`
-
-```yaml
-name: user_config_override
-kind: function
-path: src\amatelier\paths.py
-description: "Optional user-level override for config.json."
-```
-
-### `ensure_user_data`
-
-```yaml
-name: ensure_user_data
-kind: function
-path: src\amatelier\paths.py
-description: "Create the user-data tree on first use."
 ```
 
 ### `load_memory`
@@ -367,7 +499,7 @@ description: "Create the user-data tree on first use."
 ```yaml
 name: load_memory
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Load structured memory from MEMORY.json. Falls back to empty structure."
 ```
 
@@ -376,7 +508,7 @@ description: "Load structured memory from MEMORY.json. Falls back to empty struc
 ```yaml
 name: save_memory
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Persist structured memory."
 ```
 
@@ -385,7 +517,7 @@ description: "Persist structured memory."
 ```yaml
 name: render_memory
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Render structured memory as text for the agent's prompt."
 ```
 
@@ -394,7 +526,7 @@ description: "Render structured memory as text for the agent's prompt."
 ```yaml
 name: generate_session_bridge
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Generate a 'last time you...' bridge from the most recent session transcript."
 ```
 
@@ -403,7 +535,7 @@ description: "Generate a 'last time you...' bridge from the most recent session 
 ```yaml
 name: add_episode
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Add a first-person episodic memory."
 ```
 
@@ -412,7 +544,7 @@ description: "Add a first-person episodic memory."
 ```yaml
 name: extract_episodes_from_therapist
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Extract episodic memories from a therapist session."
 ```
 
@@ -421,7 +553,7 @@ description: "Extract episodic memories from a therapist session."
 ```yaml
 name: add_goal
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Add an active goal with a timeline."
 ```
 
@@ -430,7 +562,7 @@ description: "Add an active goal with a timeline."
 ```yaml
 name: update_goal_progress
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Update progress on a goal by fuzzy matching the goal text."
 ```
 
@@ -439,7 +571,7 @@ description: "Update progress on a goal by fuzzy matching the goal text."
 ```yaml
 name: age_goals
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Increment rts_elapsed on all active goals. Called after each RT."
 ```
 
@@ -448,7 +580,7 @@ description: "Increment rts_elapsed on all active goals. Called after each RT."
 ```yaml
 name: add_lesson
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Add a permanent curated lesson."
 ```
 
@@ -457,7 +589,7 @@ description: "Add a permanent curated lesson."
 ```yaml
 name: update_belief
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Add or update a belief. If a similar belief exists, update it."
 ```
 
@@ -466,7 +598,7 @@ description: "Add or update a belief. If a similar belief exists, update it."
 ```yaml
 name: add_session_summary
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Add a rolling session summary (keeps last MAX_RECENT_SESSIONS)."
 ```
 
@@ -475,7 +607,7 @@ description: "Add a rolling session summary (keeps last MAX_RECENT_SESSIONS)."
 ```yaml
 name: write_diary_entry
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Agent writes a personal diary entry — their own private reflection."
 ```
 
@@ -484,7 +616,7 @@ description: "Agent writes a personal diary entry — their own private reflecti
 ```yaml
 name: read_diary
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Read diary entries, optionally filtered by topic."
 ```
 
@@ -493,7 +625,7 @@ description: "Read diary entries, optionally filtered by topic."
 ```yaml
 name: diary_stats
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Get diary statistics for the therapist's case notes."
 ```
 
@@ -502,7 +634,7 @@ description: "Get diary statistics for the therapist's case notes."
 ```yaml
 name: migrate_from_memory_md
 kind: function
-path: src\amatelier\engine\agent_memory.py
+path: src/amatelier/engine/agent_memory.py
 description: "Migrate existing MEMORY.md content into the structured memory system."
 ```
 
@@ -511,7 +643,7 @@ description: "Migrate existing MEMORY.md content into the structured memory syst
 ```yaml
 name: load_all_digests
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Load all digest files, sorted by timestamp."
 ```
 
@@ -520,7 +652,7 @@ description: "Load all digest files, sorted by timestamp."
 ```yaml
 name: load_therapist_sessions
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Load all therapist session transcripts for an agent."
 ```
 
@@ -529,7 +661,7 @@ description: "Load all therapist session transcripts for an agent."
 ```yaml
 name: load_workers
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Get worker names from config."
 ```
 
@@ -538,7 +670,7 @@ description: "Get worker names from config."
 ```yaml
 name: dimension_trends
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Compute per-dimension moving averages and trends."
 ```
 
@@ -547,7 +679,7 @@ description: "Compute per-dimension moving averages and trends."
 ```yaml
 name: total_score_trend
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Compute total score moving average and trend."
 ```
 
@@ -556,7 +688,7 @@ description: "Compute total score moving average and trend."
 ```yaml
 name: compute_streaks
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Detect scoring streaks and personal records."
 ```
 
@@ -565,7 +697,7 @@ description: "Detect scoring streaks and personal records."
 ```yaml
 name: detect_phase
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Detect which development phase an agent is in."
 ```
 
@@ -574,7 +706,7 @@ description: "Detect which development phase an agent is in."
 ```yaml
 name: identify_strengths_weaknesses
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Identify strongest and weakest dimensions over recent window."
 ```
 
@@ -583,7 +715,7 @@ description: "Identify strongest and weakest dimensions over recent window."
 ```yaml
 name: budget_analytics
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Analyze budget usage patterns across roundtables."
 ```
 
@@ -592,7 +724,7 @@ description: "Analyze budget usage patterns across roundtables."
 ```yaml
 name: judge_redirect_analytics
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Count Judge redirects per roundtable."
 ```
 
@@ -601,7 +733,7 @@ description: "Count Judge redirects per roundtable."
 ```yaml
 name: therapist_analytics
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Aggregate therapist session outcomes."
 ```
 
@@ -610,7 +742,7 @@ description: "Aggregate therapist session outcomes."
 ```yaml
 name: economy_analytics
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Spark economy analytics: earnings, spending, ROI."
 ```
 
@@ -619,7 +751,7 @@ description: "Spark economy analytics: earnings, spending, ROI."
 ```yaml
 name: save_leaderboard_snapshot
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Save current leaderboard as a timestamped snapshot."
 ```
 
@@ -628,7 +760,7 @@ description: "Save current leaderboard as a timestamped snapshot."
 ```yaml
 name: rank_trajectory
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Get rank trajectory from leaderboard history."
 ```
 
@@ -637,7 +769,7 @@ description: "Get rank trajectory from leaderboard history."
 ```yaml
 name: engagement_matrix
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Build a matrix of who references whom across roundtables."
 ```
 
@@ -646,7 +778,7 @@ description: "Build a matrix of who references whom across roundtables."
 ```yaml
 name: agent_report
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Generate a comprehensive growth report for one agent."
 ```
 
@@ -655,7 +787,7 @@ description: "Generate a comprehensive growth report for one agent."
 ```yaml
 name: format_report_text
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Format a growth report as readable text for the Therapist or user."
 ```
 
@@ -664,7 +796,7 @@ description: "Format a growth report as readable text for the Therapist or user.
 ```yaml
 name: economy_overview
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Generate a system-wide Spark Economy overview."
 ```
 
@@ -673,7 +805,7 @@ description: "Generate a system-wide Spark Economy overview."
 ```yaml
 name: update_agent_analytics
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Compute and persist analytics fields into metrics.json."
 ```
 
@@ -682,7 +814,7 @@ description: "Compute and persist analytics fields into metrics.json."
 ```yaml
 name: update_all_analytics
 kind: function
-path: src\amatelier\engine\analytics.py
+path: src/amatelier/engine/analytics.py
 description: "Update analytics for all workers."
 ```
 
@@ -691,7 +823,7 @@ description: "Update analytics for all workers."
 ```yaml
 name: distill_one
 kind: function
-path: src\amatelier\engine\backfill_distill.py
+path: src/amatelier/engine/backfill_distill.py
 description: "Run the Sonnet distiller on a single digest. Returns result dict."
 ```
 
@@ -700,7 +832,7 @@ description: "Run the Sonnet distiller on a single digest. Returns result dict."
 ```yaml
 name: main
 kind: function
-path: src\amatelier\engine\backfill_distill.py
+path: src/amatelier/engine/backfill_distill.py
 description: ""
 ```
 
@@ -709,7 +841,7 @@ description: ""
 ```yaml
 name: main
 kind: function
-path: src\amatelier\engine\classify_concepts.py
+path: src/amatelier/engine/classify_concepts.py
 description: ""
 ```
 
@@ -718,7 +850,7 @@ description: ""
 ```yaml
 name: load_agent_context
 kind: function
-path: src\amatelier\engine\claude_agent.py
+path: src/amatelier/engine/claude_agent.py
 description: "Load the agent's full context: CLAUDE.md + MEMORY.md + metrics + skills."
 ```
 
@@ -727,7 +859,7 @@ description: "Load the agent's full context: CLAUDE.md + MEMORY.md + metrics + s
 ```yaml
 name: call_claude
 kind: function
-path: src\amatelier\engine\claude_agent.py
+path: src/amatelier/engine/claude_agent.py
 description: "Call Claude."
 ```
 
@@ -736,7 +868,7 @@ description: "Call Claude."
 ```yaml
 name: run_agent
 kind: function
-path: src\amatelier\engine\claude_agent.py
+path: src/amatelier/engine/claude_agent.py
 description: "Main loop: wait for call → respond → repeat until roundtable closes."
 ```
 
@@ -745,7 +877,7 @@ description: "Main loop: wait for call → respond → repeat until roundtable c
 ```yaml
 name: get_db
 kind: function
-path: src\amatelier\engine\db.py
+path: src/amatelier/engine/db.py
 description: ""
 ```
 
@@ -754,7 +886,7 @@ description: ""
 ```yaml
 name: get_active_roundtable
 kind: function
-path: src\amatelier\engine\db.py
+path: src/amatelier/engine/db.py
 description: ""
 ```
 
@@ -763,7 +895,7 @@ description: ""
 ```yaml
 name: listen
 kind: function
-path: src\amatelier\engine\db.py
+path: src/amatelier/engine/db.py
 description: "Read all messages since last read. Uses context manager for safe cleanup."
 ```
 
@@ -772,7 +904,7 @@ description: "Read all messages since last read. Uses context manager for safe c
 ```yaml
 name: speak
 kind: function
-path: src\amatelier\engine\db.py
+path: src/amatelier/engine/db.py
 description: "Post a message to the roundtable. Uses context manager for safe cleanup."
 ```
 
@@ -781,7 +913,7 @@ description: "Post a message to the roundtable. Uses context manager for safe cl
 ```yaml
 name: is_roundtable_open
 kind: function
-path: src\amatelier\engine\db.py
+path: src/amatelier/engine/db.py
 description: ""
 ```
 
@@ -790,7 +922,7 @@ description: ""
 ```yaml
 name: init_read_cursor
 kind: function
-path: src\amatelier\engine\db.py
+path: src/amatelier/engine/db.py
 description: "Initialize a read cursor for an agent joining a roundtable."
 ```
 
@@ -799,7 +931,7 @@ description: "Initialize a read cursor for an agent joining a roundtable."
 ```yaml
 name: recall
 kind: function
-path: src\amatelier\engine\db.py
+path: src/amatelier/engine/db.py
 description: "Retrieve specific transcript segments from the current roundtable."
 ```
 
@@ -808,7 +940,7 @@ description: "Retrieve specific transcript segments from the current roundtable.
 ```yaml
 name: build_transcript_index
 kind: function
-path: src\amatelier\engine\db.py
+path: src/amatelier/engine/db.py
 description: "Build a compact one-line-per-contribution index of the transcript."
 ```
 
@@ -817,7 +949,7 @@ description: "Build a compact one-line-per-contribution index of the transcript.
 ```yaml
 name: load_index
 kind: function
-path: src\amatelier\engine\distiller.py
+path: src/amatelier/engine/distiller.py
 description: ""
 ```
 
@@ -826,7 +958,7 @@ description: ""
 ```yaml
 name: save_index
 kind: function
-path: src\amatelier\engine\distiller.py
+path: src/amatelier/engine/distiller.py
 description: ""
 ```
 
@@ -835,7 +967,7 @@ description: ""
 ```yaml
 name: create_skill_entry
 kind: function
-path: src\amatelier\engine\distiller.py
+path: src/amatelier/engine/distiller.py
 description: "Create a structured skill entry. Returns None if duplicate or fails JUDGE gate."
 ```
 
@@ -844,7 +976,7 @@ description: "Create a structured skill entry. Returns None if duplicate or fail
 ```yaml
 name: save_skill_to_agent
 kind: function
-path: src\amatelier\engine\distiller.py
+path: src/amatelier/engine/distiller.py
 description: "Save a skill to an agent's local skills directory."
 ```
 
@@ -853,7 +985,7 @@ description: "Save a skill to an agent's local skills directory."
 ```yaml
 name: promote_to_shared
 kind: function
-path: src\amatelier\engine\distiller.py
+path: src/amatelier/engine/distiller.py
 description: "Promote a skill to the shared skill store."
 ```
 
@@ -862,7 +994,7 @@ description: "Promote a skill to the shared skill store."
 ```yaml
 name: search_shared_skills
 kind: function
-path: src\amatelier\engine\distiller.py
+path: src/amatelier/engine/distiller.py
 description: "Simple keyword search against shared skill index."
 ```
 
@@ -871,7 +1003,7 @@ description: "Simple keyword search against shared skill index."
 ```yaml
 name: list_agent_skills
 kind: function
-path: src\amatelier\engine\distiller.py
+path: src/amatelier/engine/distiller.py
 description: "List all skills an agent has accumulated."
 ```
 
@@ -880,7 +1012,7 @@ description: "List all skills an agent has accumulated."
 ```yaml
 name: load_behaviors
 kind: function
-path: src\amatelier\engine\evolver.py
+path: src/amatelier/engine/evolver.py
 description: "Load structured behavior metadata."
 ```
 
@@ -889,7 +1021,7 @@ description: "Load structured behavior metadata."
 ```yaml
 name: save_behaviors
 kind: function
-path: src\amatelier\engine\evolver.py
+path: src/amatelier/engine/evolver.py
 description: ""
 ```
 
@@ -898,7 +1030,7 @@ description: ""
 ```yaml
 name: confirm_behavior
 kind: function
-path: src\amatelier\engine\evolver.py
+path: src/amatelier/engine/evolver.py
 description: "Confirm a behavior was useful — resets confidence to 1.0."
 ```
 
@@ -907,7 +1039,7 @@ description: "Confirm a behavior was useful — resets confidence to 1.0."
 ```yaml
 name: decay_behaviors
 kind: function
-path: src\amatelier\engine\evolver.py
+path: src/amatelier/engine/evolver.py
 description: "Apply decay to all behaviors for one RT cycle."
 ```
 
@@ -916,7 +1048,7 @@ description: "Apply decay to all behaviors for one RT cycle."
 ```yaml
 name: get_behavior_decay_summary
 kind: function
-path: src\amatelier\engine\evolver.py
+path: src/amatelier/engine/evolver.py
 description: "Build a summary string for Therapist injection."
 ```
 
@@ -925,7 +1057,7 @@ description: "Build a summary string for Therapist injection."
 ```yaml
 name: read_claude_md
 kind: function
-path: src\amatelier\engine\evolver.py
+path: src/amatelier/engine/evolver.py
 description: ""
 ```
 
@@ -934,7 +1066,7 @@ description: ""
 ```yaml
 name: write_claude_md
 kind: function
-path: src\amatelier\engine\evolver.py
+path: src/amatelier/engine/evolver.py
 description: ""
 ```
 
@@ -943,7 +1075,7 @@ description: ""
 ```yaml
 name: append_to_memory
 kind: function
-path: src\amatelier\engine\evolver.py
+path: src/amatelier/engine/evolver.py
 description: "Dual-write: structured MEMORY.json (primary) + legacy MEMORY.md (backup)."
 ```
 
@@ -952,7 +1084,7 @@ description: "Dual-write: structured MEMORY.json (primary) + legacy MEMORY.md (b
 ```yaml
 name: add_learned_behavior
 kind: function
-path: src\amatelier\engine\evolver.py
+path: src/amatelier/engine/evolver.py
 description: "Add a learned behavior to CLAUDE.md + behaviors.json. Skips duplicates (>70% word overlap)."
 ```
 
@@ -961,7 +1093,7 @@ description: "Add a learned behavior to CLAUDE.md + behaviors.json. Skips duplic
 ```yaml
 name: remove_learned_behavior
 kind: function
-path: src\amatelier\engine\evolver.py
+path: src/amatelier/engine/evolver.py
 description: "Remove a learned behavior from CLAUDE.md + behaviors.json by fuzzy match."
 ```
 
@@ -970,7 +1102,7 @@ description: "Remove a learned behavior from CLAUDE.md + behaviors.json by fuzzy
 ```yaml
 name: update_emerging_trait
 kind: function
-path: src\amatelier\engine\evolver.py
+path: src/amatelier/engine/evolver.py
 description: "Update the Emerging Traits section in an agent's CLAUDE.md."
 ```
 
@@ -979,7 +1111,7 @@ description: "Update the Emerging Traits section in an agent's CLAUDE.md."
 ```yaml
 name: sync_skills_owned
 kind: function
-path: src\amatelier\engine\evolver.py
+path: src/amatelier/engine/evolver.py
 description: "Update the ## Skills Owned section in an agent's CLAUDE.md from the ledger."
 ```
 
@@ -988,7 +1120,7 @@ description: "Update the ## Skills Owned section in an agent's CLAUDE.md from th
 ```yaml
 name: load_agent_context
 kind: function
-path: src\amatelier\engine\gemini_agent.py
+path: src/amatelier/engine/gemini_agent.py
 description: ""
 ```
 
@@ -997,7 +1129,7 @@ description: ""
 ```yaml
 name: run_agent
 kind: function
-path: src\amatelier\engine\gemini_agent.py
+path: src/amatelier/engine/gemini_agent.py
 description: "Wait for call -> respond -> repeat until roundtable closes."
 ```
 
@@ -1006,7 +1138,7 @@ description: "Wait for call -> respond -> repeat until roundtable closes."
 ```yaml
 name: get_model_name
 kind: function
-path: src\amatelier\engine\gemini_client.py
+path: src/amatelier/engine/gemini_client.py
 description: "Read Gemini model name from config.json."
 ```
 
@@ -1015,7 +1147,7 @@ description: "Read Gemini model name from config.json."
 ```yaml
 name: call_gemini
 kind: function
-path: src\amatelier\engine\gemini_client.py
+path: src/amatelier/engine/gemini_client.py
 description: "Call Gemini with retries, rate limiting, and detailed error logging."
 ```
 
@@ -1024,7 +1156,7 @@ description: "Call Gemini with retries, rate limiting, and detailed error loggin
 ```yaml
 name: judge_score
 kind: function
-path: src\amatelier\engine\judge_scorer.py
+path: src/amatelier/engine/judge_scorer.py
 description: "Score all workers using Sonnet Judge. Returns results dict."
 ```
 
@@ -1033,7 +1165,7 @@ description: "Score all workers using Sonnet Judge. Returns results dict."
 ```yaml
 name: load_config
 kind: function
-path: src\amatelier\engine\roundtable_runner.py
+path: src/amatelier/engine/roundtable_runner.py
 description: ""
 ```
 
@@ -1042,7 +1174,7 @@ description: ""
 ```yaml
 name: resolve_agent_model
 kind: function
-path: src\amatelier\engine\roundtable_runner.py
+path: src/amatelier/engine/roundtable_runner.py
 description: "Read agent's model from config. Upgrades are request-based, not automatic."
 ```
 
@@ -1051,7 +1183,7 @@ description: "Read agent's model from config. Upgrades are request-based, not au
 ```yaml
 name: db_cmd
 kind: function
-path: src\amatelier\engine\roundtable_runner.py
+path: src/amatelier/engine/roundtable_runner.py
 description: "Run a db_client.py command and return parsed JSON."
 ```
 
@@ -1060,7 +1192,7 @@ description: "Run a db_client.py command and return parsed JSON."
 ```yaml
 name: get_latest_messages
 kind: function
-path: src\amatelier\engine\roundtable_runner.py
+path: src/amatelier/engine/roundtable_runner.py
 description: "Listen as the runner to get new messages."
 ```
 
@@ -1069,7 +1201,7 @@ description: "Listen as the runner to get new messages."
 ```yaml
 name: wait_for_single_speaker
 kind: function
-path: src\amatelier\engine\roundtable_runner.py
+path: src/amatelier/engine/roundtable_runner.py
 description: "Wait for a single agent to post. Returns (spoke, all_new_messages)."
 ```
 
@@ -1078,7 +1210,7 @@ description: "Wait for a single agent to post. Returns (spoke, all_new_messages)
 ```yaml
 name: is_pass
 kind: function
-path: src\amatelier\engine\roundtable_runner.py
+path: src/amatelier/engine/roundtable_runner.py
 description: "Check if the speaker's MOST RECENT message is a PASS."
 ```
 
@@ -1087,7 +1219,7 @@ description: "Check if the speaker's MOST RECENT message is a PASS."
 ```yaml
 name: check_convergence
 kind: function
-path: src\amatelier\engine\roundtable_runner.py
+path: src/amatelier/engine/roundtable_runner.py
 description: "Check if Judge posted a CONVERGED signal."
 ```
 
@@ -1096,7 +1228,7 @@ description: "Check if Judge posted a CONVERGED signal."
 ```yaml
 name: build_digest
 kind: function
-path: src\amatelier\engine\roundtable_runner.py
+path: src/amatelier/engine/roundtable_runner.py
 description: "Build a structured digest from the transcript."
 ```
 
@@ -1105,7 +1237,7 @@ description: "Build a structured digest from the transcript."
 ```yaml
 name: format_budget_status
 kind: function
-path: src\amatelier\engine\roundtable_runner.py
+path: src/amatelier/engine/roundtable_runner.py
 description: "Format budget as a readable string."
 ```
 
@@ -1114,7 +1246,7 @@ description: "Format budget as a readable string."
 ```yaml
 name: run_roundtable
 kind: function
-path: src\amatelier\engine\roundtable_runner.py
+path: src/amatelier/engine/roundtable_runner.py
 description: "Run a complete roundtable with structured debate and return the digest."
 ```
 
@@ -1123,7 +1255,7 @@ description: "Run a complete roundtable with structured debate and return the di
 ```yaml
 name: format_digest_summary
 kind: function
-path: src\amatelier\engine\roundtable_runner.py
+path: src/amatelier/engine/roundtable_runner.py
 description: "Format digest as human-readable summary for Admin."
 ```
 
@@ -1132,7 +1264,7 @@ description: "Format digest as human-readable summary for Admin."
 ```yaml
 name: load_config
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: ""
 ```
 
@@ -1141,7 +1273,7 @@ description: ""
 ```yaml
 name: load_metrics
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: ""
 ```
 
@@ -1150,7 +1282,7 @@ description: ""
 ```yaml
 name: save_metrics
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: "Write metrics.json with file locking to prevent concurrent-write corruption."
 ```
 
@@ -1159,7 +1291,7 @@ description: "Write metrics.json with file locking to prevent concurrent-write c
 ```yaml
 name: score_agent
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: "Score an agent's roundtable contribution and update their metrics."
 ```
 
@@ -1168,7 +1300,7 @@ description: "Score an agent's roundtable contribution and update their metrics.
 ```yaml
 name: deduct_entry_fee
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: "Deduct flat RT entry fee from agent's spark balance."
 ```
 
@@ -1177,7 +1309,7 @@ description: "Deduct flat RT entry fee from agent's spark balance."
 ```yaml
 name: get_leaderboard
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: "Get ranked leaderboard of all workers."
 ```
 
@@ -1186,7 +1318,7 @@ description: "Get ranked leaderboard of all workers."
 ```yaml
 name: promote_tier
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: "Agent purchases a tier promotion with sparks."
 ```
 
@@ -1195,7 +1327,7 @@ description: "Agent purchases a tier promotion with sparks."
 ```yaml
 name: check_self_determined
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: "Check if an agent has earned the right to choose their own evolution path."
 ```
 
@@ -1204,7 +1336,7 @@ description: "Check if an agent has earned the right to choose their own evoluti
 ```yaml
 name: pitch_venture
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: "Agent stakes sparks on an experimental idea."
 ```
 
@@ -1213,7 +1345,7 @@ description: "Agent stakes sparks on an experimental idea."
 ```yaml
 name: resolve_venture
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: "Admin resolves a venture — success awards multiplier, failure loses stake."
 ```
 
@@ -1222,7 +1354,7 @@ description: "Admin resolves a venture — success awards multiplier, failure lo
 ```yaml
 name: award_gate_bonus
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: "Judge awards a gate bonus for an exceptional contribution."
 ```
 
@@ -1231,7 +1363,7 @@ description: "Judge awards a gate bonus for an exceptional contribution."
 ```yaml
 name: award_rt_outcome_bonus
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: "Award bonus sparks to agents whose RT proposal was implemented by the user."
 ```
 
@@ -1240,7 +1372,7 @@ description: "Award bonus sparks to agents whose RT proposal was implemented by 
 ```yaml
 name: get_spark_balances
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: "Get spark balances and pending ventures for all workers."
 ```
 
@@ -1249,7 +1381,7 @@ description: "Get spark balances and pending ventures for all workers."
 ```yaml
 name: compute_variance_flags
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: "Detect byzantine scoring patterns — flat low or erratic across axes."
 ```
 
@@ -1258,7 +1390,7 @@ description: "Detect byzantine scoring patterns — flat low or erratic across a
 ```yaml
 name: check_underperformers
 kind: function
-path: src\amatelier\engine\scorer.py
+path: src/amatelier/engine/scorer.py
 description: "Identify agents at risk of relegation (3 consecutive net-negative RTs)."
 ```
 
@@ -1267,7 +1399,7 @@ description: "Identify agents at risk of relegation (3 consecutive net-negative 
 ```yaml
 name: parse_requests
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: "Extract all [[request: ...]] blocks from an agent's message."
 ```
 
@@ -1276,7 +1408,7 @@ description: "Extract all [[request: ...]] blocks from an agent's message."
 ```yaml
 name: strip_requests
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: "Return the message with [[request:]] blocks removed (for transcript)."
 ```
 
@@ -1285,7 +1417,7 @@ description: "Return the message with [[request:]] blocks removed (for transcrip
 ```yaml
 name: StewardBudget
 kind: class
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: "Per-agent, per-RT request budget."
 ```
 
@@ -1294,7 +1426,7 @@ description: "Per-agent, per-RT request budget."
 ```yaml
 name: load_registered_files
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: "Parse the briefing for a '## Steward-Registered Files' section."
 ```
 
@@ -1303,7 +1435,7 @@ description: "Parse the briefing for a '## Steward-Registered Files' section."
 ```yaml
 name: resolve_file
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: "Check if a file path (or glob) is in the registered list."
 ```
 
@@ -1312,7 +1444,7 @@ description: "Check if a file path (or glob) is in the registered list."
 ```yaml
 name: try_deterministic
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: "Attempt to handle the request without an LLM."
 ```
 
@@ -1321,7 +1453,7 @@ description: "Attempt to handle the request without an LLM."
 ```yaml
 name: spawn_steward_subagent
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: "Spawn an ephemeral Claude subagent with file tools to execute a lookup."
 ```
 
@@ -1330,7 +1462,7 @@ description: "Spawn an ephemeral Claude subagent with file tools to execute a lo
 ```yaml
 name: StewardTask
 kind: class
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: "A single async Steward lookup running in a background thread."
 ```
 
@@ -1339,7 +1471,7 @@ description: "A single async Steward lookup running in a background thread."
 ```yaml
 name: format_result
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: "Format a Steward result for injection into the debate context."
 ```
 
@@ -1348,7 +1480,7 @@ description: "Format a Steward result for injection into the debate context."
 ```yaml
 name: StewardLog
 kind: class
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: "Tracks all Steward requests and results for an RT."
 ```
 
@@ -1357,7 +1489,7 @@ description: "Tracks all Steward requests and results for an RT."
 ```yaml
 name: remaining
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: ""
 ```
 
@@ -1366,7 +1498,7 @@ description: ""
 ```yaml
 name: spend
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: "Deduct 1 from agent's budget. Returns False if out of budget."
 ```
 
@@ -1375,7 +1507,7 @@ description: "Deduct 1 from agent's budget. Returns False if out of budget."
 ```yaml
 name: status
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: ""
 ```
 
@@ -1384,7 +1516,7 @@ description: ""
 ```yaml
 name: log
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: ""
 ```
 
@@ -1393,7 +1525,7 @@ description: ""
 ```yaml
 name: wait
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: ""
 ```
 
@@ -1402,7 +1534,7 @@ description: ""
 ```yaml
 name: record
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: ""
 ```
 
@@ -1411,7 +1543,7 @@ description: ""
 ```yaml
 name: save
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: ""
 ```
 
@@ -1420,7 +1552,7 @@ description: ""
 ```yaml
 name: entries
 kind: function
-path: src\amatelier\engine\steward_dispatch.py
+path: src/amatelier/engine/steward_dispatch.py
 description: ""
 ```
 
@@ -1429,7 +1561,7 @@ description: ""
 ```yaml
 name: load_catalog
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: ""
 ```
 
@@ -1438,7 +1570,7 @@ description: ""
 ```yaml
 name: load_ledger
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: ""
 ```
 
@@ -1447,7 +1579,7 @@ description: ""
 ```yaml
 name: save_ledger
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: ""
 ```
 
@@ -1456,7 +1588,7 @@ description: ""
 ```yaml
 name: find_item
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Find an item by ID across all categories. Returns (item, category_key)."
 ```
 
@@ -1465,7 +1597,7 @@ description: "Find an item by ID across all categories. Returns (item, category_
 ```yaml
 name: list_catalog
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Format catalog as readable text."
 ```
 
@@ -1474,7 +1606,7 @@ description: "Format catalog as readable text."
 ```yaml
 name: what_can_afford
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Show what an agent can afford right now."
 ```
 
@@ -1483,7 +1615,7 @@ description: "Show what an agent can afford right now."
 ```yaml
 name: purchase
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Process a store purchase. Deducts sparks, records in ledger."
 ```
 
@@ -1492,7 +1624,7 @@ description: "Process a store purchase. Deducts sparks, records in ledger."
 ```yaml
 name: submit_request
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Submit a public or private store request."
 ```
 
@@ -1501,7 +1633,7 @@ description: "Submit a public or private store request."
 ```yaml
 name: get_pending_boosts
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Get unconsumed boosts for an agent (purchased but not yet used in an RT)."
 ```
 
@@ -1510,7 +1642,7 @@ description: "Get unconsumed boosts for an agent (purchased but not yet used in 
 ```yaml
 name: consume_boost
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Mark a boost as consumed after use in a roundtable. Returns True if consumed."
 ```
 
@@ -1519,7 +1651,7 @@ description: "Mark a boost as consumed after use in a roundtable. Returns True i
 ```yaml
 name: apply_boosts_for_rt
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Check all workers for pending boosts. Returns {agent: {effect_type: value}}."
 ```
 
@@ -1528,7 +1660,7 @@ description: "Check all workers for pending boosts. Returns {agent: {effect_type
 ```yaml
 name: consume_boosts_after_rt
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Consume all pending boosts for workers after an RT completes."
 ```
 
@@ -1537,7 +1669,7 @@ description: "Consume all pending boosts for workers after an RT completes."
 ```yaml
 name: age_bulletin_requests
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Increment rt_count on all open requests. Returns requests that hit 3 (expired)."
 ```
 
@@ -1546,7 +1678,7 @@ description: "Increment rt_count on all open requests. Returns requests that hit
 ```yaml
 name: fulfill_request
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "An agent fulfills a public request by creating a marketplace skill."
 ```
 
@@ -1555,7 +1687,7 @@ description: "An agent fulfills a public request by creating a marketplace skill
 ```yaml
 name: get_open_requests
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Return all open bulletin board requests with their index. Used by Admin during curation."
 ```
 
@@ -1564,7 +1696,7 @@ description: "Return all open bulletin board requests with their index. Used by 
 ```yaml
 name: admin_list_skill
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Admin lists a curated skill in the store catalog."
 ```
 
@@ -1573,7 +1705,7 @@ description: "Admin lists a curated skill in the store catalog."
 ```yaml
 name: admin_apply_private_skill
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Admin applies a privately requested skill directly to an agent."
 ```
 
@@ -1582,7 +1714,7 @@ description: "Admin applies a privately requested skill directly to an agent."
 ```yaml
 name: retire_skill
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Retire a skill an agent owns. Marks it as retired in ledger, removes skill file."
 ```
 
@@ -1591,7 +1723,7 @@ description: "Retire a skill an agent owns. Marks it as retired in ledger, remov
 ```yaml
 name: get_owned_skills
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Get all permanent skills an agent owns (from ledger). Excludes retired."
 ```
 
@@ -1600,7 +1732,7 @@ description: "Get all permanent skills an agent owns (from ledger). Excludes ret
 ```yaml
 name: inventory
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Get everything an agent owns."
 ```
 
@@ -1609,7 +1741,7 @@ description: "Get everything an agent owns."
 ```yaml
 name: purchase_history
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Format purchase history as readable text."
 ```
 
@@ -1618,7 +1750,7 @@ description: "Format purchase history as readable text."
 ```yaml
 name: bulletin_board
 kind: function
-path: src\amatelier\engine\store.py
+path: src/amatelier/engine/store.py
 description: "Show public requests with aging and fulfillment status."
 ```
 
@@ -1627,7 +1759,7 @@ description: "Show public requests with aging and fulfillment status."
 ```yaml
 name: run_session
 kind: function
-path: src\amatelier\engine\therapist.py
+path: src/amatelier/engine/therapist.py
 description: "Run a single Therapist session with one agent."
 ```
 
@@ -1636,8 +1768,305 @@ description: "Run a single Therapist session with one agent."
 ```yaml
 name: run_therapist
 kind: function
-path: src\amatelier\engine\therapist.py
+path: src/amatelier/engine/therapist.py
 description: "Run Therapist sessions for all agents in a roundtable."
+```
+
+### `BackendUnavailable`
+
+```yaml
+name: BackendUnavailable
+kind: class
+path: src/amatelier/llm_backend.py
+description: "Raised when no backend can satisfy the current environment."
+```
+
+### `Completion`
+
+```yaml
+name: Completion
+kind: class
+path: src/amatelier/llm_backend.py
+description: ""
+```
+
+### `LLMBackend`
+
+```yaml
+name: LLMBackend
+kind: class
+path: src/amatelier/llm_backend.py
+description: ""
+```
+
+### `ClaudeCLIBackend`
+
+```yaml
+name: ClaudeCLIBackend
+kind: class
+path: src/amatelier/llm_backend.py
+description: ""
+```
+
+### `AnthropicSDKBackend`
+
+```yaml
+name: AnthropicSDKBackend
+kind: class
+path: src/amatelier/llm_backend.py
+description: ""
+```
+
+### `OpenAICompatBackend`
+
+```yaml
+name: OpenAICompatBackend
+kind: class
+path: src/amatelier/llm_backend.py
+description: ""
+```
+
+### `describe_environment`
+
+```yaml
+name: describe_environment
+kind: function
+path: src/amatelier/llm_backend.py
+description: "Diagnostic snapshot — used by ``amatelier config``."
+```
+
+### `resolve_mode`
+
+```yaml
+name: resolve_mode
+kind: function
+path: src/amatelier/llm_backend.py
+description: "Resolve the mode to use."
+```
+
+### `get_backend`
+
+```yaml
+name: get_backend
+kind: function
+path: src/amatelier/llm_backend.py
+description: "Return a singleton backend instance configured for the current env."
+```
+
+### `call_claude`
+
+```yaml
+name: call_claude
+kind: function
+path: src/amatelier/llm_backend.py
+description: "Backward-compatible shim matching the original claude_agent.call_claude API."
+```
+
+### `complete`
+
+```yaml
+name: complete
+kind: function
+path: src/amatelier/llm_backend.py
+description: ""
+```
+
+### `available`
+
+```yaml
+name: available
+kind: function
+path: src/amatelier/llm_backend.py
+description: ""
+```
+
+### `complete`
+
+```yaml
+name: complete
+kind: function
+path: src/amatelier/llm_backend.py
+description: ""
+```
+
+### `available`
+
+```yaml
+name: available
+kind: function
+path: src/amatelier/llm_backend.py
+description: ""
+```
+
+### `complete`
+
+```yaml
+name: complete
+kind: function
+path: src/amatelier/llm_backend.py
+description: ""
+```
+
+### `available`
+
+```yaml
+name: available
+kind: function
+path: src/amatelier/llm_backend.py
+description: ""
+```
+
+### `complete`
+
+```yaml
+name: complete
+kind: function
+path: src/amatelier/llm_backend.py
+description: ""
+```
+
+### `bundled_assets_dir`
+
+```yaml
+name: bundled_assets_dir
+kind: function
+path: src/amatelier/paths.py
+description: "The read-only bundled-assets root. Inside the installed package."
+```
+
+### `bundled_docs_dir`
+
+```yaml
+name: bundled_docs_dir
+kind: function
+path: src/amatelier/paths.py
+description: "The bundled human docs (Diátaxis tree)."
+```
+
+### `bundled_agent_dir`
+
+```yaml
+name: bundled_agent_dir
+kind: function
+path: src/amatelier/paths.py
+description: "Seed persona directory for an agent (ships in wheel, read-only)."
+```
+
+### `bundled_store_catalog`
+
+```yaml
+name: bundled_store_catalog
+kind: function
+path: src/amatelier/paths.py
+description: "Default skill template catalog."
+```
+
+### `bundled_config`
+
+```yaml
+name: bundled_config
+kind: function
+path: src/amatelier/paths.py
+description: "Default config.json."
+```
+
+### `user_data_dir`
+
+```yaml
+name: user_data_dir
+kind: function
+path: src/amatelier/paths.py
+description: "The user-writable root for runtime state."
+```
+
+### `user_agent_dir`
+
+```yaml
+name: user_agent_dir
+kind: function
+path: src/amatelier/paths.py
+description: "Per-agent mutable state (MEMORY, metrics, behaviors, sessions, skills)."
+```
+
+### `user_db_path`
+
+```yaml
+name: user_db_path
+kind: function
+path: src/amatelier/paths.py
+description: "SQLite database for the roundtable chat."
+```
+
+### `user_logs_dir`
+
+```yaml
+name: user_logs_dir
+kind: function
+path: src/amatelier/paths.py
+description: "Runtime logs (gemini_errors, runner logs, etc.)."
+```
+
+### `user_digest_dir`
+
+```yaml
+name: user_digest_dir
+kind: function
+path: src/amatelier/paths.py
+description: "Where ``digest-<rt_id>.json`` and related transcripts land."
+```
+
+### `user_briefing_dir`
+
+```yaml
+name: user_briefing_dir
+kind: function
+path: src/amatelier/paths.py
+description: "Where user-authored briefing-*.md files are expected."
+```
+
+### `user_store_ledger`
+
+```yaml
+name: user_store_ledger
+kind: function
+path: src/amatelier/paths.py
+description: "Spark economy ledger (evolves as agents earn and spend)."
+```
+
+### `user_novel_concepts`
+
+```yaml
+name: user_novel_concepts
+kind: function
+path: src/amatelier/paths.py
+description: "DERIVE skill concepts accumulated across roundtables."
+```
+
+### `user_shared_skills_index`
+
+```yaml
+name: user_shared_skills_index
+kind: function
+path: src/amatelier/paths.py
+description: "Curated shared skills from Admin distillation."
+```
+
+### `user_config_override`
+
+```yaml
+name: user_config_override
+kind: function
+path: src/amatelier/paths.py
+description: "Optional user-level override for config.json."
+```
+
+### `ensure_user_data`
+
+```yaml
+name: ensure_user_data
+kind: function
+path: src/amatelier/paths.py
+description: "Create the user-data tree on first use."
 ```
 
 ### `get_db`
@@ -1645,7 +2074,7 @@ description: "Run Therapist sessions for all agents in a roundtable."
 ```yaml
 name: get_db
 kind: function
-path: src\amatelier\roundtable-server\db_client.py
+path: src/amatelier/roundtable-server/db_client.py
 description: ""
 ```
 
@@ -1654,7 +2083,7 @@ description: ""
 ```yaml
 name: get_active_rt
 kind: function
-path: src\amatelier\roundtable-server\db_client.py
+path: src/amatelier/roundtable-server/db_client.py
 description: ""
 ```
 
@@ -1663,7 +2092,7 @@ description: ""
 ```yaml
 name: cmd_open
 kind: function
-path: src\amatelier\roundtable-server\db_client.py
+path: src/amatelier/roundtable-server/db_client.py
 description: ""
 ```
 
@@ -1672,7 +2101,7 @@ description: ""
 ```yaml
 name: cmd_join
 kind: function
-path: src\amatelier\roundtable-server\db_client.py
+path: src/amatelier/roundtable-server/db_client.py
 description: ""
 ```
 
@@ -1681,7 +2110,7 @@ description: ""
 ```yaml
 name: cmd_speak
 kind: function
-path: src\amatelier\roundtable-server\db_client.py
+path: src/amatelier/roundtable-server/db_client.py
 description: ""
 ```
 
@@ -1690,7 +2119,7 @@ description: ""
 ```yaml
 name: cmd_listen
 kind: function
-path: src\amatelier\roundtable-server\db_client.py
+path: src/amatelier/roundtable-server/db_client.py
 description: ""
 ```
 
@@ -1699,7 +2128,7 @@ description: ""
 ```yaml
 name: cmd_status
 kind: function
-path: src\amatelier\roundtable-server\db_client.py
+path: src/amatelier/roundtable-server/db_client.py
 description: ""
 ```
 
@@ -1708,7 +2137,7 @@ description: ""
 ```yaml
 name: cmd_close
 kind: function
-path: src\amatelier\roundtable-server\db_client.py
+path: src/amatelier/roundtable-server/db_client.py
 description: ""
 ```
 
@@ -1717,7 +2146,7 @@ description: ""
 ```yaml
 name: cmd_cut
 kind: function
-path: src\amatelier\roundtable-server\db_client.py
+path: src/amatelier/roundtable-server/db_client.py
 description: ""
 ```
 
@@ -1726,7 +2155,7 @@ description: ""
 ```yaml
 name: cmd_recall
 kind: function
-path: src\amatelier\roundtable-server\db_client.py
+path: src/amatelier/roundtable-server/db_client.py
 description: "Retrieve specific transcript segments from the active roundtable."
 ```
 
@@ -1735,7 +2164,7 @@ description: "Retrieve specific transcript segments from the active roundtable."
 ```yaml
 name: cmd_index
 kind: function
-path: src\amatelier\roundtable-server\db_client.py
+path: src/amatelier/roundtable-server/db_client.py
 description: "Show the transcript index — compact one-line-per-contribution view."
 ```
 
@@ -1744,7 +2173,7 @@ description: "Show the transcript index — compact one-line-per-contribution vi
 ```yaml
 name: cmd_transcript
 kind: function
-path: src\amatelier\roundtable-server\db_client.py
+path: src/amatelier/roundtable-server/db_client.py
 description: ""
 ```
 
@@ -1753,7 +2182,7 @@ description: ""
 ```yaml
 name: get_db
 kind: function
-path: src\amatelier\roundtable-server\server.py
+path: src/amatelier/roundtable-server/server.py
 description: "Get a WAL-mode SQLite connection."
 ```
 
@@ -1762,7 +2191,7 @@ description: "Get a WAL-mode SQLite connection."
 ```yaml
 name: init_db
 kind: function
-path: src\amatelier\roundtable-server\server.py
+path: src/amatelier/roundtable-server/server.py
 description: "Create tables if they don't exist."
 ```
 
@@ -1771,7 +2200,7 @@ description: "Create tables if they don't exist."
 ```yaml
 name: roundtable_open
 kind: function
-path: src\amatelier\roundtable-server\server.py
+path: src/amatelier/roundtable-server/server.py
 description: "Open a new roundtable discussion."
 ```
 
@@ -1780,7 +2209,7 @@ description: "Open a new roundtable discussion."
 ```yaml
 name: roundtable_close
 kind: function
-path: src\amatelier\roundtable-server\server.py
+path: src/amatelier/roundtable-server/server.py
 description: "Close the active roundtable and return the full transcript."
 ```
 
@@ -1789,7 +2218,7 @@ description: "Close the active roundtable and return the full transcript."
 ```yaml
 name: roundtable_cut
 kind: function
-path: src\amatelier\roundtable-server\server.py
+path: src/amatelier/roundtable-server/server.py
 description: "Force-end the active roundtable (consensus, repetition, token ceiling, etc)."
 ```
 
@@ -1798,7 +2227,7 @@ description: "Force-end the active roundtable (consensus, repetition, token ceil
 ```yaml
 name: roundtable_join
 kind: function
-path: src\amatelier\roundtable-server\server.py
+path: src/amatelier/roundtable-server/server.py
 description: "Join the active roundtable discussion."
 ```
 
@@ -1807,7 +2236,7 @@ description: "Join the active roundtable discussion."
 ```yaml
 name: roundtable_speak
 kind: function
-path: src\amatelier\roundtable-server\server.py
+path: src/amatelier/roundtable-server/server.py
 description: "Post a message to the active roundtable discussion."
 ```
 
@@ -1816,7 +2245,7 @@ description: "Post a message to the active roundtable discussion."
 ```yaml
 name: roundtable_listen
 kind: function
-path: src\amatelier\roundtable-server\server.py
+path: src/amatelier/roundtable-server/server.py
 description: "Read all messages since your last read. First call returns full history."
 ```
 
@@ -1825,7 +2254,7 @@ description: "Read all messages since your last read. First call returns full hi
 ```yaml
 name: roundtable_leave
 kind: function
-path: src\amatelier\roundtable-server\server.py
+path: src/amatelier/roundtable-server/server.py
 description: "Leave the active roundtable."
 ```
 
@@ -1834,7 +2263,7 @@ description: "Leave the active roundtable."
 ```yaml
 name: roundtable_review
 kind: function
-path: src\amatelier\roundtable-server\server.py
+path: src/amatelier/roundtable-server/server.py
 description: "Read the full transcript of a completed roundtable."
 ```
 
@@ -1843,7 +2272,7 @@ description: "Read the full transcript of a completed roundtable."
 ```yaml
 name: roundtable_history
 kind: function
-path: src\amatelier\roundtable-server\server.py
+path: src/amatelier/roundtable-server/server.py
 description: "List past roundtables."
 ```
 
@@ -1852,7 +2281,7 @@ description: "List past roundtables."
 ```yaml
 name: roundtable_status
 kind: function
-path: src\amatelier\roundtable-server\server.py
+path: src/amatelier/roundtable-server/server.py
 description: "Get the current roundtable status — who's in, message count, is it open."
 ```
 
@@ -1861,7 +2290,7 @@ description: "Get the current roundtable status — who's in, message count, is 
 ```yaml
 name: main
 kind: function
-path: src\amatelier\roundtable-server\server.py
+path: src/amatelier/roundtable-server/server.py
 description: ""
 ```
 
@@ -1870,7 +2299,7 @@ description: ""
 ```yaml
 name: result
 kind: function
-path: src\amatelier\roundtable-server\test_roundtable.py
+path: src/amatelier/roundtable-server/test_roundtable.py
 description: ""
 ```
 
@@ -1879,7 +2308,7 @@ description: ""
 ```yaml
 name: get_db
 kind: function
-path: src\amatelier\roundtable-server\test_roundtable.py
+path: src/amatelier/roundtable-server/test_roundtable.py
 description: ""
 ```
 
@@ -1888,7 +2317,7 @@ description: ""
 ```yaml
 name: test_db_exists
 kind: function
-path: src\amatelier\roundtable-server\test_roundtable.py
+path: src/amatelier/roundtable-server/test_roundtable.py
 description: ""
 ```
 
@@ -1897,7 +2326,7 @@ description: ""
 ```yaml
 name: test_open_roundtable
 kind: function
-path: src\amatelier\roundtable-server\test_roundtable.py
+path: src/amatelier/roundtable-server/test_roundtable.py
 description: ""
 ```
 
@@ -1906,7 +2335,7 @@ description: ""
 ```yaml
 name: test_join
 kind: function
-path: src\amatelier\roundtable-server\test_roundtable.py
+path: src/amatelier/roundtable-server/test_roundtable.py
 description: ""
 ```
 
@@ -1915,7 +2344,7 @@ description: ""
 ```yaml
 name: test_speak
 kind: function
-path: src\amatelier\roundtable-server\test_roundtable.py
+path: src/amatelier/roundtable-server/test_roundtable.py
 description: ""
 ```
 
@@ -1924,7 +2353,7 @@ description: ""
 ```yaml
 name: test_listen
 kind: function
-path: src\amatelier\roundtable-server\test_roundtable.py
+path: src/amatelier/roundtable-server/test_roundtable.py
 description: ""
 ```
 
@@ -1933,7 +2362,7 @@ description: ""
 ```yaml
 name: test_close
 kind: function
-path: src\amatelier\roundtable-server\test_roundtable.py
+path: src/amatelier/roundtable-server/test_roundtable.py
 description: ""
 ```
 
@@ -1942,7 +2371,7 @@ description: ""
 ```yaml
 name: test_cut
 kind: function
-path: src\amatelier\roundtable-server\test_roundtable.py
+path: src/amatelier/roundtable-server/test_roundtable.py
 description: ""
 ```
 
@@ -1951,7 +2380,7 @@ description: ""
 ```yaml
 name: test_concurrent_writers
 kind: function
-path: src\amatelier\roundtable-server\test_roundtable.py
+path: src/amatelier/roundtable-server/test_roundtable.py
 description: ""
 ```
 
@@ -1960,7 +2389,7 @@ description: ""
 ```yaml
 name: test_gemini_agent_loadable
 kind: function
-path: src\amatelier\roundtable-server\test_roundtable.py
+path: src/amatelier/roundtable-server/test_roundtable.py
 description: ""
 ```
 
@@ -1969,34 +2398,70 @@ description: ""
 ```yaml
 name: cleanup
 kind: function
-path: src\amatelier\roundtable-server\test_roundtable.py
+path: src/amatelier/roundtable-server/test_roundtable.py
 description: "Remove test roundtables."
 ```
 
-### `get_db`
+### `agent_color`
 
 ```yaml
-name: get_db
+name: agent_color
 kind: function
-path: src\amatelier\roundtable-server\watch_roundtable.py
+path: src/amatelier/tools/watch_roundtable.py
 description: ""
 ```
 
-### `watch`
+### `agent_role`
 
 ```yaml
-name: watch
+name: agent_role
 kind: function
-path: src\amatelier\roundtable-server\watch_roundtable.py
+path: src/amatelier/tools/watch_roundtable.py
 description: ""
 ```
 
-### `watch_chat`
+### `is_gate`
 
 ```yaml
-name: watch_chat
+name: is_gate
 kind: function
-path: src\amatelier\tools\watch_roundtable.py
+path: src/amatelier/tools/watch_roundtable.py
+description: ""
+```
+
+### `RichWatcher`
+
+```yaml
+name: RichWatcher
+kind: class
+path: src/amatelier/tools/watch_roundtable.py
+description: ""
+```
+
+### `plain_watch`
+
+```yaml
+name: plain_watch
+kind: function
+path: src/amatelier/tools/watch_roundtable.py
+description: "Degraded renderer used when rich isn't importable."
+```
+
+### `main`
+
+```yaml
+name: main
+kind: function
+path: src/amatelier/tools/watch_roundtable.py
+description: ""
+```
+
+### `run`
+
+```yaml
+name: run
+kind: function
+path: src/amatelier/tools/watch_roundtable.py
 description: ""
 ```
 
@@ -2019,34 +2484,453 @@ FILE: llm/WORKFLOWS.md
 
 # Workflows
 
-> Turn-by-turn orchestration paths. Hand-written. Copied from `docs/explanation/` narrative into this deterministic form by `dual-docs-architect`.
+> Turn-by-turn orchestration paths. Hand-written. Answers the question: "this command ran — what happened, step by step, and which module.function owns each step?"
 
 ## Conventions
 
 - Each workflow is a named section
-- Steps are numbered
-- Each step names the file and function responsible
+- Steps are numbered, expressed as YAML
+- Each step names the module:function responsible
 - Inputs and outputs are explicit
-- Failure modes are listed at the end of each workflow
+- Failure modes listed at the end of each workflow
 
-## Workflow: primary user path
+## Workflow: amatelier roundtable (happy path)
 
-_Populate after initial implementation._
+Trigger: `amatelier roundtable --topic T --briefing B [--workers CSV] [--max-rounds N] [--skip-naomi] [--budget N] [--speaker-timeout S] [--skip-post] [--summary]`
 
 ```yaml
-name: <workflow-name>
-trigger: <what starts it>
-steps:
-  - step: 1
-    actor: <file:function>
-    input: <inputs>
-    output: <outputs>
-    description: <one line>
-  # ...
-failure_modes:
-  - condition: <what goes wrong>
-    behavior: <how it surfaces>
-    recovery: <what to do>
+- step: 1
+  actor: amatelier.cli:main
+  action: Reconfigure stdout/stderr to utf-8; dispatch on argv[0]
+  inputs: sys.argv[1:]
+  outputs: dispatch decision
+- step: 2
+  actor: amatelier.cli:_run_engine_module
+  action: sys.argv = ["roundtable_runner", ...rest]; runpy.run_module("roundtable_runner", run_name="__main__", alter_sys=True)
+  note: The engine module ships as a flat-import module because __init__.py inserts src/amatelier/engine into sys.path
+- step: 3
+  actor: amatelier.engine.roundtable_runner (module __main__ block)
+  action: argparse parses flags; calls run_roundtable(topic, briefing_path, workers, max_rounds, skip_naomi, speaker_timeout, budget_per_agent, skip_post)
+- step: 4
+  actor: amatelier.engine.roundtable_runner:run_roundtable
+  action: load_config() reads bundled config.json; resolve default_workers if --workers not given; resolve max_rounds default
+- step: 5
+  actor: amatelier.engine.roundtable_runner:run_roundtable
+  action: Resolve briefing file — first try SUITE_ROOT/roundtable-server/<briefing>, else treat as absolute path; read text; FileNotFoundError if missing
+- step: 6
+  actor: amatelier.engine.steward_dispatch:load_registered_files
+  action: Parse "## Steward-Registered Files" section from briefing markdown; produce list of absolute paths. If empty, steward_enabled flips to False for this RT
+- step: 7
+  actor: amatelier.engine.store:apply_boosts_for_rt
+  action: Read store/ledger.json for each worker; apply consumable effects (e.g. +extra_floor_turns to budget dict)
+- step: 8
+  actor: amatelier.engine.evolver:sync_skills_owned
+  action: Per worker — diff spark_ledger category=purchase entries against MEMORY.json.skills_owned; refresh
+- step: 9
+  actor: amatelier.engine.agent_memory:generate_session_bridge
+  action: Per worker — emit "last time you..." context block from prior session summary; stored for next agent-context assembly
+- step: 10
+  actor: amatelier.engine.db (via db_client.py subprocess)
+  action: db_cmd("open", topic, participants_csv) — INSERT INTO roundtables; returns rt_id (hex). Runner joins as "runner"
+- step: 11
+  actor: amatelier.engine.db (via db_client.py subprocess)
+  action: db_cmd("speak", "runner", "BRIEFING:\n\n<text>") — posts briefing to chat
+- step: 12
+  actor: amatelier.engine.roundtable_runner:run_roundtable
+  action: For each worker — resolve_agent_model() reads config.json team.workers.<name>.model; determines entry-fee tier (haiku/flash/sonnet/opus)
+- step: 13
+  actor: amatelier.engine.scorer (via subprocess "deduct-fee")
+  action: Insert spark_ledger row with negative amount = entry fee; category=fee
+- step: 14
+  actor: amatelier.engine.roundtable_runner._launch_claude / _launch_gemini
+  action: subprocess.Popen per worker — claude_agent.py or gemini_agent.py; cwd=WORKSPACE_ROOT; env includes PYTHONIOENCODING=utf-8 and loaded .env vars. Also launch judge (Claude sonnet). Sleep 5s for connection
+- step: 15
+  actor: amatelier.engine.roundtable_runner:run_roundtable (Research Window — optional)
+  action: If steward_enabled and registered_files — broadcast RESEARCH WINDOW signal; each worker speaks once with up to 3 [[request:]] tags; fire StewardTask per request (free, budget-exempt); await all; inject results via db_cmd("speak", "runner", format_result(...))
+- step: 16
+  actor: amatelier.engine.roundtable_runner:run_roundtable (speaking-order setup)
+  action: random.shuffle(all_workers); _resolve_first_speaker() scans store/ledger.json for pending first-speaker purchases; highest-rank bidder wins; winner inserted at index 0, losers refunded into metrics.json
+- step: 17
+  actor: amatelier.engine.roundtable_runner:run_roundtable (round loop, 1..max_rounds)
+  action: For each round — post "ROUND N: begin\nBUDGET STATUS: <...>"
+- step: 18
+  actor: amatelier.engine.roundtable_runner (SPEAK PHASE)
+  action: Post "--- SPEAK PHASE (Round N) ---". Process queue — for each agent, _call_speaker posts "YOUR TURN: <name> — SPEAK" and wait_for_single_speaker polls DB until that agent writes or speaker_timeout (default 200s). Parse returned message for [[request:]] tags
+- step: 19
+  actor: amatelier.engine.steward_dispatch (if request tag present)
+  action: steward_budget.spend() decrements; StewardTask started in background thread; agent appended to back of speak_queue (deferred). Task result polled before subsequent agents speak; INTERMISSION fires if entire queue is deferred; post-phase all pending tasks drained
+- step: 20
+  actor: amatelier.engine.roundtable_runner (stability measurement)
+  action: If round_num > 1, compute per-agent Jaccard similarity between this round's SPEAK and prior round's SPEAK; log stability_scores[round_num]
+- step: 21
+  actor: amatelier.engine.roundtable_runner (REBUTTAL PHASE)
+  action: Post "--- REBUTTAL PHASE ---"; iterate speaking_order in reverse; _call_speaker each. No [[request:]] deferral in rebuttal phase
+- step: 22
+  actor: amatelier.engine.roundtable_runner (JUDGE GATE)
+  action: Post "--- JUDGE GATE ---" with instruction to emit CONVERGED:<reason> or CONTINUE:<gap>. wait_for_single_speaker("judge"). check_convergence scans for CONVERGED prefix; if found, break round loop
+- step: 23
+  actor: amatelier.engine.roundtable_runner (FLOOR PHASE)
+  action: Gather floor_eligible = workers with budget > 0. Iterate — _call_speaker. is_pass() detects PASS response; contributions decrement budget[agent] by 1 and mark eligible for another floor turn while budget remains. Continue until all pass or all budgets exhausted
+- step: 24
+  actor: amatelier.engine.roundtable_runner (round health audit)
+  action: Count alive agent_procs; count "timed out"/"did not respond" runner messages this round. Majority-dead → abort
+- step: 25
+  actor: amatelier.engine.roundtable_runner (Gemini refresh, conditional)
+  action: At round == gemini_refresh_round (default 5, from config.roundtable.gemini_refresh_round), terminate and relaunch naomi subprocess to reset API rate-limit state
+- step: 26
+  actor: amatelier.engine.db (via db_client.py subprocess)
+  action: After round loop completes — db_cmd("close"); RT status=closed
+- step: 27
+  actor: amatelier.engine.roundtable_runner:build_digest
+  action: Assemble digest dict — topic, rt_id, rounds, total_messages, contributions (count by agent), final_positions (last message by agent), converged, convergence_reason, judge_interventions, budget_usage, stability_scores
+- step: 28
+  actor: amatelier.engine.judge_scorer:judge_score (invoked by runner)
+  action: Judge LLM call with full transcript; effort=max sonnet; emits per-agent scores on 4 axes (0/1/2/3/10). Persist to scores table
+- step: 29
+  actor: amatelier.engine.roundtable_runner:_process_gate_bonuses
+  action: Scan transcript for Judge "GATE: <agent> — <reason>" messages; award 3 sparks each; cap at config.competition.gate_bonus.max_per_rt
+- step: 30
+  actor: amatelier.engine.scorer:compute_variance_flags
+  action: Byzantine detector — flag agents whose scores deviate too far from peer consensus across recent RTs. Updates scores.is_flagged
+- step: 31
+  actor: amatelier.engine.roundtable_runner:_extract_and_register_ventures
+  action: Parse <VENTURE>/<MOONSHOT>/<SCOUT> tags in transcript; register spark-stake contracts
+- step: 32
+  actor: amatelier.engine.roundtable_runner:_save_leaderboard
+  action: Subprocess — scorer.py leaderboard; write benchmarks/leaderboard.json
+- step: 33
+  actor: amatelier.engine.roundtable_runner:_update_analytics
+  action: Subprocess — analytics.py update; compute per-agent growth curves
+- step: 34
+  actor: amatelier.engine.roundtable_runner:_distill_skills
+  action: Sonnet subprocess (claude -p with --no-session-persistence --dangerously-skip-permissions --max-budget-usd 5.00); produces 10-15 skill candidate objects as JSON; each has title, type (CAPTURE|FIX|DERIVE), agent, pattern, when_to_apply, structural_category, trigger_phase, primary_actor, problem_nature, agent_dynamic (DERIVE only), tags, one_liner
+- step: 35
+  actor: amatelier.engine.roundtable_runner:_append_novel_concepts
+  action: Filter DERIVE skills; content-hash dedup; append to user_data_dir()/novel_concepts.json
+- step: 36
+  actor: amatelier.engine.therapist (subprocess, skipped if --skip-post)
+  action: For each worker — run_session(rt_id, agent, digest, max_turns=2); 2-3 turn private interview. See separate therapist workflow
+- step: 37
+  actor: amatelier.engine.store:consume_boosts_after_rt
+  action: Mark consumable purchase entries that fired this RT as consumed; write store/ledger.json
+- step: 38
+  actor: amatelier.engine.store:age_bulletin_requests
+  action: Decrement age counters on open public-request entries; expire stale
+- step: 39
+  actor: amatelier.engine.agent_memory:age_goals
+  action: Per worker — tick active goals forward; expire goals past their horizon
+- step: 40
+  actor: amatelier.engine.evolver:sync_skills_owned
+  action: Per worker — refresh MEMORY.json.skills_owned from spark_ledger purchase entries
+- step: 41
+  actor: amatelier.engine.roundtable_runner:_notify_completion
+  action: Write user_data_dir()/roundtable-server/latest-result.md; fire OS toast notification (best-effort)
+- step: 42
+  actor: amatelier.engine.roundtable_runner (__main__)
+  action: If --summary: print format_digest_summary(digest). Else: print json.dumps(digest, indent=2, ensure_ascii=False)
+```
+
+Failure modes:
+
+```yaml
+- condition: Briefing file not found
+  detection: step 5 raises FileNotFoundError
+  recovery: runner exits non-zero; caller must fix path
+
+- condition: Steward-registered files reference paths outside WORKSPACE_ROOT
+  detection: step 6 warn-logs; steward marked inactive for this RT
+  recovery: debate continues without steward; agents cannot ground claims in files
+
+- condition: Entry fee deduction subprocess fails
+  detection: step 13 try/except; logger.warning, continue
+  recovery: RT proceeds without fee; manual ledger repair via scorer.py deduct-fee
+
+- condition: Worker subprocess crashes
+  detection: _check_and_restart polls proc.poll() at each round boundary; restarts with same model/tier
+  recovery: Lost messages drop; restart captures new TURN signals. Repeated crashes → logged; RT continues with surviving workers
+
+- condition: Gemini rate limit / API error
+  detection: gemini_agent.py logs to user_data_dir()/roundtable-server/logs/gemini_errors.log
+  recovery: step 25 scheduled refresh; or add --skip-naomi to bypass
+
+- condition: SQLite busy / lock contention
+  detection: db_cmd retries 3 times with 2s backoff; WAL mode + busy_timeout on connection
+  recovery: Transient; persistent lock raises RuntimeError and kills RT
+
+- condition: claude CLI missing in claude-code mode
+  detection: llm_backend.ClaudeCLIBackend.available() returns False; resolve_mode falls through
+  recovery: Auto-falls back to anthropic-sdk if ANTHROPIC_API_KEY set, else openai-compat, else BackendUnavailable at first LLM call
+
+- condition: Judge Gate CONTINUE but max_rounds reached
+  detection: Round loop exits without break
+  recovery: convergence_reason stays None; digest reports converged=False
+
+- condition: Keyboard interrupt
+  detection: except KeyboardInterrupt in __main__ block
+  recovery: db_cmd("cut", "keyboard interrupt") tries to close RT; exit 1
+```
+
+## Workflow: amatelier therapist (standalone or post-RT)
+
+Trigger: `amatelier therapist --digest <path> [--agents CSV] [--turns N]` (or invoked automatically by roundtable_runner step 36 unless --skip-post).
+
+```yaml
+- step: 1
+  actor: amatelier.engine.therapist (__main__)
+  action: argparse → digest path required; optional agents CSV (default: all workers in digest); default turns=2
+- step: 2
+  actor: amatelier.engine.therapist:run_therapist
+  action: Load digest JSON; iterate agents list
+- step: 3
+  actor: amatelier.engine.therapist:run_session (per agent)
+  action: _load_therapist_context() — assemble therapist persona, case_notes, frameworks (GROW+AAR, SBI, OARS)
+- step: 4
+  actor: amatelier.engine.therapist:_load_agent_state
+  action: Read MEMORY.md, MEMORY.json, behaviors.json, metrics.json, sessions/ for this agent
+- step: 5
+  actor: amatelier.engine.therapist:_extract_agent_data
+  action: Pull this agent's contributions, scores, budget_usage, stability from digest
+- step: 6
+  actor: amatelier.engine.therapist:_compute_skill_impact
+  action: Correlate owned skills with this RT's scores; flag fading or unused skills
+- step: 7
+  actor: amatelier.engine.therapist:_build_agent_brief
+  action: Render combined context block for the agent-side of the interview
+- step: 8
+  actor: amatelier.engine.therapist:_call_therapist
+  action: LLM call — therapist opens the interview (opus or configured model). Uses opening_data from step 5-6 on first turn
+- step: 9
+  actor: amatelier.engine.therapist:_call_agent
+  action: LLM call — agent responds (own model/tier). Loops for max_turns exchanges
+- step: 10
+  actor: amatelier.engine.therapist:_parse_outcomes
+  action: Scan conversation for structured blocks — behavioral_deltas, memory_updates, session_summary, trait adjustments, store_request blocks (JSON fenced)
+- step: 11
+  actor: amatelier.engine.therapist:_apply_outcomes
+  action: Dispatch parsed outcomes:
+    - behaviors.json — via evolver.apply_behavior_delta
+    - MEMORY.md / MEMORY.json — append update blocks
+    - sessions/<rt_id>.md — write interview summary
+    - store requests — _process_store_request (attempt_purchase if affordable, else queue)
+    - goals — agent_memory.add_goal
+- step: 12
+  actor: amatelier.engine.therapist:_update_case_notes
+  action: Increment sessions_conducted; append to clinical_observations, active_hypotheses, intervention_history
+- step: 13
+  actor: amatelier.engine.therapist:_save_case_notes
+  action: Write user_data_dir()/agents/therapist/case_notes/<name>.json
+- step: 14
+  actor: amatelier.engine.therapist:_mark_private_requests_addressed
+  action: Update status of any private-request entries in store/ledger.json that this session addressed
+- step: 15
+  actor: amatelier.engine.therapist:_generate_report (post-all-agents)
+  action: Aggregate per-agent summaries into user_data_dir()/roundtable-server/therapist-report-<rt_id>.md
+```
+
+Failure modes:
+
+```yaml
+- condition: Digest JSON malformed
+  detection: json.load raises
+  recovery: Exit non-zero with path in error
+
+- condition: Agent state files missing
+  detection: step 4 — paths.user_agent_dir(name) empty
+  recovery: ensure_user_data() re-seeds from bundled (first-run path); subsequent failures abort this agent only
+
+- condition: LLM timeout during interview
+  detection: _call_llm timeout raises
+  recovery: Session marked incomplete; outcomes partially applied; no case notes increment
+
+- condition: Parsed outcomes include purchase for insufficient sparks
+  detection: _process_store_request — attempt_purchase returns insufficient_funds
+  recovery: Request queued to bulletin board instead; logged
+```
+
+## Workflow: steward research request (mid-debate)
+
+Trigger: worker emits `[[request: <natural language query>]]` in a speak/rebuttal/floor turn.
+
+```yaml
+- step: 1
+  actor: amatelier.engine.roundtable_runner:run_roundtable (post-speaker scan)
+  action: After _call_speaker returns, scan last_msg_text with steward_dispatch.parse_requests; regex extracts [[request:...]] payload
+- step: 2
+  actor: amatelier.engine.steward_dispatch:StewardBudget.spend
+  action: Decrement remaining count for this agent; if 0, request denied (no budget)
+- step: 3
+  actor: amatelier.engine.steward_dispatch:StewardTask (constructor)
+  action: Spawn background thread; task.done = threading.Event
+- step: 4
+  actor: amatelier.engine.roundtable_runner:run_roundtable
+  action: Append agent to back of speak_queue (deferred); record in pending_steward dict
+- step: 5
+  actor: amatelier.engine.steward_dispatch:StewardTask._run (thread)
+  action: Try deterministic path first — JSON filter, grep, extract. If successful, skip subagent
+- step: 6
+  actor: amatelier.engine.steward_dispatch (subagent fallback)
+  action: subprocess — claude -p with --allowedTools Read,Grep,Glob --max-budget-usd from config.steward. Registered files appear in prompt context. Model = haiku_model (default) or sonnet_model for complex queries
+- step: 7
+  actor: amatelier.engine.steward_dispatch:StewardTask._run (completion)
+  action: task.done.set(); result stored on task with status, elapsed_s, output
+- step: 8
+  actor: amatelier.engine.roundtable_runner:run_roundtable
+  action: Before next speaker or at INTERMISSION, poll pending_steward tasks; if done.is_set(), call format_result(agent, request, result) and db_cmd("speak", "runner", inject_msg)
+- step: 9
+  actor: amatelier.engine.steward_dispatch:StewardLog.record
+  action: Append to in-memory log (agent, request, result, round_num); exposed in digest for audit
+- step: 10
+  actor: amatelier.engine.roundtable_runner:run_roundtable
+  action: Before REBUTTAL phase starts, drain all remaining pending_steward; inject all results
+- step: 11
+  actor: deferred agent (on next turn)
+  action: When agent is popped from back of queue, they see injected [Research result for <agent>] message in their listen context; can cite in their speak
+```
+
+Failure modes:
+
+```yaml
+- condition: Subagent timeout (default 120s)
+  detection: StewardTask.wait(timeout=timeout_seconds+10) returns with status=timeout
+  recovery: Inject "timeout" error message; agent speaks without citation
+
+- condition: Registered file missing on disk
+  detection: Subagent Read tool returns error
+  recovery: Error captured in result; injected to chat; agent cited anyway or speaks without
+
+- condition: Request outside registered files
+  detection: Subagent prompt restricts to listed paths; refuses out-of-scope reads
+  recovery: Agent receives "out of scope" result; may retry with different phrasing if budget allows
+
+- condition: All workers deferred simultaneously
+  detection: remaining_speakers empty but pending_steward non-empty
+  recovery: INTERMISSION — runner blocks on task.wait for each; resumes SPEAK phase after
+```
+
+## Workflow: skill distillation (post-RT)
+
+Trigger: end of round loop inside run_roundtable; always runs (even with --skip-post).
+
+```yaml
+- step: 1
+  actor: amatelier.engine.roundtable_runner:_distill_skills
+  action: Build prompt — transcript (capped 50K chars), RT metadata, required JSON schema with 12 fields per skill
+- step: 2
+  actor: subprocess claude -p (sonnet)
+  action: flags — --no-session-persistence --output-format text --disable-slash-commands --dangerously-skip-permissions --max-budget-usd 5.00; timeout 180s; cwd=WORKSPACE_ROOT
+- step: 3
+  actor: amatelier.engine.roundtable_runner:_distill_skills (parse)
+  action: Locate first '[' and last ']' in stdout; json.loads; validate array
+- step: 4
+  actor: amatelier.engine.roundtable_runner:_append_novel_concepts (DERIVE only)
+  action: Filter type=="DERIVE"; compute content hash of title+pattern; dedup against existing novel_concepts.json
+- step: 5
+  actor: amatelier.engine.distiller:create_skill_entry (via runner or backfill)
+  action: For each distilled skill — generate skill_id; attach rt_id, timestamp, originator; prepare entry dict
+- step: 6
+  actor: amatelier.engine.distiller:_judge_gate
+  action: Score extraction worthiness (redundancy, specificity); entries failing the gate are flagged but still included in index with lower priority
+- step: 7
+  actor: amatelier.engine.distiller:save_index / save_skill_to_agent
+  action: Append to user_data_dir()/shared-skills/index.json; write per-agent pending skill markdown
+- step: 8
+  actor: opus-admin (manual curation step, out-of-band)
+  action: Admin reviews candidates; calls distiller.promote_to_shared for the best 3-5; promoted entries move to shared-skills/entries/ and become store-purchasable
+```
+
+Failure modes:
+
+```yaml
+- condition: Sonnet returns non-JSON output
+  detection: json_start/json_end markers missing
+  recovery: Log "non-json" error; return empty skills list; digest has no new entries
+
+- condition: Subprocess timeout (180s)
+  detection: subprocess.TimeoutExpired
+  recovery: Log "timeout" error; return empty skills list
+
+- condition: Subprocess exit non-zero
+  detection: result.returncode != 0
+  recovery: Log exit code; return empty skills list
+```
+
+## Workflow: amatelier refresh-seeds (user opt-in)
+
+Trigger: `amatelier refresh-seeds [--agent NAME] [--force] [--dry-run]`.
+
+```yaml
+- step: 1
+  actor: amatelier.cli:_run_refresh_seeds
+  action: argparse flags; resolve bundled_agents = paths.bundled_assets_dir() / "agents"
+- step: 2
+  actor: amatelier.cli:_run_refresh_seeds
+  action: If --agent given — single-agent list; else — sorted(bundled_agents.iterdir())
+- step: 3
+  actor: amatelier.cli:_run_refresh_seeds (per agent)
+  action: For CLAUDE.md and IDENTITY.md:
+    - Read bundled content
+    - Compare to user_agent_dir()/<file>
+    - If identical — skip (already current)
+    - If differs and not --force — skip (user-modified, preserved)
+    - If differs and --force or no user copy — write (unless --dry-run)
+- step: 4
+  actor: amatelier.cli:_run_refresh_seeds
+  action: Print Refreshed/Skipped/WRITE counts; footnote reminding that MEMORY/behaviors/metrics are untouched
+```
+
+Failure modes:
+
+```yaml
+- condition: Bundled agents directory missing (corrupt install)
+  detection: step 1 — not bundled_agents.exists()
+  recovery: Print error, exit 1; user reinstalls
+```
+
+## Workflow: first-run bootstrap
+
+Trigger: first `import amatelier` or first `amatelier <any-command>` on a machine where user_data_dir() has no .bootstrap-complete sentinel.
+
+```yaml
+- step: 1
+  actor: amatelier/__init__.py (module import)
+  action: sys.path prepends src/amatelier/engine and src/amatelier/store for flat-import compat; try: paths.ensure_user_data()
+- step: 2
+  actor: amatelier.paths:ensure_user_data
+  action: Resolve user_data_dir (platformdirs or AMATELIER_WORKSPACE); check for .bootstrap-complete sentinel — if present and not force, return immediately
+- step: 3
+  actor: amatelier.paths:ensure_user_data
+  action: mkdir -p the writable tree — roundtable-server/, roundtable-server/logs/, agents/, store/, shared-skills/
+- step: 4
+  actor: amatelier.paths:_load_config_for_bootstrap
+  action: Read user config override if present, else bundled config; fall back to empty dict on error
+- step: 5
+  actor: amatelier.paths:ensure_user_data
+  action: Union of team.workers keys, admin/judge/therapist names, and subdirs of bundled agents/ — call _copy_agent_seed per name
+- step: 6
+  actor: amatelier.paths:_copy_agent_seed (per agent)
+  action: mkdir user_agent_dir/<name>; copy CLAUDE.md and IDENTITY.md from bundled (shutil.copy2, skip if target exists); mkdir sessions/ and skills/; initialize empty MEMORY.md, MEMORY.json="{}", metrics.json="{}", behaviors.json="{}"
+- step: 7
+  actor: amatelier.paths:ensure_user_data
+  action: _init_json(store/ledger.json, {}); _init_json(novel_concepts.json, []); _init_json(shared-skills/index.json, {"entries": []})
+- step: 8
+  actor: amatelier.paths:ensure_user_data
+  action: Write .bootstrap-complete sentinel with content "1"
+```
+
+Failure modes:
+
+```yaml
+- condition: AMATELIER_WORKSPACE points at unwritable path
+  detection: mkdir or write raises PermissionError
+  recovery: __init__.py swallows at import time; first real write (e.g. open RT) surfaces the concrete error
+
+- condition: platformdirs cannot determine user data dir
+  detection: unlikely; returns empty string → Path("") which is invalid
+  recovery: Same as above — deferred; set AMATELIER_WORKSPACE explicitly
+
+- condition: Bundled agents subdirectory missing (corrupt install)
+  detection: bundled_agents.exists() False in step 5
+  recovery: Loop skipped; empty user-data tree; refresh-seeds also fails with same symptom
 ```
 
 ================================================================================
@@ -2055,19 +2939,19 @@ FILE: llm/EXAMPLES.md
 
 # Examples
 
-> Tested, copy-runnable examples covering the full API surface. Hand-written. CI extracts code blocks and executes them — broken example = red build.
+> Tested, copy-runnable examples. Code blocks are extracted and executed by CI (checks/snippets.py). Broken example = red build.
 
 ## Conventions
 
-- Each example is a named heading
-- Each example is self-contained (can be copy-pasted and run without other context)
-- Code blocks have the language tag so the extractor can route them correctly
-- Expected output is shown in a second code block tagged `text`
-- Prerequisites are listed at the top of each example
+- Each example is self-contained
+- Prereqs listed at top of each example
+- Expected output shown in a second `text` block
+- Language tags on code blocks so extractor routes correctly
+- Shell examples use POSIX syntax; Windows users run in bash/WSL or translate env var syntax
 
 ## Example: hello world
 
-**Prerequisites:** `pip install amatelier`
+Prereqs: `pip install amatelier`
 
 ```python
 from amatelier import hello
@@ -2081,7 +2965,340 @@ Expected output:
 Hello, world!
 ```
 
-## Example: _add more examples covering every public symbol_
+## Example: anthropic-sdk backend, minimal roundtable
 
-_At scaffold time only the hello-world example ships. dual-docs-architect ensures coverage parity with `llm/API.md`._
+Prereqs: `pip install amatelier` — ANTHROPIC_API_KEY and GEMINI_API_KEY in environment.
+
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."
+export GEMINI_API_KEY="..."
+export AMATELIER_MODE="anthropic-sdk"
+
+amatelier config
+
+amatelier roundtable \
+  --topic "what is the most undervalued idea in open-source software?" \
+  --briefing examples/briefings/hello-world.md \
+  --max-rounds 1 \
+  --budget 1 \
+  --summary
+```
+
+Expected output:
+
+```text
+amatelier 0.2.0
+
+LLM backend
+  active mode: anthropic-sdk
+
+...
+
+TOPIC: what is the most undervalued idea in open-source software?
+ROUNDS: 1
+MESSAGES: 12
+CONVERGED: ...
+JUDGE INTERVENTIONS: ...
+BUDGET USAGE:
+  elena: spent 0/1
+  marcus: spent 0/1
+  clare: spent 0/1
+  simon: spent 0/1
+  naomi: spent 0/1
+...
+```
+
+Digest lands at `$(amatelier config | grep user_data_dir)/roundtable-server/digest-<rt_id>.json`.
+
+## Example: openrouter backend with custom model map
+
+Prereqs: `pip install amatelier` — OPENROUTER_API_KEY in environment. Custom model map pinning tiers to specific OpenRouter model IDs.
+
+```bash
+export OPENROUTER_API_KEY="sk-or-..."
+
+mkdir -p "$(amatelier config --json | python -c 'import sys,json; print(json.load(sys.stdin)["paths"]["user_data_dir"])')"
+
+cat > "$(amatelier config --json | python -c 'import sys,json; print(json.load(sys.stdin)["paths"]["user_data_dir"])')/config.json" << 'EOF'
+{
+  "llm": {
+    "mode": "openai-compat",
+    "openai_compat": {
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "model_map": {
+        "sonnet": "anthropic/claude-sonnet-4",
+        "haiku": "anthropic/claude-haiku-4-5",
+        "opus": "anthropic/claude-opus-4"
+      }
+    }
+  }
+}
+EOF
+
+amatelier config --json
+
+amatelier roundtable \
+  --topic "pros and cons of monorepos" \
+  --briefing examples/briefings/hello-world.md \
+  --max-rounds 1 \
+  --budget 1 \
+  --summary
+```
+
+Expected snippet of `amatelier config --json`:
+
+```text
+{
+  "version": "0.2.0",
+  "llm": {
+    ...
+    "active_mode": "openai-compat",
+    "explicit_override": null
+  },
+  ...
+}
+```
+
+## Example: local Ollama backend
+
+Prereqs: Ollama installed and running (https://ollama.ai). Pull a model locally first.
+
+```bash
+ollama pull llama3.1:70b
+ollama pull llama3.1:8b
+
+export AMATELIER_LLM_API_KEY="ollama"
+export AMATELIER_MODE="openai-compat"
+
+AMATELIER_USERDATA="$(amatelier config --json | python -c 'import sys,json; print(json.load(sys.stdin)["paths"]["user_data_dir"])')"
+
+cat > "$AMATELIER_USERDATA/config.json" << 'EOF'
+{
+  "llm": {
+    "mode": "openai-compat",
+    "openai_compat": {
+      "base_url": "http://localhost:11434/v1",
+      "api_key_env": "AMATELIER_LLM_API_KEY",
+      "model_map": {
+        "sonnet": "llama3.1:70b",
+        "haiku": "llama3.1:8b",
+        "opus": "llama3.1:70b"
+      }
+    }
+  }
+}
+EOF
+
+amatelier config
+amatelier roundtable \
+  --topic "what makes a good README" \
+  --briefing examples/briefings/hello-world.md \
+  --max-rounds 1 \
+  --budget 1 \
+  --skip-naomi \
+  --summary
+```
+
+Expected output line confirms openai-compat mode pointing at localhost.
+
+```text
+  active mode: openai-compat
+  ...
+  user_data_dir        ...
+```
+
+## Example: custom briefing file
+
+Prereqs: any backend configured. Create a briefing then invoke against it by path.
+
+```bash
+cat > /tmp/refactor-briefing.md << 'EOF'
+# Briefing: monolith split
+
+## Objective
+
+Decide whether splitting service X from the monolith is worth the coordination overhead.
+
+## Context
+
+- Team size: 8 engineers
+- Service X: 4k lines, 3 endpoints, shared DB with monolith
+- Deploy cadence: monolith deploys 5x/day, X changes 2x/week
+
+## Constraints
+
+- No downtime migration
+- Budget: one quarter
+
+## Success criteria
+
+Each worker proposes a split-or-stay position with at least one load-bearing tradeoff cited from the context above.
+
+## Steward-Registered Files
+
+(none — this briefing uses no external file references)
+EOF
+
+amatelier roundtable \
+  --topic "split service X from monolith, yes or no" \
+  --briefing /tmp/refactor-briefing.md \
+  --budget 3 \
+  --summary
+```
+
+Expected output: digest with 5 workers posting positions; Judge scores; skills distilled.
+
+## Example: skip Naomi, single-worker smoke test
+
+Prereqs: any Claude-compatible backend (claude-code mode or anthropic-sdk mode). No Gemini key required with `--skip-naomi`.
+
+```bash
+amatelier roundtable \
+  --topic "hello" \
+  --briefing examples/briefings/hello-world.md \
+  --workers elena \
+  --max-rounds 1 \
+  --budget 1 \
+  --skip-naomi \
+  --skip-post \
+  --summary
+```
+
+Expected output:
+
+```text
+...
+TOPIC: hello
+ROUNDS: 1
+MESSAGES: ...
+CONTRIBUTIONS:
+  elena: ...
+  judge: ...
+FINAL POSITIONS:
+  [elena]: ...
+```
+
+`--skip-post` halts after distillation — no therapist run, no store cleanup, no leaderboard update.
+
+## Example: reading the digest in Python
+
+Prereqs: at least one completed roundtable. Locate digest via `amatelier config`.
+
+```python
+import json
+from pathlib import Path
+from amatelier import paths
+
+digest_dir = paths.user_digest_dir()
+digests = sorted(digest_dir.glob("digest-*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+if not digests:
+    raise SystemExit("no digests yet — run: amatelier roundtable --topic ... --briefing ...")
+
+latest = digests[0]
+d = json.loads(latest.read_text(encoding="utf-8"))
+
+print(f"rt_id: {d.get('rt_id')}")
+print(f"topic: {d.get('topic')}")
+print(f"rounds: {d.get('rounds')}")
+print(f"converged: {d.get('converged')}")
+print(f"contributions: {d.get('contributions')}")
+for agent, pos in d.get("final_positions", {}).items():
+    print(f"  [{agent}] {pos[:120]}...")
+```
+
+Expected output (shape):
+
+```text
+rt_id: <hex>
+topic: <your topic>
+rounds: <int>
+converged: True|False
+contributions: {'elena': <int>, 'marcus': <int>, ...}
+  [elena] ...
+  [marcus] ...
+  ...
+```
+
+## Example: refresh agent seeds after a package upgrade
+
+Prereqs: `pip install --upgrade amatelier`. By default, pip upgrades do NOT touch user-edited persona files in `user_data_dir()/agents/<name>/`. Run `refresh-seeds` to pull shipped updates.
+
+```bash
+amatelier refresh-seeds --dry-run
+
+amatelier refresh-seeds --force
+```
+
+Expected output of `--dry-run`:
+
+```text
+dry run — no files written
+
+Refreshed: 0
+
+Skipped: <N>
+  [SKIP] elena/CLAUDE.md (already current)
+  [SKIP] marcus/CLAUDE.md (user-modified; use --force to overwrite)
+  ...
+```
+
+Output of `--force`:
+
+```text
+Refreshed: <N>
+  [WRITE] marcus/CLAUDE.md
+  ...
+
+Note: <M> agent(s) refreshed. Their accumulated MEMORY.md / behaviors.json / metrics.json are untouched — only the persona rules and identity seeds were overwritten.
+```
+
+Single-agent form: `amatelier refresh-seeds --agent elena --force`.
+
+## Example: programmatic LLM backend
+
+Prereqs: `pip install amatelier` and one of the supported backends configured. Useful when a calling program needs the backend abstraction but not the full roundtable orchestration.
+
+```python
+from amatelier.llm_backend import get_backend, describe_environment
+
+print(describe_environment())
+
+backend = get_backend()
+
+result = backend.complete(
+    system="You are a terse code reviewer.",
+    prompt="Review: def add(a, b): return a - b",
+    model="haiku",
+    max_tokens=200,
+    timeout=60.0,
+)
+
+print(f"backend: {result.backend}")
+print(f"model:   {result.model}")
+print(f"latency: {result.latency_ms:.0f} ms")
+print(f"tokens:  in={result.input_tokens} out={result.output_tokens}")
+print(f"text:    {result.text[:400]}")
+```
+
+Expected output (shape):
+
+```text
+{'claude-code': {'available': ..., 'detected_via': ...}, 'anthropic-sdk': {...}, ...}
+backend: anthropic-sdk
+model:   claude-haiku-4-5-20251001
+latency: <int> ms
+tokens:  in=<int> out=<int>
+text:    The function subtracts instead of adding...
+```
+
+## Example: tail a live roundtable
+
+Prereqs: a roundtable in progress (start one in another terminal with `amatelier roundtable ...`).
+
+```bash
+amatelier watch
+```
+
+Expected output: streams new chat messages as they land in `user_data_dir()/roundtable-server/roundtable.db`. Zero LLM cost — pure SQLite reads. Shows speaker name, message preview, and Judge interventions in real time. Exit with Ctrl-C.
 

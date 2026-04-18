@@ -15,7 +15,6 @@ import json
 import os
 import runpy
 import sys
-from pathlib import Path
 
 # Force UTF-8 stdout/stderr so bundled docs and any Unicode in engine
 # output render cleanly on Windows consoles (cp1252 default chokes on
@@ -29,7 +28,7 @@ for _stream in (sys.stdout, sys.stderr):
 # Importing `amatelier` runs __init__.py which sets up sys.path for
 # engine/ and store/ so bare imports inside engine modules resolve,
 # and calls ensure_user_data() to bootstrap the writable tree.
-import amatelier  # noqa: F401  (side-effect import)
+import amatelier  # noqa: E402, F401  (side-effect after UTF-8 reconfigure)
 
 DISPATCH_ENGINE = {
     "roundtable": "roundtable_runner",
@@ -48,6 +47,9 @@ def _usage() -> int:
         "  amatelier watch                Watch the live roundtable chat\n"
         "  amatelier therapist --digest PATH [--agents LIST] [--turns N]\n"
         "  amatelier analytics SUBCOMMAND\n"
+        "  amatelier refresh-seeds [--agent NAME] [--force]\n"
+        "                                 Re-copy persona seeds from the wheel\n"
+        "                                 (overwrites user_data_dir copies)\n"
         "  amatelier docs [TOPIC]         Show bundled documentation\n"
         "  amatelier config [--json]      Show detected LLM mode + paths\n"
         "  amatelier --version\n"
@@ -112,6 +114,86 @@ def _run_docs(args: list[str]) -> int:
     print(f"doc topic not found: {topic}", file=sys.stderr)
     print("Run `amatelier docs` (no args) to list available topics.", file=sys.stderr)
     return 1
+
+
+def _run_refresh_seeds(args: list[str]) -> int:
+    """Re-copy agent persona seeds (CLAUDE.md / IDENTITY.md) from the bundled
+    wheel layer into user_data_dir, overwriting any local edits.
+
+    Amatelier is fire-and-forget: pip upgrades NEVER clobber your local rule
+    edits. When you DO want the latest shipped rules (e.g. after a package
+    upgrade that improved the therapist interview framework), run this.
+    """
+    from amatelier import paths
+
+    parser = argparse.ArgumentParser(prog="amatelier refresh-seeds")
+    parser.add_argument("--agent", help="Refresh only this agent (else all)")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite local CLAUDE.md / IDENTITY.md even if modified",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would change; write nothing",
+    )
+    ns = parser.parse_args(args)
+
+    bundled_agents = paths.bundled_assets_dir() / "agents"
+    if not bundled_agents.exists():
+        print("error: bundled agents not found in this install", file=sys.stderr)
+        return 1
+
+    agent_names = [ns.agent] if ns.agent else [
+        d.name for d in sorted(bundled_agents.iterdir()) if d.is_dir()
+    ]
+
+    refreshed, skipped, written = [], [], []
+    for name in agent_names:
+        seed_dir = bundled_agents / name
+        if not seed_dir.exists():
+            print(f"warning: no bundled seed for agent '{name}'", file=sys.stderr)
+            continue
+        dst_dir = paths.user_agent_dir(name)
+        dst_dir.mkdir(parents=True, exist_ok=True)
+        for fname in ("CLAUDE.md", "IDENTITY.md"):
+            src = seed_dir / fname
+            dst = dst_dir / fname
+            if not src.exists():
+                continue
+            bundled_content = src.read_text(encoding="utf-8")
+            if dst.exists():
+                current = dst.read_text(encoding="utf-8")
+                if current == bundled_content:
+                    skipped.append(f"{name}/{fname} (already current)")
+                    continue
+                if not ns.force:
+                    skipped.append(f"{name}/{fname} (user-modified; use --force to overwrite)")
+                    continue
+            if ns.dry_run:
+                written.append(f"{name}/{fname} (would refresh)")
+            else:
+                dst.write_text(bundled_content, encoding="utf-8")
+                written.append(f"{name}/{fname}")
+                refreshed.append(name)
+
+    if ns.dry_run:
+        print("dry run — no files written\n")
+    print(f"Refreshed: {len(written)}")
+    for line in written:
+        print(f"  [WRITE] {line}")
+    if skipped:
+        print(f"\nSkipped: {len(skipped)}")
+        for line in skipped:
+            print(f"  [SKIP] {line}")
+    if ns.force and refreshed:
+        print(
+            f"\nNote: {len(set(refreshed))} agent(s) refreshed. Their accumulated "
+            "MEMORY.md / behaviors.json / metrics.json are untouched — only the "
+            "persona rules and identity seeds were overwritten."
+        )
+    return 0
 
 
 def _run_config(args: list[str]) -> int:
@@ -202,6 +284,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_docs(rest)
     if cmd == "config":
         return _run_config(rest)
+    if cmd == "refresh-seeds":
+        return _run_refresh_seeds(rest)
     if cmd in DISPATCH_ENGINE:
         return _run_engine_module(cmd, rest)
 

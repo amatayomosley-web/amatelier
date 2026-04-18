@@ -34,7 +34,12 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at **[INSERT CONTACT]**. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement using GitHub's built-in tools:
+
+- For a direct recipient of the behavior, use GitHub's [block or mute](https://docs.github.com/en/communities/maintaining-your-safety-on-github/blocking-a-user-from-your-personal-account) features to remove the immediate source.
+- To reach the maintainers privately, open a [private security advisory](https://github.com/amatayomosley-web/amatelier/security/advisories/new) (repurposed as a private channel when no public issue is appropriate) or use GitHub's [report abuse](https://docs.github.com/en/communities/maintaining-your-safety-on-github/reporting-abuse-or-spam) flow against the offending account. The repository owner (GitHub user `amatayomosley-web`) will follow up through GitHub.
+
+All complaints will be reviewed and investigated promptly and fairly.
 
 ## Attribution
 
