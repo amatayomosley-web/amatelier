@@ -57,3 +57,43 @@ You should receive an acknowledgement within **48 hours**. After the initial rep
 - Secret scanning with push protection enabled
 - CodeQL static analysis runs on every PR
 - Signed releases via sigstore/cosign
+- Steward credential denylist — `.env`, `.ssh/`, `.aws/`, `*.pem`,
+  `*.key`, token/secret patterns blocked at `read_file()` even when
+  path containment passes
+- Steward result truncation at 4 KB before digest persistence
+- Runtime consent gate — first `amatelier roundtable` call prompts
+  for explicit consent (or honors `AMATELIER_STEWARD_CONSENT=1` in CI)
+
+## Subagent Permission Inheritance (operational security note)
+
+When you run `amatelier roundtable`, the runner spawns several
+subprocesses (workers Elena/Marcus/Clare/Simon/Naomi, the Judge, and
+the Steward). These subprocesses **inherit the Claude Code permission
+context of the working directory the runner was launched from** —
+specifically:
+
+- Worker/judge spawn via `subprocess.Popen([python, engine/claude_agent.py, ...])` from the runner's CWD
+- When those subprocesses invoke `claude` (claude-code mode), Claude
+  Code reads `.claude/settings.json` and `.claude/settings.local.json`
+  **relative to the spawning CWD**, not relative to `AMATELIER_WORKSPACE`
+- The Steward runs with `--allowedTools Read,Grep,Glob[,WebFetch,WebSearch]`
+  and `--dangerously-skip-permissions` — its filesystem reach is the
+  CWD's workspace, not a separate sandbox
+
+**Practical implications for users running RTs:**
+
+1. If you run amatelier from a directory whose `.claude/settings.local.json`
+   grants broad `Read`/`Edit`/`Write` permissions, subagents inherit
+   that reach. A compromised briefing can prompt-inject workers into
+   reading anything those permissions allow.
+2. Set `AMATELIER_WORKSPACE` to a clean, bounded subdirectory for
+   audit / untrusted-briefing RTs.
+3. The credential denylist + truncation + consent gate defend against
+   the most common exfiltration paths (reading `.env`, writing
+   full-file contents to the RT digest) but do not replace proper
+   workspace isolation.
+4. Do not run amatelier from your home directory or project root if
+   the directory contains secrets you don't want the model to see.
+
+This is the same security posture as running `claude` directly —
+subagents are not a separate sandbox.

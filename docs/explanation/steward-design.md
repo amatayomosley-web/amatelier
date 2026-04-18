@@ -168,3 +168,31 @@ Briefings without this section → Steward disabled for that RT.
 3. **Empirically grounded convergence** — RT outcomes reference real data
 4. **Judge can verify** — every cited number has a traceable extract in the Steward log
 5. **No debate stalling** — async dispatch + defer-to-back keeps the conversation moving
+
+## Permission inheritance (operational)
+
+The Steward is **not** a separate sandbox. Like the worker and judge
+subagents the runner spawns, it inherits the Claude Code permission
+context of the working directory where the runner was launched from.
+Concretely:
+
+- `spawn_steward_subagent()` calls `subprocess.run(["claude", ...,
+  "--allowedTools", "Read,Grep,Glob", "--dangerously-skip-permissions"])`
+  with `cwd=WORKSPACE_ROOT`
+- When the Claude CLI starts, it reads `.claude/settings.json` +
+  `.claude/settings.local.json` from the spawning CWD — not from
+  `AMATELIER_WORKSPACE`
+- `WORKSPACE_ROOT` resolves from the `AMATELIER_WORKSPACE` env var or
+  the installed package location's ancestor; typically it equals the
+  directory the user ran `amatelier roundtable` from
+- The credential denylist in `engine/steward_tools.py` defends the
+  anthropic-sdk tool-use path; the claude-code CLI path relies on the
+  Claude CLI's own Read tool and any `.claude/settings*.json` rules
+  present in the spawning folder
+
+**For users auditing untrusted briefings:** run amatelier from a
+clean workspace folder with narrow permission grants. The denylist +
+truncation + consent gate defend common leak paths, but
+prompt-injected agents still inherit whatever filesystem reach the
+spawning folder's permissions allow. See `SECURITY.md` for the full
+operational posture.
