@@ -95,6 +95,24 @@ Output as JSON array matching input order:
 CONCEPTS:
 {json.dumps(items, indent=2)}"""
 
+    # Try backend first (open-mode support: anthropic-sdk / openai-compat)
+    try:
+        from amatelier.llm_backend import get_backend
+        backend = get_backend()
+        if backend.name != "claude-code":
+            res = backend.complete(
+                system="", prompt=prompt, model="sonnet",
+                max_tokens=8000, timeout=120,
+            )
+            raw = (res.text or "").strip()
+            js, je = raw.find("["), raw.rfind("]") + 1
+            if js >= 0 and je > js:
+                return json.loads(raw[js:je])
+            logger.warning("Classification backend call returned non-JSON")
+            return []
+    except Exception as e:
+        logger.debug("Backend unavailable for classify, falling back to CLI: %s", e)
+
     try:
         env = os.environ.copy()
         env["PYTHONIOENCODING"] = "utf-8"

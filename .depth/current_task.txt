@@ -1,1 +1,1 @@
-manual-ci-local
+backend-delegation

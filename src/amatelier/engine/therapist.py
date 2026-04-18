@@ -636,7 +636,29 @@ STORE:
 # ── LLM Calls ───────────────────────────────────────────────────────────────
 
 def _call_llm(prompt: str, model: str) -> str:
-    """One-shot LLM call via Claude CLI."""
+    """One-shot LLM call.
+
+    Routes through llm_backend when in open mode (anthropic-sdk / openai-compat),
+    else shells out to the Claude CLI preserving all original flags.
+    """
+    # Try backend first
+    try:
+        from amatelier.llm_backend import get_backend
+        backend = get_backend()
+        if backend.name != "claude-code":
+            res = backend.complete(
+                system="", prompt=prompt, model=model,
+                max_tokens=8000, timeout=180,
+            )
+            text = (res.text or "").strip()
+            if text:
+                return text
+            raise RuntimeError(f"{model} backend returned empty response")
+    except RuntimeError:
+        raise
+    except Exception as e:
+        logger.debug("Backend unavailable for therapist call, falling back to CLI: %s", e)
+
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
     result = subprocess.run(

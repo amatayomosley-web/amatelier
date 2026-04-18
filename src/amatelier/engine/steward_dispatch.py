@@ -284,6 +284,31 @@ def spawn_steward_subagent(
         }
     })
 
+    # Steward requires a tool-using subagent (Read/Grep/Glob). This capability
+    # is specific to the Claude CLI's agent spawning — it cannot be replicated
+    # through the Anthropic SDK or OpenAI-compatible endpoints without a full
+    # tool-use implementation. In open mode, degrade gracefully.
+    try:
+        from amatelier.llm_backend import get_backend
+        backend = get_backend()
+        if backend.name != "claude-code":
+            logger.info(
+                "Steward unavailable in %s mode — returning degradation message",
+                backend.name,
+            )
+            return {
+                "status": "unavailable",
+                "result": (
+                    "Steward subagent lookups require claude-code mode "
+                    "(tool-using agent spawning). Set AMATELIER_MODE=claude-code "
+                    "and install the Claude CLI, or proceed without empirical "
+                    "grounding via [[request: ...]] tags for this backend."
+                ),
+                "elapsed_s": 0.0,
+            }
+    except Exception as e:
+        logger.debug("Backend probe failed, proceeding to CLI path: %s", e)
+
     cmd = [
         "claude",
         "-p",

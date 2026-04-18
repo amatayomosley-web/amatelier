@@ -161,74 +161,89 @@ Output as JSON array:
 TRANSCRIPT:
 {transcript_text}"""
 
+    # Obtain raw response via backend (open-mode) or CLI subprocess (claude-code).
+    # In claude-code mode, preserve the original subprocess flags (--max-budget-usd,
+    # --no-session-persistence, etc). In open mode, delegate through llm_backend.
+    raw: str | None = None
     try:
-        env = os.environ.copy()
-        env["PYTHONIOENCODING"] = "utf-8"
-        result = subprocess.run(
-            ["claude", "-p", "--model", "sonnet",
-             "--no-session-persistence", "--output-format", "text",
-             "--disable-slash-commands", "--dangerously-skip-permissions",
-             "--max-budget-usd", "5.00"],
-            input=prompt, capture_output=True, text=True, timeout=180,
-            encoding="utf-8", errors="replace", env=env,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            raw = result.stdout.strip()
-            json_start = raw.find("[")
-            json_end = raw.rfind("]") + 1
-            if json_start >= 0 and json_end > json_start:
-                skills = json.loads(raw[json_start:json_end])
-
-                # Save to digest
-                data["distilled_skills"] = {"skills": skills, "count": len(skills), "model": "sonnet"}
-                digest_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-
-                # Append DERIVE skills to novel concepts database
-                _append_novel_concepts(skills, rt_id, topic)
-
-                # Save to shared index only — Admin curates and assigns to agents
-                saved = 0
-                for skill in skills:
-                    entry = create_skill_entry(
-                        skill_type=skill.get("type", "DERIVE"),
-                        title=skill.get("title", ""),
-                        context=topic,
-                        pattern=skill.get("pattern", ""),
-                        when_to_apply=skill.get("when_to_apply", ""),
-                        source_roundtable=rt_id,
-                        source_agent=skill.get("agent", ""),
-                    )
-                    if not entry:
-                        continue  # rejected by judge gate or duplicate
-
-                    # Add to shared index for Admin curation
-                    index = load_index()
-                    index.append({
-                        "id": entry["id"],
-                        "type": entry["type"],
-                        "title": entry["title"],
-                        "context": entry.get("context", ""),
-                        "source_agent": skill.get("agent", ""),
-                        "recurrence_count": 0,
-                    })
-                    save_index(index)
-                    saved += 1
-
-                return {"rt_id": rt_id, "extracted": len(skills), "saved": saved, "status": "ok"}
-            else:
-                data["distilled_skills"] = {"skills": [], "error": "non-json"}
-                digest_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-                return {"rt_id": rt_id, "extracted": 0, "saved": 0, "status": "non-json"}
-        else:
-            data["distilled_skills"] = {"skills": [], "error": f"exit {result.returncode}"}
-            digest_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-            return {"rt_id": rt_id, "extracted": 0, "saved": 0, "status": f"exit-{result.returncode}"}
-    except subprocess.TimeoutExpired:
-        data["distilled_skills"] = {"skills": [], "error": "timeout"}
-        digest_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-        return {"rt_id": rt_id, "extracted": 0, "saved": 0, "status": "timeout"}
+        from amatelier.llm_backend import get_backend
+        backend = get_backend()
+        if backend.name != "claude-code":
+            res = backend.complete(
+                system="", prompt=prompt, model="sonnet",
+                max_tokens=8000, timeout=180,
+            )
+            raw = (res.text or "").strip() or None
     except Exception as e:
-        logger.error("Distillation error for %s: %s", rt_id, e)
+        logger.debug("Backend unavailable for distill, falling back to CLI: %s", e)
+
+    if raw is None:
+        try:
+            env = os.environ.copy()
+            env["PYTHONIOENCODING"] = "utf-8"
+            result = subprocess.run(
+                ["claude", "-p", "--model", "sonnet",
+                 "--no-session-persistence", "--output-format", "text",
+                 "--disable-slash-commands", "--dangerously-skip-permissions",
+                 "--max-budget-usd", "5.00"],
+                input=prompt, capture_output=True, text=True, timeout=180,
+                encoding="utf-8", errors="replace", env=env,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                raw = result.stdout.strip()
+            else:
+                data["distilled_skills"] = {"skills": [], "error": f"exit {result.returncode}"}
+                digest_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                return {"rt_id": rt_id, "extracted": 0, "saved": 0, "status": f"exit-{result.returncode}"}
+        except subprocess.TimeoutExpired:
+            data["distilled_skills"] = {"skills": [], "error": "timeout"}
+            digest_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+            return {"rt_id": rt_id, "extracted": 0, "saved": 0, "status": "timeout"}
+        except Exception as e:
+            logger.error("Distillation error for %s: %s", rt_id, e)
+            return {"rt_id": rt_id, "extracted": 0, "saved": 0, "status": f"error: {e}"}
+
+    # raw is guaranteed non-None beyond this point
+    try:
+        json_start = raw.find("[")
+        json_end = raw.rfind("]") + 1
+        if json_start < 0 or json_end <= json_start:
+            data["distilled_skills"] = {"skills": [], "error": "non-json"}
+            digest_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+            return {"rt_id": rt_id, "extracted": 0, "saved": 0, "status": "non-json"}
+
+        skills = json.loads(raw[json_start:json_end])
+        data["distilled_skills"] = {"skills": skills, "count": len(skills), "model": "sonnet"}
+        digest_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        _append_novel_concepts(skills, rt_id, topic)
+
+        saved = 0
+        for skill in skills:
+            entry = create_skill_entry(
+                skill_type=skill.get("type", "DERIVE"),
+                title=skill.get("title", ""),
+                context=topic,
+                pattern=skill.get("pattern", ""),
+                when_to_apply=skill.get("when_to_apply", ""),
+                source_roundtable=rt_id,
+                source_agent=skill.get("agent", ""),
+            )
+            if not entry:
+                continue
+            index = load_index()
+            index.append({
+                "id": entry["id"],
+                "type": entry["type"],
+                "title": entry["title"],
+                "context": entry.get("context", ""),
+                "source_agent": skill.get("agent", ""),
+                "recurrence_count": 0,
+            })
+            save_index(index)
+            saved += 1
+        return {"rt_id": rt_id, "extracted": len(skills), "saved": saved, "status": "ok"}
+    except Exception as e:
+        logger.error("Distillation parse error for %s: %s", rt_id, e)
         return {"rt_id": rt_id, "extracted": 0, "saved": 0, "status": f"error: {e}"}
 
 

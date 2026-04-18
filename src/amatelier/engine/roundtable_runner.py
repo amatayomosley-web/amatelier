@@ -324,6 +324,21 @@ ROUND {round_num} TRANSCRIPT:
 
 {transcript_text}"""
 
+    # Try backend first (open-mode support); fall through to CLI for claude-code
+    try:
+        from amatelier.llm_backend import get_backend
+        backend = get_backend()
+        if backend.name != "claude-code":
+            res = backend.complete(
+                system="", prompt=prompt, model="haiku",
+                max_tokens=4000, timeout=120,
+            )
+            text = (res.text or "").strip()
+            if text:
+                return text
+    except Exception as e:
+        logger.debug("Backend unavailable for haiku summary, falling back to CLI: %s", e)
+
     try:
         env = os.environ.copy()
         env["PYTHONIOENCODING"] = "utf-8"
@@ -1418,34 +1433,50 @@ Output as JSON array:
 TRANSCRIPT:
 {transcript_text}"""
 
+    # Try backend first (open-mode support); fall through to CLI for claude-code
+    raw: str | None = None
     try:
-        env = os.environ.copy()
-        env["PYTHONIOENCODING"] = "utf-8"
-        result = subprocess.run(
-            ["claude", "-p", "--model", "sonnet",
-             "--no-session-persistence", "--output-format", "text",
-             "--disable-slash-commands", "--dangerously-skip-permissions",
-             "--max-budget-usd", "5.00"],
-            input=prompt, capture_output=True, text=True, timeout=180,
-            cwd=str(WORKSPACE_ROOT), encoding="utf-8", errors="replace", env=env,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            raw = result.stdout.strip()
-            # Try to parse JSON from the response (may be wrapped in markdown)
-            json_start = raw.find("[")
-            json_end = raw.rfind("]") + 1
-            if json_start >= 0 and json_end > json_start:
-                skills = json.loads(raw[json_start:json_end])
-                logger.info("Sonnet extracted %d raw skill candidates for RT %s", len(skills), rt_id)
-                return {"skills": skills, "count": len(skills), "model": "sonnet"}
+        from amatelier.llm_backend import get_backend
+        backend = get_backend()
+        if backend.name != "claude-code":
+            res = backend.complete(
+                system="", prompt=prompt, model="sonnet",
+                max_tokens=8000, timeout=180,
+            )
+            raw = (res.text or "").strip() or None
+    except Exception as e:
+        logger.debug("Backend unavailable for distill, falling back to CLI: %s", e)
+
+    if raw is None:
+        try:
+            env = os.environ.copy()
+            env["PYTHONIOENCODING"] = "utf-8"
+            result = subprocess.run(
+                ["claude", "-p", "--model", "sonnet",
+                 "--no-session-persistence", "--output-format", "text",
+                 "--disable-slash-commands", "--dangerously-skip-permissions",
+                 "--max-budget-usd", "5.00"],
+                input=prompt, capture_output=True, text=True, timeout=180,
+                cwd=str(WORKSPACE_ROOT), encoding="utf-8", errors="replace", env=env,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                raw = result.stdout.strip()
             else:
-                logger.warning("Sonnet skill extraction returned non-JSON output")
-                return {"skills": [], "raw_output": raw[:500], "error": "non-json"}
-        logger.warning("Sonnet skill extraction failed (exit %d)", result.returncode)
-        return {"skills": [], "error": f"exit code {result.returncode}"}
-    except subprocess.TimeoutExpired:
-        logger.error("Sonnet skill extraction timed out (180s) for RT %s", rt_id)
-        return {"skills": [], "error": "timeout"}
+                logger.warning("Sonnet skill extraction failed (exit %d)", result.returncode)
+                return {"skills": [], "error": f"exit code {result.returncode}"}
+        except subprocess.TimeoutExpired:
+            logger.error("Sonnet skill extraction timed out (180s) for RT %s", rt_id)
+            return {"skills": [], "error": "timeout"}
+
+    try:
+        json_start = raw.find("[")
+        json_end = raw.rfind("]") + 1
+        if json_start >= 0 and json_end > json_start:
+            skills = json.loads(raw[json_start:json_end])
+            logger.info("Sonnet extracted %d raw skill candidates for RT %s", len(skills), rt_id)
+            return {"skills": skills, "count": len(skills), "model": "sonnet"}
+        logger.warning("Sonnet skill extraction returned non-JSON output")
+        return {"skills": [], "raw_output": raw[:500], "error": "non-json"}
     except Exception as e:
         logger.error("Sonnet skill extraction error: %s", e)
         return {"skills": [], "error": str(e)}
