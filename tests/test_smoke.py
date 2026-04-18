@@ -15,7 +15,7 @@ import pytest
 def test_package_imports() -> None:
     import amatelier
 
-    assert amatelier.__version__ == "0.3.0"
+    assert amatelier.__version__ == "0.4.0"
     assert amatelier.AMATELIER_ROOT.exists()
     assert amatelier.REPO_ROOT.exists()
 
@@ -51,10 +51,15 @@ def test_config_json_schema() -> None:
     from amatelier import paths
 
     data = json.loads(paths.bundled_config().read_text(encoding="utf-8"))
-    assert data["version"] == "0.3.0"
+    assert data["version"] == "0.4.0"
     assert "llm" in data
     assert data["llm"]["mode"] in ("auto", "claude-code", "anthropic-sdk", "openai-compat")
-    assert set(data["team"]["workers"].keys()) == {"elena", "marcus", "clare", "simon", "naomi"}
+    # Filter comment keys (prefixed _) — per worker_registry filtering logic.
+    worker_names = {
+        k for k in data["team"]["workers"]
+        if not k.startswith("_") and isinstance(data["team"]["workers"][k], dict)
+    }
+    assert worker_names == {"elena", "marcus", "clare", "simon", "naomi"}
 
 
 def test_llm_backend_describe() -> None:
@@ -97,7 +102,7 @@ def test_cli_version(capsys: pytest.CaptureFixture[str]) -> None:
     exit_code = main(["--version"])
     assert exit_code == 0
     captured = capsys.readouterr()
-    assert "0.3.0" in captured.out
+    assert "0.4.0" in captured.out
 
 
 def test_cli_help(capsys: pytest.CaptureFixture[str]) -> None:

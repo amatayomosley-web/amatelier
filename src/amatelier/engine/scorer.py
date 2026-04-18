@@ -501,7 +501,7 @@ if __name__ == "__main__":
     sub = parser.add_subparsers(dest="command")
 
     p_score = sub.add_parser("score", help="Score an agent's roundtable contribution")
-    p_score.add_argument("agent", help="Agent name (e.g. elena, marcus)")
+    p_score.add_argument("agent", help="Agent name (any configured worker)")
     p_score.add_argument("novelty", type=int, help="Novelty score (0-3 or 10)")
     p_score.add_argument("accuracy", type=int, help="Accuracy score (0-3 or 10)")
     p_score.add_argument("impact", type=int, help="Impact score (0-3 or 10)")

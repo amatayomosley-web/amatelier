@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-04-18
+
+### Added
+- **Roster-agnostic engine.** Worker list is now read from
+  `config.team.workers` at runtime via the new `amatelier.worker_registry`
+  module. Add/remove/rename workers without editing engine code.
+- **`amatelier team` CLI** with six subcommands:
+  - `list` — show current roster with models, backends, roles
+  - `new <name> [--model M] [--backend B] [--role R] [--from-template T]`
+  - `remove <name> [--delete-folder]`
+  - `import <template>` — load a starter roster
+  - `templates` — list available starter rosters
+  - `validate` — check roster integrity (folders, required files, backends)
+- **Backend field in `config.team.workers`** — each worker declares
+  `"backend": "claude" | "gemini" | "openai-compat"`. The runner's
+  `_launch_claude` vs `_launch_gemini` dispatch now reads this field
+  instead of checking `agent_name == "naomi"`. Multiple Gemini-backed
+  workers are now supported (the "naomi-as-gemini" conflation is removed).
+- **`--skip-agent <name>` CLI flag** (repeatable) to omit any specific
+  worker per-RT. `--skip-naomi` remains as a back-compat alias that
+  filters all gemini-backed workers.
+- **Three starter roster templates** at
+  `src/amatelier/agents/templates/`:
+  - `curated-five/` — the v0.3 default team (Elena/Marcus/Clare/Simon/Naomi)
+  - `minimal/` — 2-agent starter (alpha Sonnet + beta Haiku)
+  - `empty/` — admin/judge/therapist only; users build their own workers
+- **MockBackend** (`amatelier.llm_backend.MockBackend`) — deterministic
+  test backend activated via `AMATELIER_MODE=mock`. Returns canned
+  completions + tool-use round-trips without network calls. Enables the
+  integration tests Marcus's Open-mode RT asked for and Gemini's code
+  review recommended.
+- **New docs:** `docs/guides/define-your-team.md` (customization walkthrough),
+  `docs/explanation/designing-agents.md` (teaching material behind the 5
+  curated archetypes), `DESIGN.md` files per curated agent.
+
+### Changed
+- **BREAKING for custom code depending on hardcoded worker constants:**
+  `roundtable_runner.DEFAULT_WORKERS` is now `[]` and `DEFAULT_MODELS` is
+  now `{}`. Code that imported these and expected the v0.3 curated-five
+  names must migrate to `worker_registry.list_workers()`.
+- Engine files (`roundtable_runner`, `evolver`, `therapist`,
+  `backfill_distill`, `agent_memory`) no longer hardcode worker names.
+  All dynamic lookups route through `worker_registry`.
+- README rewritten with a two-path table: "Try it out" (curated-five)
+  vs "Build your own team" (framework).
+- `--skip-naomi` preserved as backcompat alias; preferred flag is
+  `--skip-agent <name>` which works for any worker.
+
+### Acknowledged / Deferred
+- Per Gemini code review (2026-04-18):
+  - **Cross-provider tool-use schema translation** (Gemini #1) — OpenAI-compat
+    still returns `{"status": "unavailable"}` for Steward. Tracked for v0.5.0+.
+  - **Runner modularization** into SetupPhase/DiscussionPhase/DigestPhase
+    (Gemini #2) — large refactor, separated from this release. Tracked
+    for v0.5.0.
+  - **pydantic-settings** env var consolidation (Gemini #3) — valid
+    direction, deferred. Tracked for v0.5.0+.
+- Open-mode RT follow-ups (d29eab18f423):
+  - Marcus's 5 mock tests now partly addressed by the new MockBackend
+    test harness; deeper engine-path tests tracked for v0.4.1+.
+
 ## [0.3.0] — 2026-04-18
 
 ### Documentation

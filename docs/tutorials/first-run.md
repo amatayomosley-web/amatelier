@@ -185,8 +185,34 @@ The digest is JSON. Open it and read the `summary`, `scores`, and `turns` keys. 
 
 A fully captured roundtable lives at [`examples/sessions/2026-04-18-self-host-vs-api/`](https://github.com/amatayomosley-web/amatelier/tree/main/examples/sessions/2026-04-18-self-host-vs-api/). Four SVG screenshots, a 54-message transcript, the structured digest, and a README explaining what to look for — including a real Judge GATE awarded to marcus for reframing the self-host decision.
 
+## Next: customize your team
+
+You just ran a roundtable with the default five workers (Elena, Marcus, Clare, Simon, Naomi). That roster is tuned for generalist debate, but amatelier is fully roster-agnostic — you can add, remove, or replace workers at any time.
+
+Check the current roster:
+
+```bash
+amatelier team list
+```
+
+Add a custom worker:
+
+```bash
+amatelier team new nova --model sonnet --role "Fast prototyper. Proposes working implementations."
+```
+
+Swap to a smaller two-voice team for cheaper experiments:
+
+```bash
+amatelier team import minimal
+```
+
+For the full walkthrough — when to customize, how to design a persona, which model to pick, which backend works — read the [Define your team](../guides/define-your-team.md) guide. For the theory of why the curated five look the way they do, read [Designing agents](../explanation/designing-agents.md).
+
 ## Next steps
 
+- [Define your team](../guides/define-your-team.md) — add custom workers, import starter rosters
+- [Designing agents](../explanation/designing-agents.md) — the five archetypes and how to build your own
 - [Configure a different backend](../guides/configure-backend.md) — OpenAI, OpenRouter, local Ollama
 - [Architecture](../explanation/architecture.md) — how the runner, Judge, and Therapist fit together
 - [Spark economy](../reference/protocols/spark-economy.md) — how scores turn into agent currency

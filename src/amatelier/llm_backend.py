@@ -518,6 +518,88 @@ class OpenAICompatBackend:
         )
 
 
+# ── Mock backend (deterministic, no network) ─────────────────────────────────
+
+
+@dataclass
+class MockBackend:
+    """Deterministic test backend — never hits the network.
+
+    Activate via ``AMATELIER_MODE=mock``. Returns canned completions that
+    let engine code run through its paths (spawn workers, score, distill,
+    therapist debrief) without API keys or network traffic.
+
+    Enables the integration tests called out in the Gemini code review
+    (2026-04-18) and by Marcus in the Open-mode RT (d29eab18f423). Also
+    useful for contributor onboarding — anyone can run the test suite.
+
+    The default completions are intentionally dull: a non-empty string
+    plus a JSON-shaped object when ``json_mode=True``. Tests that need
+    richer behavior can monkey-patch ``default_text`` or subclass.
+    """
+
+    name: str = "mock"
+    default_text: str = "mock completion"
+    default_json_text: str = '{"status": "mock", "note": "deterministic test response"}'
+    fixed_latency_ms: float = 1.0
+
+    @classmethod
+    def available(cls) -> bool:
+        return os.environ.get("AMATELIER_MODE", "").strip().lower() == "mock"
+
+    def complete(
+        self,
+        *,
+        system: str,
+        prompt: str,
+        model: str,
+        max_tokens: int = 8000,
+        timeout: float = 300.0,
+        effort: str | None = None,
+        json_mode: bool = False,
+    ) -> Completion:
+        del system, timeout, effort  # unused for mock
+        text = self.default_json_text if json_mode else self.default_text
+        return Completion(
+            text=text,
+            model=f"mock:{model}",
+            backend=self.name,
+            latency_ms=self.fixed_latency_ms,
+            input_tokens=len(prompt) // 4,
+            output_tokens=len(text) // 4,
+        )
+
+    def complete_with_tools(
+        self,
+        *,
+        system: str,
+        user: str,
+        tools: list[dict],
+        tool_executor,
+        model: str = "sonnet",
+        max_tokens: int = 4000,
+        timeout: float = 180.0,
+        max_iterations: int = 10,
+    ) -> Completion:
+        """Deterministic tool-use loop: call each tool once with empty input,
+        concatenate results, return."""
+        del system, user, max_tokens, timeout, max_iterations  # unused
+        parts: list[str] = []
+        for t in tools[:3]:  # cap: don't let a huge tool list blow up tests
+            try:
+                result = tool_executor(t.get("name", ""), {})
+                parts.append(f"[{t.get('name')}] {str(result)[:200]}")
+            except Exception as e:  # noqa: BLE001
+                parts.append(f"[{t.get('name')}] error: {e}")
+        text = "\n".join(parts) if parts else self.default_text
+        return Completion(
+            text=text,
+            model=f"mock:{model}",
+            backend=self.name,
+            latency_ms=self.fixed_latency_ms,
+        )
+
+
 # ── Selection logic ───────────────────────────────────────────────────────────
 
 
@@ -536,6 +618,9 @@ def _load_config() -> dict:
 
 def _auto_detect() -> str:
     """Return the best available mode based on environment."""
+    # MockBackend is opt-in via AMATELIER_MODE=mock — never auto-detects.
+    if MockBackend.available():
+        return "mock"
     if ClaudeCLIBackend.available():
         return "claude-code"
     if AnthropicSDKBackend.available():
@@ -585,6 +670,9 @@ def get_backend() -> LLMBackend:
     """Return a singleton backend instance configured for the current env."""
     cfg = _load_config().get("llm", {})
     mode = resolve_mode()
+
+    if mode == "mock":
+        return MockBackend()
 
     if mode == "claude-code":
         model_map = cfg.get("model_map", {}) or CLAUDE_DEFAULT_MAP
@@ -649,6 +737,7 @@ __all__ = [
     "ClaudeCLIBackend",
     "AnthropicSDKBackend",
     "OpenAICompatBackend",
+    "MockBackend",
     "get_backend",
     "resolve_mode",
     "describe_environment",

@@ -1,14 +1,14 @@
 """Spark Store — purchase items, equip skills, manage marketplace listings.
 
 Usage:
-    python engine/store.py list                         # Show full catalog
-    python engine/store.py list --category skills       # Show one category
-    python engine/store.py buy elena debate-tactics      # Purchase an item
-    python engine/store.py inventory elena               # Show what an agent owns
-    python engine/store.py afford elena                  # Show what an agent can afford
-    python engine/store.py request elena public "Need a testing framework skill"
-    python engine/store.py bulletin                      # Show public requests
-    python engine/store.py history elena                 # Purchase history
+    python engine/store.py list                              # Show full catalog
+    python engine/store.py list --category skills            # Show one category
+    python engine/store.py buy <worker> debate-tactics       # Purchase an item
+    python engine/store.py inventory <worker>                # Show what an agent owns
+    python engine/store.py afford <worker>                   # Show what an agent can afford
+    python engine/store.py request <worker> public "Need a testing framework skill"
+    python engine/store.py bulletin                          # Show public requests
+    python engine/store.py history <worker>                  # Purchase history
 
 Called by the Therapist during sessions to process agent requests.
 """

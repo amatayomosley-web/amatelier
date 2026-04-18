@@ -8,7 +8,7 @@ per session. Outcomes are parsed and applied via evolver.py / scorer.py.
 
 Usage (standalone):
     python engine/therapist.py --digest roundtable-server/digest-abc123.json
-    python engine/therapist.py --digest roundtable-server/digest-abc123.json --agents elena,marcus
+    python engine/therapist.py --digest roundtable-server/digest-abc123.json --agents <a>,<b>
     python engine/therapist.py --digest roundtable-server/digest-abc123.json --turns 3
 
 Called automatically by roundtable_runner.py after scoring.
@@ -187,7 +187,8 @@ def _update_case_notes(agent_name: str, notes: dict, conversation: list[dict],
 
     # Extract relationship notes from the conversation (who they mentioned, how)
     agent_msgs = [m["message"] for m in conversation if m["role"] == agent_name]
-    for other in ["elena", "marcus", "clare", "simon", "naomi"]:
+    from amatelier import worker_registry
+    for other in worker_registry.list_workers():
         if other == agent_name:
             continue
         for msg in agent_msgs:
@@ -1089,15 +1090,24 @@ def _mark_private_requests_addressed(agent_name: str, resolution: str = "address
 def _resolve_agent_model(agent_name: str) -> str:
     """Resolve which model to use for the agent in the debrief.
 
-    Duplicates tier-model logic locally to avoid circular import from roundtable_runner.
+    v0.4.0: reads backend + model from worker_registry. Gemini-backed agents
+    debrief with gemini; other backends default to the worker's configured
+    model alias or "sonnet" if none.
     """
-    if agent_name == "naomi":
+    from amatelier import worker_registry
+
+    if worker_registry.get_worker_backend(agent_name) == "gemini":
         return "gemini"
 
-    default_models = {"elena": "sonnet", "marcus": "sonnet", "clare": "haiku", "simon": "haiku"}
     tier_model_map = {0: None, 1: None, 2: "sonnet", 3: "opus"}
 
-    default = default_models.get(agent_name, "sonnet")
+    # Pull default from config via worker_registry (falls back to "sonnet")
+    default = worker_registry.get_worker_model(agent_name, default="sonnet")
+    # Normalize full model IDs to aliases where possible (sonnet/haiku/opus)
+    for alias in ("opus", "sonnet", "haiku"):
+        if alias in default:
+            default = alias
+            break
     metrics_path = WRITE_ROOT / "agents" / agent_name / "metrics.json"
     if not metrics_path.exists():
         return default

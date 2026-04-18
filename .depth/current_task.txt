@@ -1,1 +1,1 @@
-openmode-fixes-v1
+v0.4.0-roster-agnostic

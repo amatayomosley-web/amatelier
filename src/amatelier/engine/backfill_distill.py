@@ -36,7 +36,16 @@ except Exception:
     WRITE_ROOT = SUITE_ROOT
 
 DIGEST_DIR = WRITE_ROOT / "roundtable-server"
-VALID_AGENTS = {"elena", "marcus", "clare", "simon", "naomi"}
+
+
+def _valid_agents() -> set[str]:
+    """Config-driven set of currently-configured worker names (v0.4.0)."""
+    from amatelier import worker_registry
+    return set(worker_registry.list_workers())
+
+
+# Backcompat alias — prefer _valid_agents() for new code.
+VALID_AGENTS = _valid_agents()
 
 
 def _append_novel_concepts(skills: list[dict], rt_id: str, topic: str) -> int:
@@ -139,12 +148,15 @@ def distill_one(digest_path: Path) -> dict:
     if len(transcript_text) > 50000:
         transcript_text = transcript_text[:50000] + "\n\n[TRANSCRIPT TRUNCATED]"
 
+    from amatelier import worker_registry
+    worker_names = worker_registry.list_workers()
+    worker_list_str = ", ".join(worker_names) if worker_names else "(no workers configured)"
     prompt = f"""Extract concrete, reusable skills from this roundtable transcript.
 
 For each skill, provide:
 - **Title**: Short descriptive name
 - **Type**: CAPTURE (observed technique), FIX (anti-pattern correction), or DERIVE (synthesized from multiple contributions)
-- **Agent**: Who originated it — use lowercase name (elena, marcus, clare, simon, naomi). For collaborative skills, pick the primary contributor.
+- **Agent**: Who originated it — use the lowercase worker name ({worker_list_str}). For collaborative skills, pick the primary contributor.
 - **Pattern**: The specific technique — what was done, with file/line references where available
 - **When to Apply**: Concrete conditions where this skill is useful beyond this specific discussion
 
@@ -152,11 +164,11 @@ Rules:
 - Only extract skills that are REUSABLE in future discussions/work — skip topic-specific observations
 - Each skill must have a filled Pattern and When to Apply — no empty fields
 - Cite specific files, functions, or line numbers from the transcript where possible
-- Agent field MUST be a single lowercase name from: elena, marcus, clare, simon, naomi
+- Agent field MUST be a single lowercase name from: {worker_list_str}
 - Target 10-15 skills. Quality over quantity.
 
 Output as JSON array:
-[{{"title": "...", "type": "CAPTURE|FIX|DERIVE", "agent": "elena|marcus|clare|simon|naomi", "pattern": "...", "when_to_apply": "..."}}]
+[{{"title": "...", "type": "CAPTURE|FIX|DERIVE", "agent": "<one of the configured workers>", "pattern": "...", "when_to_apply": "..."}}]
 
 TRANSCRIPT:
 {transcript_text}"""

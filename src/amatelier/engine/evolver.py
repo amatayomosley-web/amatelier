@@ -472,7 +472,8 @@ if __name__ == "__main__":
         sync_skills_owned(args.agent)
         print(json.dumps({"synced": True, "agent": args.agent}))
     elif args.command == "sync-all-skills":
-        all_agents = ["elena", "marcus", "clare", "simon", "naomi"]
+        from amatelier import worker_registry
+        all_agents = worker_registry.list_workers()
         for a in all_agents:
             sync_skills_owned(a)
         print(json.dumps({"synced": True, "agents": all_agents}))
@@ -483,7 +484,8 @@ if __name__ == "__main__":
         result = decay_behaviors(args.agent, args.rt)
         print(json.dumps(result))
     elif args.command == "decay-all":
-        all_agents = ["elena", "marcus", "clare", "simon", "naomi"]
+        from amatelier import worker_registry
+        all_agents = worker_registry.list_workers()
         results = {}
         for a in all_agents:
             results[a] = decay_behaviors(a, args.rt)

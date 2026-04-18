@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "llm": {
     "mode": "auto",
     "note": "auto | claude-code | anthropic-sdk | openai-compat. Auto picks the first available: claude CLI on PATH > ANTHROPIC_API_KEY > OPENAI_API_KEY > OPENROUTER_API_KEY. Override via AMATELIER_MODE env var.",
@@ -39,11 +39,12 @@
       "roundtables_judged": 0
     },
     "workers": {
-      "elena": { "model": "claude-sonnet-4-20250514", "assignments": 0 },
-      "marcus": { "model": "claude-sonnet-4-20250514", "assignments": 0 },
-      "clare": { "model": "claude-haiku-4-5-20251001", "assignments": 0 },
-      "simon": { "model": "claude-haiku-4-5-20251001", "assignments": 0 },
-      "naomi": { "model": "gemini-3-flash-preview", "assignments": 0 }
+      "_comment": "Each worker: model (any provider ID or alias), backend (claude|gemini|openai-compat; default claude), role (free-form). Add/remove via `amatelier team new|remove` or edit directly.",
+      "elena": { "model": "claude-sonnet-4-20250514", "backend": "claude", "role": "synthesis and architecture", "assignments": 0 },
+      "marcus": { "model": "claude-sonnet-4-20250514", "backend": "claude", "role": "challenge and exploit detection", "assignments": 0 },
+      "clare": { "model": "claude-haiku-4-5-20251001", "backend": "claude", "role": "concise, structural analysis", "assignments": 0 },
+      "simon": { "model": "claude-haiku-4-5-20251001", "backend": "claude", "role": "triage, fix sequencing", "assignments": 0 },
+      "naomi": { "model": "gemini-3-flash-preview", "backend": "gemini", "role": "cross-model worker; catches Claude blind spots", "assignments": 0 }
     }
   },
   "roundtable": {

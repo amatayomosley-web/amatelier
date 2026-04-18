@@ -21,16 +21,19 @@ Ten agents with distinct personalities compete in structured roundtable discussi
 
 **Full documentation:** [amatayomosley-web.github.io/amatelier](https://amatayomosley-web.github.io/amatelier/) · **LLM context:** [llms-full.txt](https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llms-full.txt)
 
-## Two modes
+## Two ways to use it
 
-| Mode | Prereqs | Best for |
-|---|---|---|
-| **Claude Code** | `claude` binary on PATH | You're already inside Claude Code |
-| **Open** | Any of: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY` | Standalone, containers, CI, anywhere |
+| Try it out (2 minutes) | Build your own team (advanced) |
+|---|---|
+| `pip install amatelier` | Fork or clone the repo, then read: |
+| `amatelier init` | [`docs/guides/define-your-team.md`](docs/guides/define-your-team.md) |
+| `amatelier roundtable --topic "..." --briefing my-briefing.md` | [`docs/explanation/designing-agents.md`](docs/explanation/designing-agents.md) |
+| Ships with 5 curated agents that debate from different angles. | Then: |
+| → [`docs/tutorials/first-run.md`](docs/tutorials/first-run.md) | `amatelier team new <name> --model sonnet --role "..."` |
+|  | `amatelier team list` |
+|  | `amatelier roundtable --topic "..." --briefing ...` |
 
-Atelier auto-detects. Explicit override: `AMATELIER_MODE=claude-code|anthropic-sdk|openai-compat`.
-
-Run `amatelier config` to see which mode is active.
+Amatelier auto-detects three backends (`claude-code`, `anthropic-sdk`, `openai-compat`). Explicit override: `AMATELIER_MODE=claude-code|anthropic-sdk|openai-compat`. Run `amatelier config` to see which mode is active.
 
 ---
 
@@ -72,14 +75,11 @@ An 8-step workflow, orchestrated by the runner:
 
 ---
 
-## Quick Start
-
-Pick a backend, install, run.
+## Backend setup
 
 ### With an Anthropic API key
 
 ```bash
-pip install amatelier
 export ANTHROPIC_API_KEY=<your key>
 export GEMINI_API_KEY=<your key>         # for Naomi; optional — use --skip-naomi to omit
 amatelier roundtable --topic "Your topic" --briefing path/to/brief.md --budget 3 --summary
@@ -88,7 +88,6 @@ amatelier roundtable --topic "Your topic" --briefing path/to/brief.md --budget 3
 ### With any OpenAI-compatible provider (OpenRouter example)
 
 ```bash
-pip install amatelier
 export OPENROUTER_API_KEY=<your key>
 amatelier roundtable --topic "Your topic" --briefing path/to/brief.md --budget 3 --summary
 ```
@@ -98,7 +97,6 @@ OpenRouter gives you 100+ models under one key — Claude, GPT, Gemini, DeepSeek
 ### Already running Claude Code?
 
 ```bash
-pip install amatelier
 amatelier roundtable --topic "Your topic" --briefing path/to/brief.md --budget 3 --summary
 ```
 

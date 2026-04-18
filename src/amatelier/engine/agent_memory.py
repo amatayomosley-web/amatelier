@@ -12,11 +12,11 @@ The runner generates the session bridge pre-RT.
 Agents load the full structured memory into their prompt.
 
 Usage:
-    python engine/agent_memory.py bridge elena          # Generate session bridge
-    python engine/agent_memory.py episodes elena        # Show episodes
-    python engine/agent_memory.py migrate elena         # Migrate old MEMORY.md
-    python engine/agent_memory.py migrate --all         # Migrate all agents
-    python engine/agent_memory.py show elena            # Show full structured memory
+    python engine/agent_memory.py bridge <worker>        # Generate session bridge
+    python engine/agent_memory.py episodes <worker>      # Show episodes
+    python engine/agent_memory.py migrate <worker>       # Migrate old MEMORY.md
+    python engine/agent_memory.py migrate --all          # Migrate all agents
+    python engine/agent_memory.py show <worker>          # Show full structured memory
 """
 
 from __future__ import annotations
@@ -485,14 +485,15 @@ def add_session_summary(agent_name: str, rt_id: str, summary: str, date: str = "
 #   - Compression checkpoints: oldest entries compressed into era summaries
 #   - Deduplication: skip if same topic written within DIARY_DEDUP_WINDOW
 
-# Topic keywords — maps keywords to topic labels (like Vela's domain classification)
-_TOPIC_KEYWORDS = {
+# Topic keywords — maps keywords to topic labels (like Vela's domain classification).
+# v0.4.0: worker names are injected dynamically from worker_registry via
+# _get_topic_keywords() below. "judge" + admin roles stay hardcoded as core topics.
+_BASE_TOPIC_KEYWORDS = {
     "score": "performance", "scored": "performance", "sparks": "economy",
     "budget": "economy", "tier": "economy", "upgrade": "economy",
     "skill": "skills", "bought": "skills", "purchased": "skills",
     "strategy": "strategy", "plan": "strategy", "focus": "strategy",
-    "elena": "teammate", "marcus": "teammate", "clare": "teammate",
-    "simon": "teammate", "naomi": "teammate", "judge": "teammate",
+    "judge": "teammate",
     "therapist": "coaching", "debrief": "coaching", "session": "coaching",
     "mistake": "reflection", "wrong": "reflection", "learned": "reflection",
     "frustrated": "emotion", "confident": "emotion", "worried": "emotion",
@@ -503,14 +504,26 @@ _TOPIC_KEYWORDS = {
 }
 
 
+def _get_topic_keywords() -> dict:
+    """Build the topic-keyword map, injecting current workers as "teammate" entries."""
+    try:
+        from amatelier import worker_registry
+        worker_map = {name: "teammate" for name in worker_registry.list_workers()}
+    except Exception:
+        worker_map = {}
+    return {**_BASE_TOPIC_KEYWORDS, **worker_map}
+
+
 def _extract_topics(text: str) -> list[str]:
     """Extract topic labels from diary text using keyword matching.
 
     Borrowed from Vela's topic classification — simple, fast, no LLM needed.
+    v0.4.0: worker names are sourced from worker_registry at call time so
+    renamed/added workers participate in classification without code edits.
     """
     text_lower = text.lower()
     topics = set()
-    for keyword, topic in _TOPIC_KEYWORDS.items():
+    for keyword, topic in _get_topic_keywords().items():
         if keyword in text_lower:
             topics.add(topic)
     return sorted(topics) if topics else ["general"]
@@ -856,7 +869,8 @@ if __name__ == "__main__":
         add_goal(args.agent, args.text)
         print(json.dumps({"added": True}))
     elif args.command == "migrate":
-        agents = ["elena", "marcus", "clare", "simon", "naomi"]
+        from amatelier import worker_registry
+        agents = worker_registry.list_workers()
         if args.all:
             for a in agents:
                 migrate_from_memory_md(a)

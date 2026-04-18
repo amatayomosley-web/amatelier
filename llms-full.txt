@@ -11,7 +11,7 @@ FILE: llm/SPEC.md
 ```yaml
 name: amatelier
 display_name: Amatelier
-version: 0.3.0
+version: 0.4.0
 license: MIT
 author: Maximillian
 standard: Amatayo Standard v1.0

@@ -30,6 +30,7 @@ Subcommands carry their own `--help` surface because they dispatch into engine-l
 | `docs` | Print bundled docs to stdout or list topics. | `amatelier docs guides/install` |
 | `config` | Diagnose detected LLM backend, credentials, and resolved paths. | `amatelier config --json` |
 | `refresh-seeds` | Re-copy persona seeds (`CLAUDE.md`, `IDENTITY.md`) from the wheel into user data. | `amatelier refresh-seeds --agent elena --force` |
+| `team` | Manage the worker roster — add, remove, list, import a starter roster, validate. | `amatelier team new nova --model sonnet --role "Fast prototyper"` |
 
 ---
 
@@ -209,6 +210,213 @@ amatelier refresh-seeds [OPTIONS]
 | `--dry-run` | flag | `false` | no | Report what would change without writing. |
 
 Output lists per-file `[WRITE]` and `[SKIP]` lines with reasons. Returns 0 on success, 1 if the bundled agent directory is missing.
+
+---
+
+## `amatelier team`
+
+Manage the worker roster — the set of agents that debate in a roundtable. Since v0.4.0 the engine reads `config.team.workers` dynamically, so you can add, remove, or replace workers without touching code. For conceptual guidance see the [Define your team](../guides/define-your-team.md) guide.
+
+```bash
+amatelier team SUBCOMMAND [ARGS...]
+```
+
+| Subcommand | Purpose |
+|---|---|
+| `list` | Show current roster with models, backends, and roles. |
+| `new` | Add a new worker to the roster and create its agent folder. |
+| `remove` | Remove a worker from the roster (agent folder preserved). |
+| `import` | Replace the roster with a starter template. |
+| `templates` | List available starter rosters. |
+| `validate` | Check roster integrity. |
+
+### `amatelier team list`
+
+Print the current roster as a table. Pulls from `config.team.workers`.
+
+No flags. Returns 0 on success, 1 if the config is unreadable.
+
+**Example output:**
+
+```text
+Current roster (5 workers):
+
+  elena   sonnet        (claude)  Worker — synthesis and architecture.
+  marcus  sonnet        (claude)  Worker — challenge and exploit detection.
+  clare   haiku         (claude)  Fast worker — concise, structural analysis.
+  simon   haiku         (claude)  Fast worker — triage, fix sequencing.
+  naomi   gemini-flash  (gemini)  Cross-model worker — catches Claude blind spots.
+```
+
+### `amatelier team new`
+
+Add a worker. Creates the agent folder under `<user_data>/agents/<name>/` with skeleton `CLAUDE.md` and `IDENTITY.md`, and appends the worker to `config.team.workers`.
+
+```bash
+amatelier team new NAME [--model MODEL] [--backend BACKEND] [--role ROLE]
+```
+
+| Arg / Flag | Type | Default | Required | Description |
+|---|---|---|---|---|
+| `name` | positional | — | yes | Unique worker name. Lowercase, alphanumeric plus hyphens. Must not collide with an existing worker. |
+| `--model` | string | `sonnet` | no | Model shorthand (`opus`, `sonnet`, `haiku`) or explicit provider model ID (`gpt-4o`, `gemini-3-flash-preview`, `claude-3-5-sonnet-latest`, etc.). |
+| `--backend` | string | `claude` | no | One of `claude`, `gemini`, `openai-compat`. Must match the model family. |
+| `--role` | string | `""` | no | Free-form one-line role description. Display only — shown in `team list`. |
+
+**Side effects:**
+
+- Writes `<user_data>/agents/<name>/CLAUDE.md` and `IDENTITY.md` (skeleton templates).
+- Updates `config.json` with the new worker entry.
+- Does **not** allocate sparks or seed MEMORY.md — first RT populates those.
+
+**Example:**
+
+```bash
+amatelier team new nova --model sonnet --role "Fast prototyper. Proposes working implementations."
+```
+
+Output:
+
+```text
+Added worker: nova
+  model:   sonnet
+  backend: claude
+  role:    Fast prototyper. Proposes working implementations.
+
+Persona files:
+  ~/.local/share/amatelier/agents/nova/CLAUDE.md
+  ~/.local/share/amatelier/agents/nova/IDENTITY.md
+
+Edit the persona files, then run `amatelier team validate` to confirm.
+```
+
+Exit 0 on success, 1 if the name collides or the folder creation fails, 2 on usage error.
+
+### `amatelier team remove`
+
+Remove a worker from the roster. The agent folder is **preserved** on disk — only the config entry is removed. Accumulated state (MEMORY.md, behaviors.json, metrics.json, session history) stays intact in case you re-add the worker later.
+
+```bash
+amatelier team remove NAME
+```
+
+| Arg | Type | Default | Required | Description |
+|---|---|---|---|---|
+| `name` | positional | — | yes | Name of the worker to remove. Must exist in `config.team.workers`. |
+
+**Example:**
+
+```bash
+amatelier team remove nova
+```
+
+Output:
+
+```text
+Removed worker: nova
+  config entry removed from config.team.workers
+  agent folder preserved at ~/.local/share/amatelier/agents/nova/
+
+Restore with: amatelier team new nova --model sonnet
+```
+
+Exit 0 on success, 1 if the worker is not in the roster.
+
+### `amatelier team import`
+
+Replace the current roster with a starter template. The old `config.team.workers` is overwritten; old agent folders on disk are left untouched.
+
+```bash
+amatelier team import TEMPLATE
+```
+
+| Arg | Type | Default | Required | Description |
+|---|---|---|---|---|
+| `template` | positional | — | yes | Template name. Must match one of the entries in `amatelier team templates`. |
+
+**Side effects:**
+
+- Replaces `config.team.workers` with the template's roster.
+- Creates any missing agent folders under `<user_data>/agents/` from the template's bundled seeds.
+- Does **not** delete existing agent folders for workers no longer in the roster.
+
+**Example:**
+
+```bash
+amatelier team import minimal
+```
+
+Output:
+
+```text
+Imported template: minimal (2 workers)
+
+Workers now active:
+  alpha  sonnet  (claude)  Researcher — opens positions, supports with evidence.
+  beta   haiku   (claude)  Critic — challenges alpha, proposes alternatives.
+
+Previous workers still on disk (not in roster):
+  elena, marcus, clare, simon, naomi
+
+Re-import curated-five to restore them: amatelier team import curated-five
+```
+
+Exit 0 on success, 1 if the template name is unknown.
+
+### `amatelier team templates`
+
+List the starter rosters that ship with the package. Templates live in `src/amatelier/agents/templates/`.
+
+No flags.
+
+**Example output:**
+
+```text
+Available templates:
+
+  curated-five   5 workers  Default generalist team (Elena, Marcus, Clare, Simon, Naomi).
+  minimal        2 workers  Two-voice quick-test team (alpha researcher, beta critic).
+  empty          0 workers  Admin/judge/therapist only — build your own.
+
+Import with: amatelier team import <name>
+```
+
+Exit 0 on success.
+
+### `amatelier team validate`
+
+Check roster integrity. Verifies every worker in `config.team.workers` has a well-formed agent folder with the required persona files and a recognized model and backend.
+
+No flags.
+
+**Checks performed:**
+
+- Every worker name in config has a folder under `<user_data>/agents/<name>/`.
+- Every folder has `CLAUDE.md` and `IDENTITY.md`.
+- `model` is a known shorthand (`opus`, `sonnet`, `haiku`) or matches a provider model ID pattern for the declared backend.
+- `backend` is one of `claude`, `gemini`, `openai-compat`.
+- No duplicate worker names.
+- Roster is non-empty (unless intentionally imported as `empty`).
+
+**Example output (healthy):**
+
+```text
+Roster OK — 5 workers validated.
+```
+
+**Example output (issues):**
+
+```text
+Roster has issues:
+
+  [ERR]  nova    — agent folder missing at ~/.local/share/amatelier/agents/nova/
+  [WARN] hadley  — no IDENTITY.md (agent will spawn with default persona)
+  [ERR]  marcus  — backend 'anthropic' is not valid (did you mean 'claude'?)
+
+3 issues found (2 errors, 1 warning).
+```
+
+Exit 0 if no errors, 1 on any error (warnings alone do not fail the command).
 
 ---
 

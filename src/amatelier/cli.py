@@ -256,6 +256,357 @@ def _run_config(args: list[str]) -> int:
     return 0
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# `amatelier team` subcommands (v0.4.0)
+# ─────────────────────────────────────────────────────────────────────────
+
+
+def _load_user_config() -> dict:
+    """Load user's config.json (from user_data_dir), falling back to bundled."""
+    from amatelier import paths
+    user_cfg = paths.user_config_override()
+    if not user_cfg.exists():
+        bundled = paths.bundled_config()
+        if bundled.exists():
+            user_cfg.parent.mkdir(parents=True, exist_ok=True)
+            user_cfg.write_text(bundled.read_text(encoding="utf-8"), encoding="utf-8")
+    if not user_cfg.exists():
+        return {}
+    try:
+        return json.loads(user_cfg.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def _save_user_config(data: dict) -> None:
+    from amatelier import paths
+    user_cfg = paths.user_config_override()
+    user_cfg.parent.mkdir(parents=True, exist_ok=True)
+    user_cfg.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _templates_dir():
+    from amatelier import paths
+    return paths.bundled_assets_dir() / "agents" / "templates"
+
+
+def _agents_user_dir():
+    from amatelier import paths
+    return paths.user_data_dir() / "agents"
+
+
+def _team_list(_args: list[str]) -> int:
+    from amatelier import worker_registry
+    roster = worker_registry.describe_roster()
+    if not roster["workers"]:
+        print("No workers configured.")
+        print()
+        print("Add one:       amatelier team new <name> --model sonnet --role \"...\"")
+        print("Or import:     amatelier team import minimal")
+        print("Or see all:    amatelier team templates")
+        return 0
+    print(f"Active roster ({roster['count']} workers):")
+    max_name = max((len(w["name"]) for w in roster["workers"]), default=8)
+    max_model = max((len(w["model"]) for w in roster["workers"]), default=8)
+    for w in roster["workers"]:
+        role = w["role"] or "(no role set)"
+        if len(role) > 60:
+            role = role[:57] + "..."
+        print(
+            f"  {w['name']:<{max_name}}  "
+            f"{w['backend']:<13}  "
+            f"{w['model']:<{max_model}}  "
+            f"{role}"
+        )
+    print()
+    by_backend = roster["backends"]
+    for backend in ("claude", "gemini", "openai-compat"):
+        names = by_backend.get(backend, [])
+        if names:
+            print(f"  {backend}: {len(names)} worker(s) — {', '.join(names)}")
+    return 0
+
+
+def _team_new(args: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="amatelier team new")
+    parser.add_argument("name", help="Worker agent name (lowercase, alphanumeric + dashes)")
+    parser.add_argument("--model", default="sonnet",
+                        help="Model alias or provider ID (default: sonnet)")
+    parser.add_argument("--backend", default="claude",
+                        choices=["claude", "gemini", "openai-compat"],
+                        help="Backend routing (default: claude)")
+    parser.add_argument("--role", default="",
+                        help="Free-form role description")
+    parser.add_argument("--from-template", default="",
+                        help="Optional: copy CLAUDE.md/IDENTITY.md from this template/agent dir")
+    ns = parser.parse_args(args)
+
+    name = ns.name.lower().strip()
+    if not name or not all(c.isalnum() or c == "-" for c in name):
+        print(f"Invalid name: {name!r}. Use lowercase alphanumeric + dashes.", file=sys.stderr)
+        return 1
+
+    from amatelier import worker_registry
+    if worker_registry.worker_exists(name):
+        print(f"Worker {name!r} already exists. Remove first: amatelier team remove {name}")
+        return 1
+
+    # Create agent folder with minimal scaffolding
+    agent_dir = _agents_user_dir() / name
+    agent_dir.mkdir(parents=True, exist_ok=True)
+
+    claude_md = agent_dir / "CLAUDE.md"
+    identity_md = agent_dir / "IDENTITY.md"
+
+    if ns.from_template:
+        src = _templates_dir() / ns.from_template
+        if not src.exists():
+            # Fall back to direct agent folder under bundled
+            from amatelier import paths
+            src = paths.bundled_assets_dir() / "agents" / ns.from_template
+        if src.exists() and src.is_dir():
+            for fname in ("CLAUDE.md", "IDENTITY.md"):
+                src_file = src / fname
+                if src_file.exists():
+                    (agent_dir / fname).write_text(
+                        src_file.read_text(encoding="utf-8"),
+                        encoding="utf-8",
+                    )
+
+    if not claude_md.exists():
+        claude_md.write_text(
+            f"# {name.capitalize()} — CLAUDE.md\n\n"
+            "<!-- Persona system prompt. Written in first person, to the model. -->\n\n"
+            f"You are {name}.\n\n"
+            f"## Role\n\n{ns.role or 'Describe your role here.'}\n\n"
+            "## Voice\n\n"
+            "<!-- Distinctive voice and approach. Avoid the eager-assistant trap. -->\n\n"
+            "## Focus\n\n"
+            "<!-- What you specialize in. What failure modes you catch. -->\n",
+            encoding="utf-8",
+        )
+    if not identity_md.exists():
+        identity_md.write_text(
+            f"# {name.capitalize()}\n\n"
+            f"- **Role:** {ns.role or '(describe)'}\n"
+            f"- **Model:** {ns.model}\n"
+            f"- **Backend:** {ns.backend}\n",
+            encoding="utf-8",
+        )
+
+    # Update config
+    cfg = _load_user_config()
+    cfg.setdefault("team", {}).setdefault("workers", {})
+    cfg["team"]["workers"][name] = {
+        "model": ns.model,
+        "backend": ns.backend,
+        "role": ns.role,
+        "assignments": 0,
+    }
+    _save_user_config(cfg)
+
+    print(f"Created {agent_dir}")
+    print(f"Updated config.team.workers with {name!r}")
+    print()
+    print(f"Edit {claude_md.name} to refine the persona.")
+    print("Run:  amatelier team list")
+    return 0
+
+
+def _team_remove(args: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="amatelier team remove")
+    parser.add_argument("name", help="Worker to remove from config")
+    parser.add_argument("--delete-folder", action="store_true",
+                        help="Also delete the agent's data folder (destructive)")
+    ns = parser.parse_args(args)
+
+    name = ns.name
+    cfg = _load_user_config()
+    workers = cfg.get("team", {}).get("workers", {})
+    if name not in workers:
+        print(f"Worker {name!r} not in config.")
+        return 1
+
+    del workers[name]
+    _save_user_config(cfg)
+    print(f"Removed {name!r} from config.team.workers.")
+
+    agent_dir = _agents_user_dir() / name
+    if agent_dir.exists():
+        if ns.delete_folder:
+            import shutil
+            shutil.rmtree(agent_dir)
+            print(f"Deleted folder: {agent_dir}")
+        else:
+            print(f"Agent folder preserved at {agent_dir}")
+            print("Use --delete-folder to remove it entirely.")
+    return 0
+
+
+def _team_templates(_args: list[str]) -> int:
+    tdir = _templates_dir()
+    if not tdir.exists():
+        print(f"No templates directory at {tdir}")
+        return 1
+    print(f"Starter rosters (in {tdir}):")
+    for entry in sorted(tdir.iterdir()):
+        if not entry.is_dir():
+            continue
+        readme = entry / "README.md"
+        desc = ""
+        if readme.exists():
+            first_lines = readme.read_text(encoding="utf-8").splitlines()[:3]
+            for ln in first_lines:
+                s = ln.strip()
+                if s and not s.startswith("#"):
+                    desc = s[:80]
+                    break
+        workers_in = [
+            d.name for d in entry.iterdir()
+            if d.is_dir() and d.name not in ("admin", "judge", "therapist")
+        ]
+        worker_count = len(workers_in)
+        print(f"  {entry.name:<16}  {worker_count} worker(s)  {desc}")
+    print()
+    print("Import with:   amatelier team import <name>")
+    return 0
+
+
+def _team_import(args: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="amatelier team import")
+    parser.add_argument("template", help="Template name (see: amatelier team templates)")
+    parser.add_argument("--replace", action="store_true",
+                        help="Replace current roster entirely (default: merge)")
+    ns = parser.parse_args(args)
+
+    src = _templates_dir() / ns.template
+    if not src.exists() or not src.is_dir():
+        print(f"Template not found: {ns.template}", file=sys.stderr)
+        print("See available: amatelier team templates", file=sys.stderr)
+        return 1
+
+    import shutil
+    user_agents = _agents_user_dir()
+    user_agents.mkdir(parents=True, exist_ok=True)
+
+    cfg = _load_user_config()
+    cfg.setdefault("team", {}).setdefault("workers", {})
+    if ns.replace:
+        cfg["team"]["workers"] = {}
+
+    imported: list[str] = []
+    for entry in sorted(src.iterdir()):
+        if not entry.is_dir():
+            continue
+        dest = user_agents / entry.name
+        if dest.exists():
+            print(f"  (already present, skipping) {entry.name}")
+            continue
+        shutil.copytree(entry, dest)
+        # If it's a worker (not admin/judge/therapist), register in config
+        if entry.name not in ("admin", "judge", "therapist"):
+            # Try to read IDENTITY.md for model hint
+            imported.append(entry.name)
+            cfg["team"]["workers"].setdefault(entry.name, {
+                "model": "sonnet",
+                "backend": "claude",
+                "role": "",
+                "assignments": 0,
+            })
+
+    _save_user_config(cfg)
+    print(f"Imported {len(imported)} worker(s) from {ns.template!r}: {', '.join(imported)}")
+    print(f"Config updated at {_load_user_config and 'user_data_dir/config.json'}")
+    print()
+    print("Review with:  amatelier team list")
+    return 0
+
+
+def _team_validate(_args: list[str]) -> int:
+    from amatelier import worker_registry
+    user_agents = _agents_user_dir()
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    workers = worker_registry.list_workers()
+    if not workers:
+        warnings.append("No workers configured — RT will refuse to start.")
+
+    for name in workers:
+        agent_dir = user_agents / name
+        if not agent_dir.exists():
+            errors.append(f"{name}: config entry exists but no folder at {agent_dir}")
+            continue
+        for required in ("CLAUDE.md", "IDENTITY.md"):
+            if not (agent_dir / required).exists():
+                errors.append(f"{name}: missing {required}")
+        backend = worker_registry.get_worker_backend(name)
+        if backend not in ("claude", "gemini", "openai-compat"):
+            warnings.append(f"{name}: unknown backend {backend!r}; defaulting to claude")
+
+    # Check admin-side roles
+    for role in ("admin", "judge", "therapist"):
+        if not (user_agents / role).exists():
+            warnings.append(f"Admin-side role {role!r} missing at {user_agents / role}")
+
+    if not errors and not warnings:
+        print(f"Roster OK. {len(workers)} workers, all folders present.")
+        return 0
+
+    if errors:
+        print("ERRORS:")
+        for e in errors:
+            print(f"  - {e}")
+    if warnings:
+        print("WARNINGS:" if not errors else "\nWARNINGS:")
+        for w in warnings:
+            print(f"  - {w}")
+    return 1 if errors else 0
+
+
+def _run_team(args: list[str]) -> int:
+    if not args or args[0] in ("-h", "--help"):
+        print(
+            "amatelier team — manage the worker roster\n"
+            "\n"
+            "Subcommands:\n"
+            "  list                                    Show current roster\n"
+            "  new <name> [--model M] [--backend B] [--role R] [--from-template T]\n"
+            "                                          Add a new worker\n"
+            "  remove <name> [--delete-folder]         Remove a worker from config\n"
+            "  import <template> [--replace]           Load a starter roster\n"
+            "  templates                               List available starter rosters\n"
+            "  validate                                Check roster integrity\n"
+            "\n"
+            "Examples:\n"
+            "  amatelier team list\n"
+            "  amatelier team new nova --model sonnet --role \"distributed systems\"\n"
+            "  amatelier team import minimal\n"
+            "  amatelier team validate\n",
+            file=sys.stderr,
+        )
+        return 0 if (args and args[0] in ("-h", "--help")) else 2
+
+    sub, rest = args[0], args[1:]
+    handlers = {
+        "list": _team_list,
+        "new": _team_new,
+        "remove": _team_remove,
+        "import": _team_import,
+        "templates": _team_templates,
+        "validate": _team_validate,
+    }
+    if sub not in handlers:
+        print(f"Unknown subcommand: team {sub}", file=sys.stderr)
+        return _run_team([])
+    return handlers[sub](rest)
+
+
+# ─────────────────────────────────────────────────────────────────────────
+
 _CONSENT_ENV = "AMATELIER_STEWARD_CONSENT"
 _CONSENT_TRUTHY = frozenset({"1", "yes", "true", "y"})
 
@@ -349,6 +700,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_config(rest)
     if cmd == "refresh-seeds":
         return _run_refresh_seeds(rest)
+    if cmd == "team":
+        return _run_team(rest)
     if cmd in DISPATCH_ENGINE:
         # Steward consent gate fires before the runner spawns workers.
         # GDPR Article 13 requires disclosure before processing event.

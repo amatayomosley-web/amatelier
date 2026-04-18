@@ -1,7 +1,7 @@
 """Claude worker agent — responds only when called on by the runner.
 
 Usage:
-    python engine/claude_agent.py --agent elena --model sonnet
+    python engine/claude_agent.py --agent <worker> --model sonnet
     python engine/claude_agent.py --agent judge --model sonnet
 
 Workers respond to YOUR TURN signals (SPEAK, REBUTTAL, FLOOR).

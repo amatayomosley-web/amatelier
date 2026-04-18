@@ -3,7 +3,7 @@
 Usage:
     python engine/roundtable_runner.py --topic "Topic here" --briefing briefing-001.md
     python engine/roundtable_runner.py --topic "Topic here" --briefing briefing-001.md --budget 5
-    python engine/roundtable_runner.py --topic "Topic here" --briefing briefing-001.md --workers elena,marcus --max-rounds 4
+    python engine/roundtable_runner.py --topic "Topic here" --briefing briefing-001.md --workers <a>,<b> --max-rounds 4
 
 Debate structure per round:
   1. SPEAK PHASE — each worker called sequentially (guaranteed, free)
@@ -81,17 +81,16 @@ def _load_env() -> dict[str, str]:
     return env
 
 
-# Default model mapping — overridden at runtime by tier from metrics.json
-DEFAULT_MODELS = {
-    "elena": "sonnet",
-    "marcus": "sonnet",
-    "clare": "haiku",
-    "simon": "haiku",
-}
+# v0.4.0+: roster is config-driven via worker_registry (reads config.team.workers).
+# `DEFAULT_MODELS` below is retained as a fallback for worker_registry.get_worker_model()
+# when a config entry is missing its `model` field. Don't hardcode names here.
+DEFAULT_MODELS: dict[str, str] = {}
 
-# Model upgrades are request-based — no automatic tier overrides
+# DEFAULT_WORKERS is deprecated — callers now use worker_registry.list_workers().
+# Kept as an empty list so any lingering imports don't crash, with a deprecation
+# note for future cleanup (v0.5.0).
+DEFAULT_WORKERS: list[str] = []
 
-DEFAULT_WORKERS = ["elena", "marcus", "clare", "simon"]
 AGENTS_DIR = WRITE_ROOT / "agents"
 
 
@@ -377,8 +376,17 @@ def run_roundtable(
     skip_post: bool = False,
 ) -> dict:
     """Run a complete roundtable with structured debate and return the digest."""
+    from amatelier import worker_registry
     config = load_config()
-    workers = workers or DEFAULT_WORKERS
+    # v0.4.0: roster from config.team.workers via worker_registry. If no workers
+    # are configured and no explicit list is passed, refuse rather than silently
+    # running an RT with zero workers.
+    workers = workers or worker_registry.list_workers()
+    if not workers:
+        raise ValueError(
+            "No workers configured. Set team.workers in config.json or run "
+            "`amatelier team new <name>` to add agents."
+        )
     max_rounds = max_rounds or config.get("roundtable", {}).get("max_rounds", 3)
 
     # Resolve briefing
@@ -401,10 +409,16 @@ def run_roundtable(
         logger.info("Steward enabled but no registered files in briefing — Steward inactive this RT")
         steward_enabled = False
 
-    # Build participant list
-    all_workers = list(workers)
-    if not skip_naomi and "naomi" not in workers:
-        all_workers.append("naomi")
+    # Build participant list. v0.4.0: we no longer auto-append "naomi" to the
+    # roster — workers come from config.team.workers. The --skip-naomi flag
+    # (aliased to --skip-agent) lets users omit a gemini-backed worker at
+    # runtime without editing config. The 'workers' argument already contains
+    # everyone the caller asked for.
+    from amatelier import worker_registry
+    all_workers = [
+        w for w in workers
+        if not (skip_naomi and worker_registry.get_worker_backend(w) == "gemini")
+    ]
     participants = all_workers + ["judge"]
 
     # Initialize budget
@@ -547,19 +561,25 @@ def run_roundtable(
             logger.warning("Fee deduction failed for %s: %s (continuing)", agent, e)
 
     try:
-        # Launch all workers
+        # Launch all workers. v0.4.0: dispatch on worker_registry backend field
+        # (gemini vs claude), not agent name. Multiple Gemini workers are now
+        # supported; claude-default applies when backend field is missing.
+        from amatelier import worker_registry
+        gemini_workers_launched: list[str] = []
         for worker in workers:
-            if worker == "naomi":
-                continue
+            backend = worker_registry.get_worker_backend(worker)
             model = resolved_models.get(worker, "sonnet")
-            agent_procs[worker] = _launch_claude(worker, model)
+            if backend == "gemini":
+                if not skip_naomi:  # reuse existing flag; renamed alias below
+                    agent_procs[worker] = _launch_gemini(worker)
+                    gemini_workers_launched.append(worker)
+            else:
+                # claude (default) or openai-compat (currently routes through
+                # claude_agent.py + open-mode backend)
+                agent_procs[worker] = _launch_claude(worker, model)
 
-        # Launch Judge (persistent live moderator)
+        # Launch Judge (persistent live moderator) — always claude, always sonnet
         agent_procs["judge"] = _launch_claude("judge", "sonnet")
-
-        # Launch Naomi (Gemini)
-        if not skip_naomi:
-            agent_procs["naomi"] = _launch_gemini("naomi")
 
         # Give agents time to connect and initialize
         time.sleep(5)
@@ -654,19 +674,24 @@ def run_roundtable(
             for agent_name in all_workers + ["judge"]:
                 _check_and_restart(agent_name)
 
-            # Hard-refresh Gemini agent at configured round to reset rate limit state
-            if round_num == gemini_refresh_round and "naomi" in agent_procs:
-                proc = agent_procs["naomi"]
-                if proc.poll() is None:
-                    logger.info("Hard-refreshing naomi (Gemini) at round %d", round_num)
+            # Hard-refresh all Gemini-backed workers at configured round to reset
+            # rate-limit state. v0.4.0: generalized from naomi-only to any
+            # worker with backend == "gemini" in config.
+            if round_num == gemini_refresh_round:
+                gemini_workers = worker_registry.list_workers_by_backend("gemini")
+                for gw in gemini_workers:
+                    proc = agent_procs.get(gw)
+                    if proc is None or proc.poll() is not None:
+                        continue
+                    logger.info("Hard-refreshing %s (Gemini) at round %d", gw, round_num)
                     proc.terminate()
                     try:
                         proc.wait(timeout=10)
                     except Exception:
                         proc.kill()
-                    time.sleep(2)  # Brief pause before relaunch
-                    agent_procs["naomi"] = _launch_gemini("naomi")
-                    logger.info("Relaunched naomi (fresh API connection)")
+                    time.sleep(2)
+                    agent_procs[gw] = _launch_gemini(gw)
+                    logger.info("Relaunched %s (fresh API connection)", gw)
 
             # Post round start with budget status
             budget_str = format_budget_status(budget)
@@ -1669,7 +1694,10 @@ if __name__ == "__main__":
     parser.add_argument("--briefing", required=True, help="Briefing file path")
     parser.add_argument("--workers", default=None, help="Comma-separated worker names")
     parser.add_argument("--max-rounds", type=int, default=None, help="Max rounds")
-    parser.add_argument("--skip-naomi", action="store_true", help="Skip Gemini/Naomi")
+    parser.add_argument("--skip-naomi", action="store_true",
+                        help="[v0.3-compat alias] Skip all Gemini-backed workers; prefer --skip-agent")
+    parser.add_argument("--skip-agent", action="append", default=[], metavar="NAME",
+                        help="Skip a specific worker by name (repeatable). Supersedes --skip-naomi.")
     parser.add_argument("--speaker-timeout", type=int, default=200,
                         help="Seconds to wait for each speaker (default: 200)")
     parser.add_argument("--budget", type=int, default=3,
@@ -1681,11 +1709,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
     workers = args.workers.split(",") if args.workers else None
 
+    # Apply --skip-agent: filter the workers list. --skip-naomi remains an
+    # alias that filters all gemini-backed agents (backcompat for v0.3).
+    from amatelier import worker_registry as _wr
+    effective_workers = workers if workers is not None else _wr.list_workers()
+    if args.skip_agent:
+        skip_set = set(args.skip_agent)
+        effective_workers = [w for w in effective_workers if w not in skip_set]
+
     try:
         digest = run_roundtable(
             topic=args.topic,
             briefing_path=args.briefing,
-            workers=workers,
+            workers=effective_workers,
             max_rounds=args.max_rounds,
             skip_naomi=args.skip_naomi,
             speaker_timeout=args.speaker_timeout,

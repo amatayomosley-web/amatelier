@@ -11,12 +11,12 @@ Reads existing metrics.json + therapist session transcripts + digests to compute
 - Cross-agent engagement patterns
 
 Usage:
-    python engine/analytics.py report elena          # Full growth report
-    python engine/analytics.py report --all          # All agents
-    python engine/analytics.py trends elena          # Dimension trends only
-    python engine/analytics.py economy              # Spark economy overview
-    python engine/analytics.py history elena         # Therapist session history
-    python engine/analytics.py snapshot              # Save leaderboard snapshot
+    python engine/analytics.py report <worker>        # Full growth report
+    python engine/analytics.py report --all           # All agents
+    python engine/analytics.py trends <worker>        # Dimension trends only
+    python engine/analytics.py economy                # Spark economy overview
+    python engine/analytics.py history <worker>       # Therapist session history
+    python engine/analytics.py snapshot               # Save leaderboard snapshot
 """
 
 from __future__ import annotations

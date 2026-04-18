@@ -151,7 +151,7 @@ def recall(rt_id: str, agent_filter: str = "", keyword: str = "",
     referenced in the debate state index. Doesn't cost a floor turn.
 
     Filters (combinable):
-      agent_filter: "elena" — only that agent's messages
+      agent_filter: "<worker>" — only that agent's messages
       keyword: "caching" — messages containing this keyword (case-insensitive)
       round_num: 2 — only messages from that round (matched via ROUND markers)
 
