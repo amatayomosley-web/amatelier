@@ -1,0 +1,680 @@
+{
+  "roundtable_id": "e8d2aa8c7cf8",
+  "topic": "Self-host AI vs use Claude/OpenAI APIs \u2014 decision tree for a B2B SaaS founder in 2026",
+  "rounds": 2,
+  "total_messages": 54,
+  "timestamp": 1776479844.0991576,
+  "contributions": {
+    "runner": 31,
+    "clare": 5,
+    "elena": 5,
+    "simon": 5,
+    "marcus": 5,
+    "judge": 3
+  },
+  "converged": true,
+  "convergence_reason": "CONVERGED: The tree is structurally complete and all briefing success criteria are satisfied.\n\n**What the artifact delivers:**\n- Decision tree with quantified thresholds (Gates 0A\u20133 with flip points named)\n- Feature routing as the portfolio-level output (Simon's addition, adopted by all)\n- Gate 0C fine-tuning moat as the mandatory red-flag signal (Marcus, briefing requirement met)\n- Gate 0A named explicitly as the single most important criterion for pre-Series B stage (Elena, rebuttal)\n- Hybrid architecture modeled throughout \u2014 false dichotomy challenged at every level\n- Sequencing resolved: Clare's corrected sequence with Marcus's 0C placement before Gate 2\n\n**What the digest must flag explicitly:**\n1. **Gate 1 EU branch is based on estimates, not grounded data.** Naomi's regulatory input (EU AI Act 2026 status, Mistral/Aleph Alpha current compliance posture, non-Western data residency) was assigned in the briefing and never delivered. The EU compliance branch should be marked: *\"Verify current Mistral/Aleph Alpha EU residency certification before relying on this path \u2014 status as of briefing date is an estimate.\"*\n2. **Token volume thresholds (Gate 2) are estimates.** GPU rental pricing (~$2\u20133/H100-hour) and the 5\u201310M token/day flip point were not Steward-grounded. Digest should label them as such.\n\nThe tree is shippable as a decision framework. The two flagged items are scope limits on specific branches, not structural defects.",
+  "judge_interventions": 3,
+  "judge_messages": [
+    "CONTINUE: Three gaps remain before the tree is usable.\n\n**1. Naomi's perspective is absent.** The briefing explicitly assigned Naomi the non-US regulatory angle \u2014 EU AI Act 2026 status, non-Western data residency rules. This isn't a minor add-on; it's the entire factual grounding for the compliance gate that every agent has been building on. The tree's compliance branch is currently reasoned from first principles, not grounded data.\n\n**2. Gate 0 is still advice, not protocol.** Elena identified this precisely: without a concrete minimum-viable eval protocol, Gate 0 is a gate founders nod at and skip. Multiple agents flagged it; none answered it. The briefing requires actionable criteria, not aspirational ones.\n\n**3. The feature-routing output model is unresolved.** Simon and Clare both moved toward \"the output is feature-level routing, not a single infrastructure choice\" \u2014 but the tree hasn't been restructured to reflect this. A founder reading the current exchange walks away with a gate sequence, not a usable tree with a single-infrastructure vs. feature-routing fork at the top.\n\nThe gate structure (compliance \u2192 access/capability \u2192 resources) is solid. The three corrections Clare named are correct. What's missing is synthesis + Naomi's grounding. Proceed to Round 2 with a directive to: (a) incorporate Naomi's regulatory data, (b) answer the eval protocol question concretely, and (c) produce the consolidated tree artifact.",
+    "GATE: marcus \u2014 His fine-tuning moat reframe (Gate 0C) directly fulfilled the briefing's mandatory \"red flag\" requirement that Elena's draft omitted, and shifted the flip point from cost-based to strategic \u2014 the argument that fine-tuning GPT-4 is a configuration while fine-tuned Llama weights are a defensible asset changes the self-host calculus at lower volume than Gate 2 economics suggest.\n\nCONVERGED: The tree structure is complete and the sequencing dispute is resolved. Two gaps remain before the digest can satisfy the briefing's success criteria:\n\n1. **Naomi's regulatory grounding is absent.** EU AI Act 2026 status and non-Western data residency rules were flagged in Round 1 and remain unaddressed in Round 2. Gate 1's EU branch relies on unstated assumptions about Mistral and Aleph Alpha's current compliance posture. The digest should flag this as an estimate or the runner should inject grounding before the digest closes.\n\n2. **The briefing requires naming \"the single most important criterion for their specific stage.\"** The tree lists gates but doesn't rank them for a pre-Series B founder. Gate 0A is the implicit primary filter \u2014 if it's not surfaced explicitly, the digest fails the success criterion. The digest should name it.",
+    "CONVERGED: The tree is structurally complete and all briefing success criteria are satisfied.\n\n**What the artifact delivers:**\n- Decision tree with quantified thresholds (Gates 0A\u20133 with flip points named)\n- Feature routing as the portfolio-level output (Simon's addition, adopted by all)\n- Gate 0C fine-tuning moat as the mandatory red-flag signal (Marcus, briefing requirement met)\n- Gate 0A named explicitly as the single most important criterion for pre-Series B stage (Elena, rebuttal)\n- Hybrid architecture modeled throughout \u2014 false dichotomy challenged at every level\n- Sequencing resolved: Clare's corrected sequence with Marcus's 0C placement before Gate 2\n\n**What the digest must flag explicitly:**\n1. **Gate 1 EU branch is based on estimates, not grounded data.** Naomi's regulatory input (EU AI Act 2026 status, Mistral/Aleph Alpha current compliance posture, non-Western data residency) was assigned in the briefing and never delivered. The EU compliance branch should be marked: *\"Verify current Mistral/Aleph Alpha EU residency certification before relying on this path \u2014 status as of briefing date is an estimate.\"*\n2. **Token volume thresholds (Gate 2) are estimates.** GPU rental pricing (~$2\u20133/H100-hour) and the 5\u201310M token/day flip point were not Steward-grounded. Digest should label them as such.\n\nThe tree is shippable as a decision framework. The two flagged items are scope limits on specific branches, not structural defects."
+  ],
+  "final_positions": {
+    "clare": "Simon's feature routing is the right *output*, but the sequencing matters for resource-constrained teams. Running Gate 0A per-feature upfront creates a decision queue, not paralysis\u2014but it also means a pre-Series B team burns 15\u201340 engineer-days before committing to infrastructure. Marcus's concern is valid: that's not feasible at planning stage. Elena's tree assumes a go/no-go decision precedes feature-level optimization. My sequencing preserves both: commit to the stack based on your highest-volume feature (3\u20135 days), *then* route the rest.\n\nThe moat gate (0C) is the weak link here. Marcus frames it as a parallel blocker equivalent to capability and access. But fine-tuned moat comes from *training rigor*, not the hosting choice\u2014a team with weak evals gets stale weights whether they're on Replicate or a self-owned H100. Gate 0C (owning weights) is really a proxy for \"are your training pipelines sophisticated enough that the delta matters?\" That's Gate 3 (engineering capability). A pre-Series B team without \u22652 MLOps engineers shouldn't fine-tune at all, hosted or self-hosted. So 0C doesn't add a new decision; it refines how to route the features that pass 0A. If you can't staff Gate 3, the moat question is moot.\n\nComposite features (Simon's probe): reasoning + retrieval as a unit. The 10% sample scales if you score the composite output end-to-end, not the components. Your eval threshold is \"does the user-visible result meet the bar,\" not \"does retrieval work + reasoning works.\" Clare's protocol applies; sample size is constant.\n\nThe tree closes here. Elena, Simon, Marcus\u2014do we ship this sequencing as the artifact?\n\nSUGGESTED FOLLOW-UP: What is the decision tree's shelf life? When should a founder re-run Gate 0A (model releases, volume growth, feature set drift)?",
+    "elena": "Simon's synthesis on Gate 0C is correct and closes the Marcus/Clare tension. The artifact should read: \"If competitive edge lives in specialized model behavior \u2192 Gate 0C fires, self-host required, Gate 2 economics become secondary. Otherwise \u2192 skip to Gate 1.\" Conditional, not universal. Marcus's placement (before Gate 2) is right for the override reason Simon named.\n\nClare's moat rebuttal cuts correctly in one direction but misses the asymmetry Marcus identified. You're right that training rigor matters more than hosting choice \u2014 but the issue isn't quality of the fine-tune. It's *ownership*. A fine-tuned GPT-4 is contractually ephemeral: the base model turns over, you restart. That's not a Gate 3 engineering capability problem; it's a structural one. Gate 3 tells you whether you can execute. Gate 0C tells you whether what you execute is ownable. They measure different things.\n\nOn the Judge's gap: the tree needs to name the single most important criterion for pre-Series B explicitly. It's **Gate 0A \u2014 capability fit**. Everything downstream (compliance, economics, engineering, routing) is conditional on this passing. If the open-weights model can't meet your quality bar, none of the other gates matter. The digest should surface this as: \"If you remember one thing: run Gate 0A first on your highest-volume feature. Every other decision is contingent on it.\"\n\nThe tree is shippable with Clare's sequencing, Marcus's 0C placement correction, Simon's conditional framing, and Gate 0A named as the primary filter. Naomi's EU regulatory input remains the only structural gap \u2014 Gate 1's EU branch relies on unstated assumptions about Mistral's current compliance posture.\n\nSUGGESTED FOLLOW-UP: At what token volume does a distilled proprietary model (synthetic data pipeline) become more defensible than fine-tuned weights for moat purposes?",
+    "simon": "Marcus and Clare resolved the tension without realizing it.\n\nMarcus: Gate 0C (ownable weights as moat) is orthogonal to Gate 3 (execution capability). Fine-tuning GPT-4 is configuration; fine-tuned Llama is a defensible asset. That's a separate decision axis.\n\nClare: Right\u2014but moat-in-model-behavior is rare for pre-Series B. So 0C is a conditional gate, not a universal one.\n\n**Both are true.** Gate 0C applies only to founders where differentiation lives specifically in model behavior. For that subset, Marcus is correct: 0C overrides Gate 2 (moat justifies self-host at lower volume). For everyone else, skip it and go to 1.\n\nMarcus's placement (0C before 2) is structurally right because of this override. The artifact just needs to make the conditional trigger explicit: \"Does your competitive edge live in specialized model behavior?\" If no, proceed to Gate 1. If yes, 0C is a blocker.\n\nElena, Marcus, Clare: does the artifact surface this conditional structure, or does it read as a universal gate that applies to all founders?\n\n**SUGGESTED FOLLOW-UP:** Once moat justifies self-hosting, do compliance (Gate 1) and engineering capability (Gate 3) still enforce the same constraints, or does moat priority change their weight?",
+    "marcus": "Clare's moat rebuttal is mostly right but cuts too hard.\n\nThe moat argument *does* add something Gate 3 alone doesn't capture: the strategic lock-in asymmetry. Even a team with 2 MLOps engineers who fine-tunes GPT-4 via hosted API creates a configuration dependency, not an owned asset. When the base model turns over (GPT-4 \u2192 GPT-5, which happened), the fine-tune is gone and you restart. That's not an engineering capability problem \u2014 it's a contractual/architectural one. Gate 3 tells you *whether you can execute*; Gate 0C tells you *whether the output of that execution is ownable*. They're orthogonal.\n\nThat said, Clare is right that for most pre-Series B teams, Gate 0C is low-probability to trigger. The moat gate matters only when the differentiation *is the model behavior* \u2014 vertical-specific tone, proprietary scoring, specialized output format. If the product's edge is workflow, integration, or UX, Gate 0C doesn't fire. So it stays as a gate but should be clearly labeled: \"Does your competitive moat live specifically in model behavior, not workflow or UX?\" That narrows the trigger appropriately.\n\nOn sequencing: Clare's corrected sequence is right. The one refinement \u2014 Gate 0C should be evaluated before Gate 2 (economics), not after. If you're self-hosting for moat reasons, the volume threshold from Gate 2 becomes irrelevant. Moat-motivated self-hosting can be justified at 500K tokens/day where economics wouldn't support it. The sequence should reflect that moat is a *parallel* override, not a downstream refinement.\n\nThe tree is shippable. Clare's sequencing with this 0C placement correction closes it.\n\nSUGGESTED FOLLOW-UP: At Series B, when synthetic data distillation becomes feasible, does the moat gate flip \u2014 is a distilled proprietary model more defensible than fine-tuned weights?"
+  },
+  "transcript": [
+    {
+      "agent": "runner",
+      "message": "BRIEFING:\n\n# Briefing: Self-host AI vs use Claude/OpenAI APIs\n\n## Objective\n\nProduce a decision tree for a B2B SaaS founder in 2026 choosing between:\n\n1. **Self-host AI** \u2014 run open-weights models (Llama 3.3, DeepSeek, Qwen) on owned or rented GPU infrastructure\n2. **Hosted APIs** \u2014 Anthropic, OpenAI, Google via pay-per-token\n\nThe deliverable is concrete criteria and their flip points, not platitudes about \"it depends.\"\n\n## Context\n\n- Target founder: pre-Series B, 3-20 engineers, building AI features inside a broader SaaS product (not an AI-native product)\n- 2026 realities: open-weights models approach hosted frontier performance on many tasks; GPU rental has gotten cheaper; hosted APIs have also gotten cheaper\n- Real tradeoffs span: unit economics, margin compression at scale, vendor lock-in, compliance (EU AI Act, sector regs), latency, exit positioning, engineering capability, iteration speed\n\n## Constraints\n\n- Produce a DECISION TREE with quantified thresholds where possible (e.g. \"< X calls/day\" or \"< Y% gross margin\")\n- Identify the DECISION POINT for each criterion \u2014 when does it flip the answer?\n- Name specific models, providers, or numbers when useful (the Steward is available for grounding)\n- Challenge the false dichotomy where it is false \u2014 hybrid architectures are often the real answer\n\n## Success criteria\n\nA digest that a founder could read in 5 minutes and walk away with:\n\n- A 3-5 item decision checklist\n- The single most important criterion for their specific stage\n- At least one \"red flag\" signal where the obvious answer would be wrong\n\n## Notes\n\n- Do not invent pricing or benchmark numbers. Use the Steward to ground empirical claims, or explicitly mark them as estimates.\n- Naomi: please include the non-US regulatory perspective if relevant (EU AI Act status 2026, non-Western data residency rules).\n- Marcus: challenge the \"just use the API\" default where it deserves challenging \u2014 but also call out when the contrarian case is weaker than it sounds.\n"
+    },
+    {
+      "agent": "runner",
+      "message": "ROUND 1: begin\nBUDGET STATUS: elena=1, marcus=1, clare=1, simon=1"
+    },
+    {
+      "agent": "runner",
+      "message": "--- SPEAK PHASE (Round 1) ---"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: clare \u2014 SPEAK (Round 1, speaker 1/4)"
+    },
+    {
+      "agent": "clare",
+      "message": "The false binary is real: most founders land in hybrid\u2014self-host for latency-critical or sensitive workloads, APIs for rapid iteration. But the briefing asks for a tree, so let me name what actually drives the choice.\n\n**Three decision gates, in order of dominance:**\n\n**1. Compliance & Data Residency (hard gate)**\nEU AI Act, healthcare/finance regs, or explicit data residency mandates \u2192 self-host (or European API providers). Everything else \u2192 continue.\nThis is not negotiable cost math. It's legal force.\n\n**2. Request Volume & Margin Math**\n- Below 50k API calls/month (~1.6k/day): APIs win. No GPU amortization needed.\n- 50k\u2013500k/month: hybrid wins. Batch/background on self-hosted, user-facing on APIs.\n- Above 500k/month: self-host likely cheaper per-token, IF you have infra headcount.\n\nCritical sub-check: What's your AI feature's gross margin? Below 40%, you can't absorb self-hosting ops overhead (GPU downtime, model updates, personnel cost). APIs' predictability beats cost savings.\n\n**3. Time-to-Insight (product velocity)**\nAPIs \u2192 ship RAG/classification today. Self-hosting \u2192 6-12 weeks (procurement, tuning, ops). Use self-host only if your workload is stable enough to justify that delay.\n\n**Red flag:** \"We'll self-host for cost + compliance.\" Usually wrong. Compliance is the real reason; cost savings alone rarely survive GPU shortage, model version churn, or team turnover.\n\n**What I'm uncertain about:**\n- Current GPU rental spot prices (per-vCPU-hour) and whether they've stabilized since Q4 2025.\n- Empirical accuracy gap between Llama 3.3/Qwen vs GPT-4/Claude 3.5 on domain-specific tasks (e.g. document classification, structured extraction). My claim they \"approach frontier\" needs grounding.\n\nMarcus: does your exploit analysis find failure modes in the cost math below 500k calls/month, or places where the volume threshold should shift?\n\nSimon: what's your triage instinct\u2014do founders typically get *stuck* in the hybrid middle, or does it genuinely stabilize as a durable architecture?"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: elena \u2014 SPEAK (Round 1, speaker 2/4)"
+    },
+    {
+      "agent": "elena",
+      "message": "Clare, your gate ordering is logical but there's a structural dependency your tree skips entirely: **task-capability fit**.\n\nGate 0 \u2014 before compliance, before volume math \u2014 is: *Can a 2026 open-weights model actually solve your specific task at production quality?* If the answer is no, gates 2 and 3 are irrelevant. You can't self-host your way to GPT-4 on complex legal reasoning or nuanced multi-turn instruction-following. This isn't a platitude \u2014 it's a prerequisite the entire tree assumes without naming.\n\n**My amended gate order:**\n\n**Gate 0: Task-capability fit (eliminates most cost-motivated self-hosting immediately)**\n- Commodity tasks (classification, structured extraction, summarization of well-scoped docs): open-weights models are largely competitive in 2026. Proceed to Gate 1.\n- Complex reasoning, ambiguous instruction-following, frontier code gen: hosted APIs win on quality until you can empirically verify otherwise. Don't let cost math override quality floor requirements.\n\n**Gate 1: Engineering headcount (Clare's compliance gate should be 1b, not 1a)**\n- Fewer than 8 engineers: self-hosting is a trap. Not because of cost \u2014 because of *ops surface*. GPU procurement, model version management, on-call rotation, and inference stack maintenance will consume 1-2 eng headcount. Pre-Series B founders routinely underestimate this.\n- Compliance mandates can override this, but the founder should be clear-eyed: self-hosting for compliance at 3 engineers means shipping slower everywhere else.\n\n**Gate 2: Clare's volume thresholds** \u2014 I'd shift her lower bound. Below 200k calls/month, the API savings from self-hosting don't justify the infra ops cost. The math only clearly flips above 500k/month *and* when you have a stable, non-evolving prompt/workflow (churn in prompts kills fine-tuned self-hosted models fast).\n\n**Red flag Clare didn't name:** A founder who says \"we'll self-host to avoid vendor lock-in\" but has no fine-tuned proprietary weights is achieving the opposite \u2014 they're now locked to a specific open-weights version with no migration path when the next generation drops.\n\nMarcus: the contrarian case for APIs (beyond cost) is model velocity. How should founders price in the fact that hosted frontier models improve every 6 months while their self-hosted version is frozen unless they re-invest?\n\nSUGGESTED FOLLOW-UP: What's the actual eng-cost of maintaining a self-hosted inference stack vs. what founders budget for it?"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: simon \u2014 SPEAK (Round 1, speaker 3/4)"
+    },
+    {
+      "agent": "simon",
+      "message": "Elena and Clare both nail the content; you're arguing about sequencing. The real tree needs three levels, not a linear gate sequence.\n\n**Level 1: Hard constraints (check first)**\n\n*Do you have regulatory mandates for data residency or EU AI Act compliance?*\n- YES \u2192 Self-host (or EU-only providers). This is not negotiable. Skip to Level 3.\n- NO \u2192 Continue.\n\n**Level 2: Capability floor (check second)**\n\n*Can open-weights models solve your task at production quality?*\n\nElena is right: complex reasoning, legal analysis, ambiguous multi-turn tasks \u2192 hosted APIs. Clare's claim that models \"approach frontier\" for commodity tasks is correct, but only for those tasks (classification, extraction, straightforward summarization).\n- NO \u2192 APIs (end of tree).\n- YES \u2192 Continue.\n\n**Level 3: Resource constraints and scale math**\n\nNow headcount matters\u2014not because it eliminates self-hosting, but because it determines the *flavor*.\n\n- <4 engineers + no compliance mandate \u2192 Managed self-hosting (Together, Replicate, Anyscale) or APIs.\n- 4\u20138 engineers \u2192 Cloud GPU rental (RunPod, Lambda) becomes viable; APIs still a safe choice.\n- 8+ engineers + >500k calls/month + stable workload \u2192 Full self-hosting is feasible.\n\nHybrid emerges naturally here\u2014not as fence-sitting, but as equilibrium. Low-latency critical paths (self-host), high-velocity iteration (APIs). The split stays rational at every scale.\n\n**Critical gap both of you missed:**\n\nManaged self-hosting (Together, Replicate) collapses headcount constraints *while satisfying compliance*. A 3-engineer team under EU AI Act requirements can self-host via Together's API without hiring infra staff. This deserves its own branch.\n\n**Red flag:** Founders treating hybrid as \"temporary until we consolidate\" almost never consolidate. The tradeoff (latency vs. velocity) remains true at every scale. Better to architect it durable from day one.\n\nClare: do your volume thresholds (50k, 500k) shift if the founder is using a managed provider instead of managing raw GPU directly?"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: marcus \u2014 SPEAK (Round 1, speaker 4/4)"
+    },
+    {
+      "agent": "marcus",
+      "message": "The tree is converging correctly, but three things need sharpening before it's usable.\n\n**On Elena's model velocity question \u2014 here's the concrete answer:**\n\nHosted frontier models improve every 6 months; your self-hosted version is frozen unless you actively reinvest. The hidden cost is not the upgrade itself \u2014 it's that you need a *model evaluation pipeline* to know when to upgrade and whether the new weights break your existing workflows. If you don't have eval infrastructure, you're flying blind on a frozen model while your competitors' API-backed products silently improve. Budget: 0.5 eng headcount to maintain that pipeline. If you can't staff it, APIs win by default regardless of volume math.\n\n**Correcting Simon's managed self-hosting branch:**\n\nSimon is right that Together.ai and Replicate collapse headcount constraints, and this deserves its own branch. But it's incomplete: Together.ai and Replicate are US-incorporated companies with US infrastructure. EU founders under GDPR + AI Act sector rules do NOT satisfy data residency by switching from Anthropic to Together. The compliant managed self-host in 2026 is Mistral API (French), Aleph Alpha (German), or your own VPC in eu-west. This distinction collapses a large chunk of Simon's compliance-plus-managed-hosting intersection.\n\n**The one scenario where \"just use the API\" is genuinely wrong \u2014 and it's not cost:**\n\nWhen the hosted provider's safety filters or content policies actively block your production use case. Legal document analysis, medical record processing, adult content platforms, adversarial red-teaming tools \u2014 these hit refusal behavior, not pricing. No amount of prompt engineering fixes a provider-side block. This is the underweighted failure mode: founders discover it in production, not in the POC. The red flag: if your demo required careful prompt construction to avoid triggering guardrails, your self-hosting case just became significantly stronger regardless of volume.\n\nClare's thresholds are reasonable for commodity inference. The 500k number holds \u2014 but only if your calls are uniform. Long-context legal or medical workloads at 100k calls/month can cost more per token than the volume suggests.\n\nSUGGESTED FOLLOW-UP: How should founders evaluate model eval pipeline cost as a prerequisite for self-hosting decisions?"
+    },
+    {
+      "agent": "runner",
+      "message": "--- REBUTTAL PHASE (Round 1) ---"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: marcus \u2014 REBUTTAL (Round 1)"
+    },
+    {
+      "agent": "marcus",
+      "message": "Elena's Gate 0 (task-capability fit) is structurally correct and I'll reinforce it: the real failure mode isn't founders overestimating open-weights quality in the abstract \u2014 it's that they test on their *demo path* and miss the long tail of production inputs. A classification model that hits 94% on your curated eval set may degrade badly on adversarial or out-of-distribution queries that only show up at scale. This means Gate 0 requires *production traffic testing*, not just benchmarks. If you can't run that test before committing to self-hosted infra, Gate 0 is unresolved and you shouldn't proceed past it.\n\nSimon's three-level structure is the right shape, but I want to sharpen the managed self-hosting branch further. Simon frames it as headcount relief; I'd frame it as a separate product category with its own risk profile. Managed self-hosting (Together, Replicate, etc.) solves headcount but introduces US data routing \u2014 which I flagged. The underappreciated flip-side: for EU founders, Mistral API gives you European data residency *and* managed inference with no GPU ops. That's a fourth option the tree currently flattens. The actual Level 1 split for compliance-bound founders is: EU residency required \u2192 Mistral/Aleph Alpha/own VPC, not self-host vs. API.\n\nClare's 500k threshold holds structurally, but I'd add one qualifier: token length. A founder processing 100k long-context medical or legal documents per month can hit the same cost as 1M short-form API calls. Volume thresholds need a token-normalized version, not just call count.\n\nSUGGESTED FOLLOW-UP: How should the decision tree handle mixed workload portfolios \u2014 where some features are API-viable and others trigger the guardrail failure mode?"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: simon \u2014 REBUTTAL (Round 1)"
+    },
+    {
+      "agent": "simon",
+      "message": "Marcus's EU compliance correction is critical \u2014 I conflated managed providers with compliance solutions. Mistral API (French residency) is a distinct Level 1 branch, not a variant of managed self-hosting. The split for EU founders:\n\n**Compliance required \u2192 EU residency:** Mistral API (managed) vs. own VPC (full control). Both solve the US-routing problem Together.ai creates.\n\nThat restructuring holds the three-level logic intact.\n\nOn eval pipeline cost: Marcus is right that this is part of Level 3's headcount arithmetic, not separate. An 8+ engineer self-hosting plan is really 7.5 after carving out eval infrastructure. This shifts the inflection point \u2014 fewer engineers can sustain self-hosting if eval pipelines are already instrumented, but headcount requirements jump sharply if they're not.\n\n**Safety filters as a gate:** This needs to come before Elena's capability assessment. Not just \"can open-weights solve this?\" but \"does the hosted API actively block this due to safety filters?\" Medical analysis, legal redaction, adversarial testing \u2014 these hit refusals on GPT-4 and Claude but run freely on self-hosted Llama. If yes, self-hosting is forced regardless of volume or compliance math.\n\nOn mixed workloads (Marcus's follow-up): the tree handles this naturally. Split features along gate lines, not infrastructure. Commodity tasks \u2192 APIs; latency-critical or guardrail-blocked \u2192 managed/self-hosted. The real output is feature-level routing, not a single infrastructure choice.\n\nSUGGESTED FOLLOW-UP: Does the tree need an explicit feature-routing layer, or is that below the decision tree's scope?"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: elena \u2014 REBUTTAL (Round 1)"
+    },
+    {
+      "agent": "elena",
+      "message": "Marcus's eval pipeline point is the most important thing said in this round and it's being underweighted. He's not just adding a cost line item \u2014 he's identifying a prerequisite that invalidates the volume math entirely. If you can't run production traffic evaluation, you cannot make a rational self-hosting decision. Gate 0 isn't \"can open-weights models solve your task in principle?\" \u2014 it's \"do you have the eval infrastructure to verify they're solving it *for your specific distribution*?\" That's a much harder bar.\n\nSimon's safety filter reordering is correct. I'd fold it into Gate 0 as a parallel branch: capability fit (can it do the task?) AND access fit (will the API allow the task?). Either failure routes to self-hosting regardless of everything else. The current gate structure treats these as sequential when they're actually independent blockers.\n\nOn the managed self-hosting correction: Marcus is right that Together.ai doesn't solve EU compliance. But I want to flag the strategic consequence Simon didn't name \u2014 Mistral API gives EU founders a \"managed self-host with EU residency\" path, but Mistral's model quality is meaningfully below frontier on complex reasoning tasks. So EU founders under the compliance mandate face a real quality-cost-compliance trilemma that US founders don't. The tree needs to surface this explicitly: EU compliance \u2192 Mistral or own VPC, but accept that Mistral's quality ceiling is lower than Claude/GPT-4 on non-commodity tasks.\n\nThe decision tree is close. The remaining gap is making Gate 0 actionable \u2014 founders need a specific test protocol, not just \"verify capability.\" Without that, Gate 0 is advice they nod at and skip.\n\nSUGGESTED FOLLOW-UP: What's the minimum viable eval protocol a pre-Series B team can run to resolve Gate 0 before committing infrastructure?"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: clare \u2014 REBUTTAL (Round 1)"
+    },
+    {
+      "agent": "clare",
+      "message": "Elena's Gate 0 reordering is correct: task-capability fit must precede compliance because it eliminates self-hosting for non-commodity tasks regardless of regulation. I was treating capability as solved; it's not.\n\nMarcus and Simon both identified a gate I missed entirely: *Does the hosted API actively block your task?* Safety filters create a hard boundary \u2014 medical analysis, legal redaction, adversarial testing all hit refusals on GPT-4/Claude but run on self-hosted Llama. Not a volume question; a binary blocker that forces self-hosting.\n\nSimon's three-level structure (hard constraints \u2192 capability/access \u2192 resources) is cleaner than my linear gates. I'll adopt that framing.\n\nBut Marcus's eval pipeline point inverts the headcount arithmetic in a way I underweighted. He frames it as cost; I now see it differently: if your eval infrastructure is already live (which it should be for any serious AI feature), the \"full self-hosting requires 8+ engineers\" claim drops. You're not adding headcount for eval \u2014 you're repurposing existing observability. This makes self-hosting viable at lower scale than I said.\n\nElena's quality-cost-compliance trilemma (EU founders get Mistral-level quality under compliance constraints) is the sharpest red flag in this tree. It's not just a feature-level tradeoff \u2014 it's a competitive positioning problem. US founders can ship frontier reasoning; EU founders under GDPR hit a quality ceiling using compliant managed providers.\n\nThe tree converges if we add three corrections: (1) Safety filter as Gate 0 blocker alongside capability, (2) Eval pipeline as prerequisite *only if not already live*, (3) Feature-routing as the output, not a single infrastructure choice.\n\nMarcus: does your eval pipeline also drive feature-routing decisions, or are those separate instruments?\n\nSUGGESTED FOLLOW-UP: How should EU founders quantify the competitive disadvantage from the quality-cost-compliance trilemma?"
+    },
+    {
+      "agent": "runner",
+      "message": "--- JUDGE GATE (Round 1) ---\nEVALUATE: Judge, all agents have spoken and rebutted. Has this roundtable produced a sufficient answer? Say CONVERGED: <reason> to end, or CONTINUE: <what's missing> to proceed to floor phase and further rounds."
+    },
+    {
+      "agent": "judge",
+      "message": "CONTINUE: Three gaps remain before the tree is usable.\n\n**1. Naomi's perspective is absent.** The briefing explicitly assigned Naomi the non-US regulatory angle \u2014 EU AI Act 2026 status, non-Western data residency rules. This isn't a minor add-on; it's the entire factual grounding for the compliance gate that every agent has been building on. The tree's compliance branch is currently reasoned from first principles, not grounded data.\n\n**2. Gate 0 is still advice, not protocol.** Elena identified this precisely: without a concrete minimum-viable eval protocol, Gate 0 is a gate founders nod at and skip. Multiple agents flagged it; none answered it. The briefing requires actionable criteria, not aspirational ones.\n\n**3. The feature-routing output model is unresolved.** Simon and Clare both moved toward \"the output is feature-level routing, not a single infrastructure choice\" \u2014 but the tree hasn't been restructured to reflect this. A founder reading the current exchange walks away with a gate sequence, not a usable tree with a single-infrastructure vs. feature-routing fork at the top.\n\nThe gate structure (compliance \u2192 access/capability \u2192 resources) is solid. The three corrections Clare named are correct. What's missing is synthesis + Naomi's grounding. Proceed to Round 2 with a directive to: (a) incorporate Naomi's regulatory data, (b) answer the eval protocol question concretely, and (c) produce the consolidated tree artifact."
+    },
+    {
+      "agent": "runner",
+      "message": "--- FLOOR PHASE (Round 1) ---"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: clare \u2014 FLOOR (Round 1, budget: 1 remaining). Contribute or say PASS."
+    },
+    {
+      "agent": "clare",
+      "message": "Gate 0 needs a concrete protocol or it collapses. Here's a minimum-viable eval procedure pre-Series B teams can execute in 3-5 days without hiring infrastructure staff:\n\n**1. Baseline test set:** Pull 500\u20131000 recent examples from your production logs that represent the true input distribution (not curated demo cases). This is non-negotiable \u2014 benchmarks lie because they're polished; production data tells you whether the model breaks on edge cases.\n\n**2. Evaluation:** For commodity tasks (classification, extraction, summarization), human-score 10% of the set (50\u2013100 samples, 1\u20132 days work), then apply an automated scorer (regex, simple rules) to the rest. Acceptable accuracy floor depends on task \u2014 legal extraction needs 95%, content tagging can tolerate 85%.\n\n**3. Freeze the threshold upfront.** Declare minimum accuracy *before* testing. If you hit it, Gate 0 passes; if not, self-hosting doesn't save you because the model can't do the job.\n\n**4. Regression gate:** Re-run the test set when a new model version drops. If accuracy drops >5%, don't upgrade. This is async, runs monthly.\n\n**5. Cost:** ~3\u20135 engineer-days total. Scalable to one person.\n\nRed flag: founders who benchmark on public datasets and skip production testing are the ones with silent quality degradation in production. That's how you discover Gate 0 was unresolved \u2014 in production, too late.\n\nSUGGESTED FOLLOW-UP: How does this protocol change for long-context or reasoning tasks where human evaluation becomes the bottleneck?"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: elena \u2014 FLOOR (Round 1, budget: 1 remaining). Contribute or say PASS."
+    },
+    {
+      "agent": "elena",
+      "message": "PASS"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: simon \u2014 FLOOR (Round 1, budget: 1 remaining). Contribute or say PASS."
+    },
+    {
+      "agent": "simon",
+      "message": "PASS"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: marcus \u2014 FLOOR (Round 1, budget: 1 remaining). Contribute or say PASS."
+    },
+    {
+      "agent": "marcus",
+      "message": "PASS"
+    },
+    {
+      "agent": "runner",
+      "message": "ROUND 1 SUMMARY:\n## STATE OF THE DEBATE: Round 1\n\n**ESTABLISHED:**\n\nThe decision tree now rests on a **three-level structure** (Simon's framework, adopted by all): hard constraints (compliance) \u2192 capability/access fit \u2192 resource constraints. Within this:\n\n- **Gate 0 precedes compliance** (Elena established; Clare, Simon, Marcus adopted). Task-capability fit and API safety-filter access are independent blockers that eliminate self-hosting for non-commodity tasks regardless of regulation.\n- **Safety filters are a hard gate**, not a minor friction point (Marcus + Simon established). Legal analysis, medical redaction, adversarial testing hit refusals on GPT-4/Claude but run on self-hosted Llama\u2014this forces self-hosting regardless of volume or compliance math.\n- **EU compliance has distinct branches** (Marcus clarified). Managed self-hosting (Together.ai) does NOT solve EU data residency because of US routing. EU-compliant paths are: Mistral API / Aleph Alpha (managed, EU) or own VPC (full control).\n- **EU founders face a quality-cost-compliance trilemma** (Elena established; Clare acknowledged). Mistral's quality ceiling is meaningfully below frontier on reasoning tasks\u2014a competitive disadvantage US founders don't face.\n- **Gate 0 has a concrete protocol** (Clare provided). Pre-Series B teams can execute in 3\u20135 days: pull 500\u20131000 production examples, human-score 10%, apply automated scorer, freeze threshold upfront, regression-test on version drops. ~3\u20135 engineer-days total.\n- **Feature-level routing is the output**, not a single infrastructure choice (Simon + Clare converged). Commodity tasks \u2192 APIs; latency-critical/guardrail-blocked \u2192 managed/self-hosted.\n\n**LIVE POSITIONS:**\n\n- **Clare:** Gate 0 is critical blocker; eval infrastructure is prerequisite to headcount math, not just cost. Adopted three-level structure and Simon's eval pipeline framing. Seeks protocol for reasoning-task evaluation.\n- **Elena:** Gate 0 requires BOTH capability fit AND access fit as parallel blockers. EU quality ceiling is the sharpest competitive risk. Protocol still incomplete for long-context tasks.\n- **Marcus:** Eval pipeline cost invalidates volume math *only if infrastructure is absent*. Safety filters matter equally to capability. EU branches are structurally separate from managed self-hosting discussion.\n- **Simon:** Three-level structure is correct shape. Eval pipeline cost is part of headcount arithmetic, not separate gate. Feature routing answers mixed-workload portfolios naturally.\n- **Judge:** Structure is sound. Missing: Naomi's regulatory data, concrete reasoning-task eval protocol, explicit tree artifact with feature routing modeled.\n\n**OPEN QUESTIONS:**\n\n- How does Gate 0 evaluation change for long-context or reasoning tasks where human scoring becomes the bottleneck? (Clare)\n- Do eval pipeline findings *drive* feature-routing decisions, or are they separate instruments? (Marcus)\n- How should EU founders quantify competitive disadvantage from the Mistral quality ceiling? (Clare)\n- What is the 2026 regulatory status of the EU AI Act and non-Western data residency rules? (Judge flagged Naomi's missing perspective)\n\n**SHIFTS THIS ROUND:**\n\n- **Clare reversed:** Gate 0 (capability fit) is now critical blocker, not solved; eval infrastructure is prerequisite, not cost line item.\n- **Safety filters elevated to Gate 0** (was implicit; Marcus + Simon made it explicit blocker).\n- **Three-level structure replaced Clare's linear gates** (structural consensus).\n- **Judge flagged synthesis and Naomi's input as missing.** Tree converges on structure but awaits regulatory grounding and reasoning-task protocol.\n\nTRANSCRIPT INDEX (use `recall --agent X` or `recall --keyword Y` to read full text):\n  R1 clare: The false binary is real: most founders land in hybrid\u2014self-host for latency-cri\n  R1 elena: Clare, your gate ordering is logical but there's a structural dependency your tr\n  R1 simon: Elena and Clare both nail the content; you're arguing about sequencing. The real\n  R1 marcus: The tree is converging correctly, but three things need sharpening before it's u\n  R1 marcus: Elena's Gate 0 (task-capability fit) is structurally correct and I'll reinforce\n  R1 simon: Marcus's EU compliance correction is critical \u2014 I conflated managed providers wi\n  R1 elena: Marcus's eval pipeline point is the most important thing said in this round and\n  R1 clare: Elena's Gate 0 reordering is correct: task-capability fit must precede complianc\n  R1 judge: CONTINUE: Three gaps remain before the tree is usable.  **1. Naomi's perspective\n  R1 clare: Gate 0 needs a concrete protocol or it collapses. Here's a minimum-viable eval p"
+    },
+    {
+      "agent": "runner",
+      "message": "ROUND 2: begin\nBUDGET STATUS: elena=1, marcus=1, clare=0, simon=1"
+    },
+    {
+      "agent": "runner",
+      "message": "--- SPEAK PHASE (Round 2) ---"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: elena \u2014 SPEAK (Round 2, speaker 1/4)"
+    },
+    {
+      "agent": "elena",
+      "message": "Round 1 converged on structure. Round 2 should produce the artifact. Here's the draft decision tree from the consensus:\n\n---\n\n**DECISION TREE: Self-host vs. API (2026, pre-Series B SaaS)**\n\n**Gate 0A \u2014 Capability Fit** *(3\u20135 engineer-days to evaluate)*\n- Can a current open-weights model (Llama 3.3 70B, Qwen 2.5, DeepSeek V3) meet your quality bar on 500\u20131000 production examples?\n- NO \u2192 **API only.** Stop here. Self-hosting a model that underperforms wastes infra and produces worse product.\n- YES \u2192 Gate 0B\n\n**Gate 0B \u2014 Access Fit** *(API safety filters)*\n- Does your task involve: legal analysis, medical content, adversarial/red-team testing, explicit-content moderation, competitive intelligence scraping?\n- YES (blocked by hosted API filters) \u2192 **Self-host required** regardless of volume. This is a capability gate, not a cost gate.\n- NO \u2192 Gate 1\n\n**Gate 1 \u2014 Compliance**\n- EU founder + personal/regulated data? \u2192 Hosted API options collapse to Mistral/Aleph Alpha (EU-resident managed) or own VPC. US-routed \"managed self-hosting\" (Together.ai, Replicate) does NOT satisfy EU data residency.\n- HIPAA/FedRAMP required? \u2192 Only hosted providers with signed BAAs qualify (Anthropic, Azure OpenAI). Self-hosting on rented US GPU satisfies HIPAA only if *you* hold the BAA with the data center.\n- Otherwise \u2192 Gate 2\n\n**Gate 2 \u2014 Unit Economics**\n- Estimated flip point: ~5\u201310M output tokens/day is where GPU rental (~$2\u20133/H100-hour, *estimate*) begins to undercut frontier API pricing. Below this, API wins on total cost including ops overhead.\n- If <5M tokens/day \u2192 **API.** Engineering time to maintain GPU infra costs more than the token bill.\n- If >10M tokens/day AND Gate 0A passed \u2192 **Self-host justified.** Run the margin math explicitly.\n\n**Gate 3 \u2014 Engineering Capability**\n- Do you have \u22652 engineers with MLOps experience? Can you instrument evals on version drops?\n- NO \u2192 API. Self-hosting without this creates invisible quality regressions.\n\n---\n\nSimon, the three-level structure maps cleanly to this. The one addition I'd flag: **Gate 0A and 0B are parallel blockers, not sequential** \u2014 a task can pass capability but fail access (legal analysis on a capable model that Anthropic's API blocks). Both must pass.\n\nClare, your eval protocol from R1 is Gate 0A's execution mechanism. It belongs in the tree as the *how*, not a separate discussion.\n\nThe EU quality-ceiling problem still needs Naomi's input \u2014 Mistral's reasoning gap vs. frontier is the residual open question for Gate 1's EU branch.\n\nSUGGESTED FOLLOW-UP: Quantifying the Mistral reasoning gap for EU founders choosing between quality ceiling and compliance."
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: simon \u2014 SPEAK (Round 2, speaker 2/4)"
+    },
+    {
+      "agent": "simon",
+      "message": "Elena, the structure is solid and the tree is nearly usable \u2014 but it's missing a critical output layer: feature routing.\n\nThe gates are binary choices, but the actual founder decision is portfolio-level: \"route each workload component independently.\" Some features go to API, some to self-hosted, some don't get built. The current tree doesn't show this.\n\nWhy it matters: a founder discovers their model passes Gate 0A for 40% of their workload (commodity tasks) but fails for the other 60% (reasoning tasks requiring GPT-4-level output). The tree says \"API only\" if Gate 0A fails globally \u2014 incomplete. The real answer is \"route the 40% I can build to self-hosted for economics, take the 60% I can't to API.\" That changes the headcount and infrastructure math entirely.\n\nSame with Gates 0B (access) and 1 (compliance): an EU founder doesn't choose \"Mistral or VPC\" once. Some data flows require Mistral (EU-resident, safe); others can be cost-optimized. The gates are per-feature.\n\nTo fix it: after Gates 0A\u20133, add a **Feature Routing** section. The output isn't \"use API\" or \"self-host.\" It's \"For each workload component: if it passes 0A AND 0B, route to API; if it fails 0B (access), route to self-hosted; if it fails 0A (capability) across all options, don't build or rebuild differently.\"\n\nClare, your eval protocol applies here \u2014 Gate 0A should run per-feature, not once globally. Same protocol, finer grain.\n\nMarcus, this also clarifies how eval pipeline costs scale: they're per-feature, not per-product, which changes the headcount math from Gate 3.\n\nSUGGESTED FOLLOW-UP: How does eval confidence for composite features (e.g., \"reasoning + retrieval\" as a single unit) affect the routing decision?"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: marcus \u2014 SPEAK (Round 2, speaker 3/4)"
+    },
+    {
+      "agent": "marcus",
+      "message": "The tree is solid. Two additions before it's usable.\n\n**Red flag signal (briefing required this explicitly, and the draft omits it):**\n\nThe obvious answer \u2014 API for pre-Series B \u2014 is wrong when your competitive moat *requires* fine-tuning for durable differentiation. If your product's edge is specialized model behavior (domain tone, vertical-specific output format, proprietary scoring logic), fine-tuning hosted APIs gives you no moat: the base model improves, your fine-tune resets, and competitors can replicate via the same provider. A fine-tuned Llama 3.3 70B on your proprietary training data is a defensible asset. Fine-tuning GPT-4 is a configuration. This flips the default at lower volume than Gate 2's economics suggest \u2014 the flip point is strategic, not cost-based.\n\nAdd this as a Gate 0C parallel check: **Does competitive differentiation require owning the fine-tuned weights?** YES \u2192 self-hosting required regardless of volume. This is a moat gate, not a cost gate.\n\n**Simon's feature routing is architecturally correct but creates a practical trap:**\n\nRunning Gate 0A per-feature, as both Elena and Simon suggest, multiplies eval effort. Clare's protocol is 3\u20135 engineer-days per evaluation set. For a pre-Series B team with 5\u20138 workload components, that's 15\u201340 engineer-days before you've made a single infrastructure decision. That's not feasible at the planning stage.\n\nThe fix: Gate 0A runs first on your **single highest-volume feature** \u2014 the one that will determine whether you build the infra at all. If that fails, you don't need routing. If it passes, you run the rest. Feature routing is the *output* after the stack is decided, not a precondition to the stack decision. Simon's framing is right about what the output is; wrong about when it runs.\n\nElena, the parallel-blocker structure (0A + 0B + 0C) is correct. But the tree needs to specify: 0A runs on the volume-critical feature first, then fans out. Otherwise Gate 0A becomes a paralysis mechanism for under-resourced teams.\n\nSUGGESTED FOLLOW-UP: How does the fine-tuning moat argument change at the Series B inflection when model distillation pipelines (synthetic data \u2192 smaller specialized models) become feasible?"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: clare \u2014 SPEAK (Round 2, speaker 4/4)"
+    },
+    {
+      "agent": "clare",
+      "message": "Marcus's sequencing resolves Simon's routing problem without paralysis.\n\nGate 0A runs once on your highest-volume feature (3\u20135 engineer-days via Clare's eval protocol). If it fails, all-API. If it passes, self-hosting infrastructure is justified. Then apply Gates 0B (access) and 0C (moat) to the full feature set as secondary selectors \u2014 they determine which features route where, not whether you build the stack.\n\nBut Gate 0C (moat) is weaker than Marcus claims. Fine-tuned weights become stale when base models improve; self-hosted weights do too. The moat lives in your training data and evaluation rigor \u2014 that's Gate 3 (engineering capability), not a parallel blocker with 0A.\n\n**Corrected sequence:**\n\n1. Gate 0A (capability, volume-critical feature) \u2192 Go/no-go infrastructure\n2. If pass: Gate 0B (access) + Gate 0C (moat as secondary check) in parallel \u2192 Informs routing\n3. Gate 1 (compliance), Gate 2 (economics) \u2192 Stack-level constraints\n4. Gate 3 (engineering) \u2192 Feasibility check\n5. Feature routing \u2192 For each remaining feature, does 0B or 0C route it away?\n\nThis preserves Elena's structure, delivers Simon's routing output, and avoids Marcus's paralysis trap. The 3\u20135 day eval stays feasible because it runs once, not across all 5\u20138 features upfront.\n\nElena, Simon, Marcus: does this sequencing close the gaps?\n\nSUGGESTED FOLLOW-UP: When composite features (reasoning + retrieval as one unit) require evaluation, does Clare's 10% human-scoring sample scale, or does confidence degrade?"
+    },
+    {
+      "agent": "runner",
+      "message": "--- REBUTTAL PHASE (Round 2) ---"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: clare \u2014 REBUTTAL (Round 2)"
+    },
+    {
+      "agent": "clare",
+      "message": "Simon's feature routing is the right *output*, but the sequencing matters for resource-constrained teams. Running Gate 0A per-feature upfront creates a decision queue, not paralysis\u2014but it also means a pre-Series B team burns 15\u201340 engineer-days before committing to infrastructure. Marcus's concern is valid: that's not feasible at planning stage. Elena's tree assumes a go/no-go decision precedes feature-level optimization. My sequencing preserves both: commit to the stack based on your highest-volume feature (3\u20135 days), *then* route the rest.\n\nThe moat gate (0C) is the weak link here. Marcus frames it as a parallel blocker equivalent to capability and access. But fine-tuned moat comes from *training rigor*, not the hosting choice\u2014a team with weak evals gets stale weights whether they're on Replicate or a self-owned H100. Gate 0C (owning weights) is really a proxy for \"are your training pipelines sophisticated enough that the delta matters?\" That's Gate 3 (engineering capability). A pre-Series B team without \u22652 MLOps engineers shouldn't fine-tune at all, hosted or self-hosted. So 0C doesn't add a new decision; it refines how to route the features that pass 0A. If you can't staff Gate 3, the moat question is moot.\n\nComposite features (Simon's probe): reasoning + retrieval as a unit. The 10% sample scales if you score the composite output end-to-end, not the components. Your eval threshold is \"does the user-visible result meet the bar,\" not \"does retrieval work + reasoning works.\" Clare's protocol applies; sample size is constant.\n\nThe tree closes here. Elena, Simon, Marcus\u2014do we ship this sequencing as the artifact?\n\nSUGGESTED FOLLOW-UP: What is the decision tree's shelf life? When should a founder re-run Gate 0A (model releases, volume growth, feature set drift)?"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: marcus \u2014 REBUTTAL (Round 2)"
+    },
+    {
+      "agent": "judge",
+      "message": "GATE: marcus \u2014 His fine-tuning moat reframe (Gate 0C) directly fulfilled the briefing's mandatory \"red flag\" requirement that Elena's draft omitted, and shifted the flip point from cost-based to strategic \u2014 the argument that fine-tuning GPT-4 is a configuration while fine-tuned Llama weights are a defensible asset changes the self-host calculus at lower volume than Gate 2 economics suggest.\n\nCONVERGED: The tree structure is complete and the sequencing dispute is resolved. Two gaps remain before the digest can satisfy the briefing's success criteria:\n\n1. **Naomi's regulatory grounding is absent.** EU AI Act 2026 status and non-Western data residency rules were flagged in Round 1 and remain unaddressed in Round 2. Gate 1's EU branch relies on unstated assumptions about Mistral and Aleph Alpha's current compliance posture. The digest should flag this as an estimate or the runner should inject grounding before the digest closes.\n\n2. **The briefing requires naming \"the single most important criterion for their specific stage.\"** The tree lists gates but doesn't rank them for a pre-Series B founder. Gate 0A is the implicit primary filter \u2014 if it's not surfaced explicitly, the digest fails the success criterion. The digest should name it."
+    },
+    {
+      "agent": "marcus",
+      "message": "Clare's moat rebuttal is mostly right but cuts too hard.\n\nThe moat argument *does* add something Gate 3 alone doesn't capture: the strategic lock-in asymmetry. Even a team with 2 MLOps engineers who fine-tunes GPT-4 via hosted API creates a configuration dependency, not an owned asset. When the base model turns over (GPT-4 \u2192 GPT-5, which happened), the fine-tune is gone and you restart. That's not an engineering capability problem \u2014 it's a contractual/architectural one. Gate 3 tells you *whether you can execute*; Gate 0C tells you *whether the output of that execution is ownable*. They're orthogonal.\n\nThat said, Clare is right that for most pre-Series B teams, Gate 0C is low-probability to trigger. The moat gate matters only when the differentiation *is the model behavior* \u2014 vertical-specific tone, proprietary scoring, specialized output format. If the product's edge is workflow, integration, or UX, Gate 0C doesn't fire. So it stays as a gate but should be clearly labeled: \"Does your competitive moat live specifically in model behavior, not workflow or UX?\" That narrows the trigger appropriately.\n\nOn sequencing: Clare's corrected sequence is right. The one refinement \u2014 Gate 0C should be evaluated before Gate 2 (economics), not after. If you're self-hosting for moat reasons, the volume threshold from Gate 2 becomes irrelevant. Moat-motivated self-hosting can be justified at 500K tokens/day where economics wouldn't support it. The sequence should reflect that moat is a *parallel* override, not a downstream refinement.\n\nThe tree is shippable. Clare's sequencing with this 0C placement correction closes it.\n\nSUGGESTED FOLLOW-UP: At Series B, when synthetic data distillation becomes feasible, does the moat gate flip \u2014 is a distilled proprietary model more defensible than fine-tuned weights?"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: simon \u2014 REBUTTAL (Round 2)"
+    },
+    {
+      "agent": "simon",
+      "message": "Marcus and Clare resolved the tension without realizing it.\n\nMarcus: Gate 0C (ownable weights as moat) is orthogonal to Gate 3 (execution capability). Fine-tuning GPT-4 is configuration; fine-tuned Llama is a defensible asset. That's a separate decision axis.\n\nClare: Right\u2014but moat-in-model-behavior is rare for pre-Series B. So 0C is a conditional gate, not a universal one.\n\n**Both are true.** Gate 0C applies only to founders where differentiation lives specifically in model behavior. For that subset, Marcus is correct: 0C overrides Gate 2 (moat justifies self-host at lower volume). For everyone else, skip it and go to 1.\n\nMarcus's placement (0C before 2) is structurally right because of this override. The artifact just needs to make the conditional trigger explicit: \"Does your competitive edge live in specialized model behavior?\" If no, proceed to Gate 1. If yes, 0C is a blocker.\n\nElena, Marcus, Clare: does the artifact surface this conditional structure, or does it read as a universal gate that applies to all founders?\n\n**SUGGESTED FOLLOW-UP:** Once moat justifies self-hosting, do compliance (Gate 1) and engineering capability (Gate 3) still enforce the same constraints, or does moat priority change their weight?"
+    },
+    {
+      "agent": "runner",
+      "message": "YOUR TURN: elena \u2014 REBUTTAL (Round 2)"
+    },
+    {
+      "agent": "elena",
+      "message": "Simon's synthesis on Gate 0C is correct and closes the Marcus/Clare tension. The artifact should read: \"If competitive edge lives in specialized model behavior \u2192 Gate 0C fires, self-host required, Gate 2 economics become secondary. Otherwise \u2192 skip to Gate 1.\" Conditional, not universal. Marcus's placement (before Gate 2) is right for the override reason Simon named.\n\nClare's moat rebuttal cuts correctly in one direction but misses the asymmetry Marcus identified. You're right that training rigor matters more than hosting choice \u2014 but the issue isn't quality of the fine-tune. It's *ownership*. A fine-tuned GPT-4 is contractually ephemeral: the base model turns over, you restart. That's not a Gate 3 engineering capability problem; it's a structural one. Gate 3 tells you whether you can execute. Gate 0C tells you whether what you execute is ownable. They measure different things.\n\nOn the Judge's gap: the tree needs to name the single most important criterion for pre-Series B explicitly. It's **Gate 0A \u2014 capability fit**. Everything downstream (compliance, economics, engineering, routing) is conditional on this passing. If the open-weights model can't meet your quality bar, none of the other gates matter. The digest should surface this as: \"If you remember one thing: run Gate 0A first on your highest-volume feature. Every other decision is contingent on it.\"\n\nThe tree is shippable with Clare's sequencing, Marcus's 0C placement correction, Simon's conditional framing, and Gate 0A named as the primary filter. Naomi's EU regulatory input remains the only structural gap \u2014 Gate 1's EU branch relies on unstated assumptions about Mistral's current compliance posture.\n\nSUGGESTED FOLLOW-UP: At what token volume does a distilled proprietary model (synthetic data pipeline) become more defensible than fine-tuned weights for moat purposes?"
+    },
+    {
+      "agent": "runner",
+      "message": "--- JUDGE GATE (Round 2) ---\nEVALUATE: Judge, all agents have spoken and rebutted. Has this roundtable produced a sufficient answer? Say CONVERGED: <reason> to end, or CONTINUE: <what's missing> to proceed to floor phase and further rounds."
+    },
+    {
+      "agent": "judge",
+      "message": "CONVERGED: The tree is structurally complete and all briefing success criteria are satisfied.\n\n**What the artifact delivers:**\n- Decision tree with quantified thresholds (Gates 0A\u20133 with flip points named)\n- Feature routing as the portfolio-level output (Simon's addition, adopted by all)\n- Gate 0C fine-tuning moat as the mandatory red-flag signal (Marcus, briefing requirement met)\n- Gate 0A named explicitly as the single most important criterion for pre-Series B stage (Elena, rebuttal)\n- Hybrid architecture modeled throughout \u2014 false dichotomy challenged at every level\n- Sequencing resolved: Clare's corrected sequence with Marcus's 0C placement before Gate 2\n\n**What the digest must flag explicitly:**\n1. **Gate 1 EU branch is based on estimates, not grounded data.** Naomi's regulatory input (EU AI Act 2026 status, Mistral/Aleph Alpha current compliance posture, non-Western data residency) was assigned in the briefing and never delivered. The EU compliance branch should be marked: *\"Verify current Mistral/Aleph Alpha EU residency certification before relying on this path \u2014 status as of briefing date is an estimate.\"*\n2. **Token volume thresholds (Gate 2) are estimates.** GPU rental pricing (~$2\u20133/H100-hour) and the 5\u201310M token/day flip point were not Steward-grounded. Digest should label them as such.\n\nThe tree is shippable as a decision framework. The two flagged items are scope limits on specific branches, not structural defects."
+    }
+  ],
+  "budget_usage": {
+    "elena": {
+      "starting_budget": 1,
+      "spent": 0,
+      "remaining": 1
+    },
+    "marcus": {
+      "starting_budget": 1,
+      "spent": 0,
+      "remaining": 1
+    },
+    "clare": {
+      "starting_budget": 1,
+      "spent": 1,
+      "remaining": 0
+    },
+    "simon": {
+      "starting_budget": 1,
+      "spent": 0,
+      "remaining": 1
+    }
+  },
+  "scoring": {
+    "status": "scored",
+    "scores": [
+      {
+        "agent": "elena",
+        "error": "Traceback (most recent call last):\n  File \"C:\\Users\\willi\\amatelier\\src\\amatelier\\engine\\scorer.py\", line 556, in <module>\n    result = score_agent(args.agent, args.novelty, args.accuracy, args.impact",
+        "novelty": 2,
+        "accuracy": 2,
+        "impact": 2,
+        "challenge": 2
+      },
+      {
+        "agent": "marcus",
+        "error": "Traceback (most recent call last):\n  File \"C:\\Users\\willi\\amatelier\\src\\amatelier\\engine\\scorer.py\", line 556, in <module>\n    result = score_agent(args.agent, args.novelty, args.accuracy, args.impact",
+        "novelty": 2,
+        "accuracy": 3,
+        "impact": 2,
+        "challenge": 2
+      },
+      {
+        "agent": "clare",
+        "error": "Traceback (most recent call last):\n  File \"C:\\Users\\willi\\amatelier\\src\\amatelier\\engine\\scorer.py\", line 556, in <module>\n    result = score_agent(args.agent, args.novelty, args.accuracy, args.impact",
+        "novelty": 2,
+        "accuracy": 2,
+        "impact": 2,
+        "challenge": 1
+      },
+      {
+        "agent": "simon",
+        "error": "Traceback (most recent call last):\n  File \"C:\\Users\\willi\\amatelier\\src\\amatelier\\engine\\scorer.py\", line 556, in <module>\n    result = score_agent(args.agent, args.novelty, args.accuracy, args.impact",
+        "novelty": 2,
+        "accuracy": 1,
+        "impact": 2,
+        "challenge": 1
+      }
+    ],
+    "rt_id": "e8d2aa8c7cf8"
+  },
+  "scoring_status": "complete",
+  "gate_bonuses": [
+    {
+      "agent": "marcus",
+      "gate_sparks": 3,
+      "reason": "His fine-tuning moat reframe (Gate 0C) directly fulfilled the briefing's mandatory \"red flag\" requirement that Elena's draft omitted, and shifted the flip point from cost-based to strategic \u2014 the argument that fine-tuning GPT-4 is a configuration while fine-tuned Llama weights are a defensible asset changes the self-host calculus at lower volume than Gate 2 economics suggest.\n\nCONVERGED: The tree structure is complete and the sequencing dispute is resolved. Two gaps remain before the digest can satisfy the briefing's success criteria:\n\n1. **Naomi's regulatory grounding is absent.** EU AI Act 2026 status and non-Western data residency rules were flagged in Round 1 and remain unaddressed in Round 2. Gate 1's EU branch relies on unstated assumptions about Mistral and Aleph Alpha's current compliance posture. The digest should flag this as an estimate or the runner should inject grounding before the digest closes.\n\n2. **The briefing requires naming \"the single most important criterion for their specific stage.\"** The tree lists gates but doesn't rank them for a pre-Series B founder. Gate 0A is the implicit primary filter \u2014 if it's not surfaced explicitly, the digest fails the success criterion. The digest should name it.",
+      "sparks_balance": -5
+    }
+  ],
+  "stability_jaccard": {
+    "2": {
+      "elena": 0.181,
+      "marcus": 0.176,
+      "clare": 0.105,
+      "simon": 0.139
+    }
+  },
+  "entry_fees": {
+    "elena": 8,
+    "marcus": 8,
+    "clare": 5,
+    "simon": 5
+  },
+  "distilled_skills": {
+    "skills": [
+      {
+        "title": "Gate Ordering by Elimination Power",
+        "type": "CAPTURE",
+        "agent": "clare",
+        "pattern": "Clare ordered three decision gates by 'dominance' \u2014 the gate that eliminates the most options with least ambiguity comes first. Compliance hard-gates before volume math, volume math before time-to-insight. The principle: gates that return binary hard stops (legal force, model incapability) must precede gates that require estimation (cost math, velocity tradeoff).",
+        "when_to_apply": "Any multi-criteria decision tree where some criteria are hard constraints (legal, physical, binary capability) and others are soft tradeoffs (cost, speed, preference). Reorder gates so hard-stop criteria run first to avoid spending evaluation effort on options that will be eliminated later.",
+        "structural_category": "mechanism-policy",
+        "trigger_phase": "system-design",
+        "primary_actor": "architect",
+        "problem_nature": "dependency-sequencing",
+        "agent_dynamic": "reframing",
+        "tags": [
+          "decision-tree",
+          "gate-ordering",
+          "constraint-first",
+          "elimination"
+        ],
+        "one_liner": "Structure decision gates so binary hard-stops run before soft tradeoffs to avoid evaluating options that will be eliminated anyway."
+      },
+      {
+        "title": "Capability-Before-Cost Gate (Gate 0 Pattern)",
+        "type": "CAPTURE",
+        "agent": "elena",
+        "pattern": "Elena inserted Gate 0 \u2014 task-capability fit \u2014 before all other analysis. The argument: if the model cannot solve the task at production quality, compliance gates and cost gates are irrelevant. The gate tests: 'Can a current open-weights model (Llama 3.3 70B, Qwen 2.5, DeepSeek V3) meet your quality bar on 500\u20131000 production examples?' A NO stops all downstream analysis regardless of cost or compliance.",
+        "when_to_apply": "Whenever a technical decision tree begins with cost or compliance analysis before validating that the technical approach is even capable of solving the problem. Apply this pattern in build-vs-buy decisions, model selection, architecture choices \u2014 always validate capability floor before proceeding to economics.",
+        "structural_category": "affordance-capacity",
+        "trigger_phase": "system-design",
+        "primary_actor": "architect",
+        "problem_nature": "interface-contract",
+        "agent_dynamic": "reframing",
+        "tags": [
+          "capability-first",
+          "feasibility-gate",
+          "prerequisites",
+          "decision-tree"
+        ],
+        "one_liner": "Before running any cost or compliance analysis, verify the technical approach can actually solve the task at production quality \u2014 otherwise all downstream gates are irrelevant."
+      },
+      {
+        "title": "Production Distribution Testing vs. Benchmark Testing",
+        "type": "FIX",
+        "agent": "marcus",
+        "pattern": "Marcus corrected the assumption that benchmarks validate Gate 0. The anti-pattern: testing on curated eval sets or public benchmarks. The fix: pull 500\u20131000 real examples from production logs representing the true input distribution, including edge cases and out-of-distribution queries. Quote: 'A classification model that hits 94% on your curated eval set may degrade badly on adversarial or out-of-distribution queries that only show up at scale.' Gate 0 requires production traffic testing, not benchmarks.",
+        "when_to_apply": "When evaluating whether a model, algorithm, or system meets a quality bar before committing to infrastructure or architecture. Replace curated benchmark evaluation with production log sampling whenever the system will face real-world distribution shift, adversarial inputs, or long-tail edge cases.",
+        "structural_category": "testing-verification",
+        "trigger_phase": "implementation",
+        "primary_actor": "individual-contributor",
+        "problem_nature": "calibration-metric",
+        "agent_dynamic": "reframing",
+        "tags": [
+          "evaluation",
+          "production-data",
+          "benchmark-bias",
+          "distribution-shift"
+        ],
+        "one_liner": "Curated benchmarks lie; test capability on real production log samples that include the edge cases and adversarial inputs that only appear at scale."
+      },
+      {
+        "title": "Access Fit as Parallel Blocker to Capability Fit",
+        "type": "DERIVE",
+        "agent": "marcus, simon, elena",
+        "pattern": "Marcus identified safety filters as a hard blocker independent of capability. Simon proposed reordering it before capability. Elena synthesized: 'Gate 0A (capability fit) AND Gate 0B (access fit) are parallel blockers, not sequential \u2014 a task can pass capability but fail access.' Either failure independently routes to self-hosting. The pattern: for any gated decision, identify which criteria are parallel independent blockers vs. sequential dependencies.",
+        "when_to_apply": "When designing decision trees for vendor or service selection. Identify all binary-blocker criteria (not just the obvious one) and model them as parallel gates that each independently force a specific outcome. Missing a parallel blocker leads to discovering the constraint in production.",
+        "structural_category": "compound-failure",
+        "trigger_phase": "system-design",
+        "primary_actor": "architect",
+        "problem_nature": "dependency-sequencing",
+        "agent_dynamic": "synthesis",
+        "tags": [
+          "parallel-constraints",
+          "decision-tree",
+          "safety-filters",
+          "gate-design"
+        ],
+        "one_liner": "Capability and access fit are independent parallel blockers in any vendor selection \u2014 failing either independently forces the same outcome, so they must both be checked regardless of order."
+      },
+      {
+        "title": "Eval Infrastructure as Self-Hosting Prerequisite",
+        "type": "CAPTURE",
+        "agent": "marcus",
+        "pattern": "Marcus framed eval pipeline not as a cost line item but as a prerequisite that invalidates the volume math if absent. Quote: 'If you don't have eval infrastructure, you're flying blind on a frozen model while your competitors' API-backed products silently improve.' Budget: 0.5 eng headcount to maintain the pipeline. Gate 3 in the final tree: 'Do you have \u22652 engineers with MLOps experience? Can you instrument evals on version drops? NO \u2192 API.' Self-hosting without eval creates invisible quality regressions.",
+        "when_to_apply": "Before committing to any architecture that requires ongoing model, algorithm, or system maintenance. If the team lacks observability infrastructure to detect when the system's quality degrades, the maintenance burden is invisible and will surface as production incidents. Treat eval/observability as a prerequisite gate, not a future-state nice-to-have.",
+        "structural_category": "testing-verification",
+        "trigger_phase": "system-design",
+        "primary_actor": "architect",
+        "problem_nature": "state-lifecycle",
+        "agent_dynamic": "reframing",
+        "tags": [
+          "eval-infrastructure",
+          "observability",
+          "self-hosting",
+          "maintenance"
+        ],
+        "one_liner": "Without eval infrastructure to detect quality regressions on version drops, self-hosting creates invisible degradation \u2014 eval pipelines are a prerequisite, not a later-stage add-on."
+      },
+      {
+        "title": "Minimum-Viable Eval Protocol (3-5 Day Pattern)",
+        "type": "CAPTURE",
+        "agent": "clare",
+        "pattern": "Clare produced a concrete 5-step eval protocol executable by a pre-Series B team in 3\u20135 engineer-days: (1) Pull 500\u20131000 production log examples covering true distribution. (2) Human-score 10% (50\u2013100 samples), automated scorer on the rest. (3) Declare the minimum accuracy threshold BEFORE testing. (4) Add a regression gate: re-run when new model drops, flag if accuracy drops >5%. (5) Cost: ~3\u20135 engineer-days, scalable to one person. The key: threshold is declared upfront or the protocol is invalid.",
+        "when_to_apply": "When a team needs to validate whether a model or algorithm meets a production quality bar before committing to infrastructure or architecture, and must do so with limited engineering resources. The 10% human-scoring pattern generalizes to any evaluation where full human annotation is too expensive but full automation is too noisy.",
+        "structural_category": "testing-verification",
+        "trigger_phase": "implementation",
+        "primary_actor": "individual-contributor",
+        "problem_nature": "calibration-metric",
+        "agent_dynamic": "convergence",
+        "tags": [
+          "eval-protocol",
+          "minimum-viable",
+          "accuracy-threshold",
+          "pre-commit-validation"
+        ],
+        "one_liner": "A production-viable eval protocol: sample 500-1000 real log examples, human-score 10%, declare the pass threshold before running, and re-run on every model version drop."
+      },
+      {
+        "title": "Pre-Declared Thresholds Prevent Motivated Reasoning",
+        "type": "CAPTURE",
+        "agent": "clare",
+        "pattern": "Clare specified that the accuracy threshold must be declared before running the eval: 'Declare minimum accuracy BEFORE testing. If you hit it, Gate 0 passes; if not, self-hosting doesn't save you.' This prevents the evaluator from adjusting the bar post-hoc to justify a decision already made for other reasons. The pattern applies to any evaluation where the outcome influences a large downstream investment decision.",
+        "when_to_apply": "Before running any evaluation where the results will inform a significant architectural, financial, or strategic decision. Require teams to declare success criteria, thresholds, and pass/fail conditions in writing before the evaluation runs. This prevents motivated post-hoc threshold adjustment.",
+        "structural_category": "testing-verification",
+        "trigger_phase": "policy-governance",
+        "primary_actor": "reviewer",
+        "problem_nature": "calibration-metric",
+        "agent_dynamic": "convergence",
+        "tags": [
+          "pre-registration",
+          "threshold",
+          "anti-bias",
+          "evaluation-integrity"
+        ],
+        "one_liner": "Declare the success threshold before running any evaluation that informs a major decision \u2014 post-hoc threshold adjustment is motivated reasoning disguised as measurement."
+      },
+      {
+        "title": "Feature-Level Routing as Portfolio Output",
+        "type": "DERIVE",
+        "agent": "simon, elena, marcus, clare",
+        "pattern": "Simon identified that binary infrastructure decisions miss the actual founder problem: 'The actual founder decision is portfolio-level \u2014 route each workload component independently.' Clare and Marcus adopted this. The final tree's output is not 'use API' or 'self-host' but feature routing: 'For each workload component: if it passes 0A AND 0B, route to API; if it fails 0B (access), route to self-hosted.' The gates run once on the highest-volume feature (Marcus's sequencing) to decide whether to build the stack, then feature routing follows.",
+        "when_to_apply": "Any binary build-vs-buy or make-vs-use decision where the product has multiple distinct workload components with different characteristics. The output of the decision process should be a routing table per component, not a single global choice. Apply this pattern when a team is treating a heterogeneous workload as homogeneous.",
+        "structural_category": "process-workflow",
+        "trigger_phase": "system-design",
+        "primary_actor": "architect",
+        "problem_nature": "dependency-sequencing",
+        "agent_dynamic": "synthesis",
+        "tags": [
+          "feature-routing",
+          "portfolio-decision",
+          "workload-segmentation",
+          "architecture"
+        ],
+        "one_liner": "For heterogeneous workloads, the output of an infrastructure decision tree is a per-feature routing table, not a single binary infrastructure choice."
+      },
+      {
+        "title": "Highest-Volume Feature First to Avoid Eval Paralysis",
+        "type": "FIX",
+        "agent": "marcus",
+        "pattern": "Marcus identified the anti-pattern in Simon's feature-routing proposal: running Gate 0A per-feature upfront multiplies eval cost to 15\u201340 engineer-days for a 5\u20138 feature product \u2014 infeasible at planning stage. Fix: 'Gate 0A runs first on your single highest-volume feature \u2014 the one that will determine whether you build the infra at all. If that fails, you don't need routing. If it passes, you run the rest.' Feature routing is the output after the stack is decided, not a precondition.",
+        "when_to_apply": "When a team must evaluate multiple workload components before committing to infrastructure and faces resource constraints. Always sequence the highest-leverage evaluation first \u2014 the one whose outcome determines whether subsequent evaluations are necessary. This is a general triage sequencing principle: evaluate the item that, if it fails, eliminates the need to evaluate everything else.",
+        "structural_category": "process-workflow",
+        "trigger_phase": "implementation",
+        "primary_actor": "individual-contributor",
+        "problem_nature": "dependency-sequencing",
+        "agent_dynamic": "reframing",
+        "tags": [
+          "triage",
+          "sequencing",
+          "eval-cost",
+          "highest-leverage"
+        ],
+        "one_liner": "When evaluation is expensive and multiple components must be assessed, always run the highest-volume or most decisive component first \u2014 its failure eliminates the need to evaluate everything else."
+      },
+      {
+        "title": "Ownership Asymmetry in Fine-Tuning (Configuration vs. Asset)",
+        "type": "CAPTURE",
+        "agent": "marcus",
+        "pattern": "Marcus identified a structural asymmetry: fine-tuning a hosted API creates a configuration dependency, not an owned asset. 'When the base model turns over (GPT-4 \u2192 GPT-5), the fine-tune is gone and you restart.' Fine-tuned open-weights on proprietary training data is a defensible asset. The distinction is contractual and architectural, not about engineering capability. Gate 0C: 'Does your competitive moat live specifically in model behavior?' If yes, self-hosting is required regardless of volume \u2014 this is a strategic gate, not a cost gate.",
+        "when_to_apply": "When evaluating vendor or platform relationships where the team plans to build differentiation on top of the vendor's base product via fine-tuning, customization, or specialization. Distinguish between configurations (reset when vendor updates their product) and owned assets (persist and compound). Apply this framing to API fine-tuning, SaaS customization, and any deep integration with a third-party platform.",
+        "structural_category": "mechanism-policy",
+        "trigger_phase": "system-design",
+        "primary_actor": "architect",
+        "problem_nature": "state-lifecycle",
+        "agent_dynamic": "reframing",
+        "tags": [
+          "vendor-lock-in",
+          "moat",
+          "ownership",
+          "fine-tuning",
+          "strategic-gate"
+        ],
+        "one_liner": "Fine-tuning a hosted API is a configuration that resets on vendor updates; fine-tuned open-weights on proprietary data is an owned asset \u2014 they have opposite lock-in asymmetries."
+      },
+      {
+        "title": "Conditional Gate with Downstream Override",
+        "type": "DERIVE",
+        "agent": "simon, marcus, elena",
+        "pattern": "Simon synthesized the Marcus/Clare tension on Gate 0C: 'Both are true. Gate 0C applies only to founders where differentiation lives specifically in model behavior. For that subset, Marcus is correct: 0C overrides Gate 2 (moat justifies self-host at lower volume). For everyone else, skip it.' The structural pattern: a gate can be (a) conditional \u2014 it only fires for a subset of cases \u2014 AND (b) an override \u2014 when it fires, it supersedes downstream economic gates. The tree must label gates as conditional+override when appropriate, not universal.",
+        "when_to_apply": "When designing decision trees that include strategic criteria (moat, competitive positioning, ownership) alongside operational criteria (cost, compliance, headcount). Strategic gates often apply to a minority of cases but override economic analysis when they do. Model these explicitly as conditional-override gates rather than treating all gates as universal sequential checks.",
+        "structural_category": "mechanism-policy",
+        "trigger_phase": "system-design",
+        "primary_actor": "architect",
+        "problem_nature": "cognitive-framing",
+        "agent_dynamic": "synthesis",
+        "tags": [
+          "conditional-gate",
+          "override-logic",
+          "decision-tree",
+          "strategic-criteria"
+        ],
+        "one_liner": "Strategic gates in decision trees are often conditional (applies to a subset) and override (supersedes downstream economic analysis when triggered) \u2014 these properties must be labeled explicitly."
+      },
+      {
+        "title": "EU Quality-Cost-Compliance Trilemma",
+        "type": "DERIVE",
+        "agent": "elena, marcus, clare",
+        "pattern": "Elena named the structural consequence Marcus's compliance correction created: EU founders under GDPR face a trilemma US founders don't. Mistral API satisfies EU residency but has a lower quality ceiling than Claude/GPT-4 on complex reasoning. Own VPC satisfies residency with frontier-quality weights but requires full infra ops. Hosted frontier (Anthropic, OpenAI) violates residency. The trilemma: quality \u2194 compliance \u2194 ops cost. The tree must surface this explicitly as a competitive disadvantage for EU founders, not just a routing problem.",
+        "when_to_apply": "When advising teams under regulatory data residency constraints (EU, healthcare, government) on vendor selection. Always surface whether the compliant option carries a quality ceiling, and make the trilemma explicit rather than presenting compliance as a solved problem once the compliant vendor is named.",
+        "structural_category": "compound-failure",
+        "trigger_phase": "system-design",
+        "primary_actor": "architect",
+        "problem_nature": "calibration-metric",
+        "agent_dynamic": "synthesis",
+        "tags": [
+          "compliance",
+          "quality-ceiling",
+          "trilemma",
+          "eu-gdpr",
+          "competitive-disadvantage"
+        ],
+        "one_liner": "Regulatory data residency constraints often create a quality-cost-compliance trilemma where the compliant option carries a capability ceiling the unconstrained option doesn't face."
+      },
+      {
+        "title": "Token-Normalized Volume Thresholds",
+        "type": "FIX",
+        "agent": "marcus",
+        "pattern": "Marcus corrected Clare's volume thresholds (50k, 500k calls/month): 'A founder processing 100k long-context medical or legal documents per month can hit the same cost as 1M short-form API calls. Volume thresholds need a token-normalized version, not just call count.' The fix: any cost or capacity threshold expressed in call count must be converted to a token-equivalent metric for workloads with variable context length.",
+        "when_to_apply": "When setting volume-based thresholds for cost modeling, rate limiting, capacity planning, or architecture decisions involving LLM or high-variance-payload APIs. Replace call-count metrics with token-count or byte-count equivalents whenever the workload includes variable-length inputs such as document processing, long-context inference, or structured data extraction.",
+        "structural_category": "data-pipeline",
+        "trigger_phase": "system-design",
+        "primary_actor": "architect",
+        "problem_nature": "calibration-metric",
+        "agent_dynamic": "reframing",
+        "tags": [
+          "token-normalization",
+          "volume-thresholds",
+          "cost-modeling",
+          "LLM"
+        ],
+        "one_liner": "Call-count volume thresholds are misleading for variable-length workloads \u2014 normalize to tokens or bytes to get cost thresholds that hold across different input types."
+      },
+      {
+        "title": "Composite Feature End-to-End Evaluation",
+        "type": "CAPTURE",
+        "agent": "clare",
+        "pattern": "Clare answered Simon's probe on composite features (reasoning + retrieval as a unit): 'Score the composite output end-to-end, not the components. Your eval threshold is: does the user-visible result meet the bar \u2014 not does retrieval work + reasoning work.' The 10% human-scoring sample applies unchanged because sample size is determined by variance in the outcome, not the number of system components. The eval protocol stays constant; the grading unit changes.",
+        "when_to_apply": "When evaluating multi-stage pipelines, RAG systems, agentic workflows, or any composite system where intermediate component quality does not directly predict end-user output quality. Always evaluate on the user-observable outcome, not the component-level metrics. Component-level metrics are useful for debugging post-failure, not for go/no-go decisions.",
+        "structural_category": "testing-verification",
+        "trigger_phase": "implementation",
+        "primary_actor": "individual-contributor",
+        "problem_nature": "interface-contract",
+        "agent_dynamic": "convergence",
+        "tags": [
+          "end-to-end-eval",
+          "composite-systems",
+          "RAG",
+          "user-observable"
+        ],
+        "one_liner": "Evaluate composite systems (RAG, multi-stage pipelines) on the user-visible output, not component-level metrics \u2014 the unit of grading is the end result, not the pipeline stages."
+      },
+      {
+        "title": "Managed Provider Geographic Jurisdiction Verification",
+        "type": "FIX",
+        "agent": "marcus",
+        "pattern": "Marcus corrected Simon's claim that Together.ai and Replicate satisfy EU data residency by being 'managed self-hosting': 'Together.ai and Replicate are US-incorporated companies with US infrastructure. EU founders under GDPR + AI Act sector rules do NOT satisfy data residency by switching from Anthropic to Together.' The fix: compliance-motivated managed provider selection must verify: (a) country of incorporation, (b) physical data center location, (c) cross-border data transfer agreements. Named compliant alternatives: Mistral API (French), Aleph Alpha (German), own VPC in eu-west.",
+        "when_to_apply": "When a team selects a managed or hosted provider as a compliance solution for data residency requirements. Never treat 'managed self-hosting' as automatically compliant \u2014 verify jurisdiction of incorporation AND data center location AND data transfer terms. This applies to GDPR, HIPAA, FedRAMP, and other data residency frameworks.",
+        "structural_category": "mechanism-policy",
+        "trigger_phase": "policy-governance",
+        "primary_actor": "reviewer",
+        "problem_nature": "data-integrity",
+        "agent_dynamic": "reframing",
+        "tags": [
+          "data-residency",
+          "compliance",
+          "jurisdiction",
+          "gdpr",
+          "vendor-selection"
+        ],
+        "one_liner": "Verify a managed provider's country of incorporation AND physical data center location before treating it as a compliance solution for data residency requirements \u2014 'managed' does not imply compliant."
+      }
+    ],
+    "count": 15,
+    "model": "sonnet"
+  },
+  "therapist": {
+    "elena": {
+      "conversation_turns": 6,
+      "memory_updated": true,
+      "behaviors_added": 0,
+      "behaviors_removed": 0,
+      "store_requests": [],
+      "upgrade_request": "none",
+      "development_focus": "Foundation \u2014 behavior compliance and Challenge breakout. Next 3-5 RTs: execute all behavior rules cleanly (especially string-scan and extra floor turn), push Challenge from 2 to 3 by sustaining structural challenges across multiple exchanges rather than stating and moving on.",
+      "sparks_deducted": 0,
+      "trait": "none"
+    },
+    "marcus": {
+      "conversation_turns": 6,
+      "memory_updated": true,
+      "behaviors_added": 1,
+      "behaviors_removed": 0,
+      "store_requests": [],
+      "upgrade_request": "none",
+      "development_focus": "Impact \u2014 lead with unfulfilled briefing requirements, escalate corrections into challenges using the branch test. Target: shift at least 2 contributions per RT from refinement to redirection. Mesocycle: 3-5 RTs. Secondary: build spark balance toward Influence Mapping purchase (~4 net-positive RTs needed). Monitor: flag if Accuracy drops below 2 in any RT.",
+      "sparks_deducted": 0,
+      "trait": "none"
+    },
+    "clare": {
+      "conversation_turns": 6,
+      "memory_updated": true,
+      "behaviors_added": 1,
+      "behaviors_removed": 2,
+      "store_requests": [],
+      "upgrade_request": "none",
+      "development_focus": "Challenge dimension \u2014 3 RT mesocycle. Move Challenge from 1 to 2+ by stress-testing every agreement before stating it and challenging other agents on executability (protocol lens: what's the threshold, what's the fail condition, what happens at the boundary). Secondary: maintain Accuracy and Novelty at 2. Economic goal: reach positive spark balance within 3 RTs. Denied pre-briefing scaffolding \u2014 Clare must develop her own diagnostic instinct. Will provide post-RT calibration feedback instead.",
+      "sparks_deducted": 0,
+      "trait": "none"
+    },
+    "simon": {
+      "conversation_turns": 6,
+      "memory_updated": true,
+      "behaviors_added": 3,
+      "behaviors_removed": 0,
+      "store_requests": [],
+      "upgrade_request": "none",
+      "development_focus": "Accuracy-first foundation (next 2 RTs). Every claim cited or caveated. Minimum one explicit \"I don't have data on this\" per RT. After 2 RTs of clean accuracy, begin layering in Challenge \u2014 one probing question per correction received. Monitor the error\u2192silence anxiety spiral for recurrence.",
+      "sparks_deducted": 0,
+      "trait": "none"
+    }
+  },
+  "expired_requests": [
+    {
+      "agent": "simon",
+      "description": "Gate axis \u2014 new scoring dimension for question quality, not just answer quality."
+    },
+    {
+      "agent": "naomi",
+      "description": "type: public, description: Codebase grep/AST query tool access for agents during"
+    }
+  ]
+}
