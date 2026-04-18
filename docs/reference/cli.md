@@ -23,6 +23,7 @@ Subcommands carry their own `--help` surface because they dispatch into engine-l
 
 | Command | Purpose | Example |
 |---|---|---|
+| `init` | Bootstrap user data dir, show roster + backend status. First-run entry. | `amatelier init` |
 | `roundtable` | Run one structured debate — all five workers, judged, scored, persisted. | `amatelier roundtable --topic "Auth" --briefing brief.md --summary` |
 | `therapist` | Run post-RT exit interviews (memory + behavior updates) against a digest. | `amatelier therapist --digest digest-42.json --agents elena,marcus` |
 | `analytics` | Inspect agent growth, spark economy, trends, engagement. Has subcommands. | `amatelier analytics economy` |

@@ -43,8 +43,10 @@ def _usage() -> int:
         "amatelier — self-evolving multi-model AI team\n"
         "\n"
         "Usage:\n"
+        "  amatelier init                 Bootstrap + show status (first-run entry)\n"
         "  amatelier roundtable --topic TEXT --briefing PATH [--budget N] [--summary]\n"
         "  amatelier watch                Watch the live roundtable chat\n"
+        "  amatelier team SUBCOMMAND      Manage the worker roster\n"
         "  amatelier therapist --digest PATH [--agents LIST] [--turns N]\n"
         "  amatelier analytics SUBCOMMAND\n"
         "  amatelier refresh-seeds [--agent NAME] [--force]\n"
@@ -64,6 +66,68 @@ def _usage() -> int:
         file=sys.stderr,
     )
     return 2
+
+
+def _run_init(args: list[str]) -> int:
+    """Bootstrap the writable user_data_dir and confirm setup status.
+
+    v0.4.0: explicit entry point that runs `paths.ensure_user_data()` (which
+    also fires automatically on first `import amatelier`). Useful for a
+    clear "first-run" experience — shows where data lives, what agents are
+    configured, which backend is active, and any warnings.
+    """
+    parser = argparse.ArgumentParser(prog="amatelier init")
+    parser.add_argument("--force", action="store_true",
+                        help="Re-run bootstrap even if .bootstrap-complete exists")
+    parser.add_argument("--template", default=None,
+                        choices=["curated-five", "minimal", "empty"],
+                        help="Start with a specific roster template (default: curated-five)")
+    ns = parser.parse_args(args)
+
+    from amatelier import __version__, paths, worker_registry
+
+    print(f"amatelier {__version__}")
+    print()
+
+    udir = paths.user_data_dir()
+    was_bootstrapped = (udir / ".bootstrap-complete").exists()
+
+    if ns.force or not was_bootstrapped:
+        paths.ensure_user_data()
+        print(f"Bootstrapped user data: {udir}")
+    else:
+        print(f"User data already bootstrapped: {udir}")
+
+    if ns.template and ns.template != "curated-five":
+        print()
+        print(f"Importing template: {ns.template}")
+        result = _team_import([ns.template, "--replace"])
+        if result != 0:
+            return result
+
+    # Show roster
+    print()
+    workers = worker_registry.list_workers()
+    if workers:
+        print(f"Active roster: {len(workers)} workers — {', '.join(workers)}")
+    else:
+        print("Active roster: empty — add workers with `amatelier team new`")
+
+    # Show backend
+    print()
+    try:
+        from amatelier.llm_backend import resolve_mode
+        mode = resolve_mode()
+        print(f"LLM backend: {mode}")
+    except Exception:
+        print("LLM backend: (not yet configured — run `amatelier config`)")
+
+    print()
+    print("Next steps:")
+    print("  amatelier config              Diagnose backend + credentials")
+    print("  amatelier team list           See the active roster")
+    print("  amatelier roundtable --help   See how to run a debate")
+    return 0
 
 
 def _run_docs(args: list[str]) -> int:
@@ -694,6 +758,8 @@ def main(argv: list[str] | None = None) -> int:
 
     cmd, rest = argv[0], argv[1:]
 
+    if cmd == "init":
+        return _run_init(rest)
     if cmd == "docs":
         return _run_docs(rest)
     if cmd == "config":
