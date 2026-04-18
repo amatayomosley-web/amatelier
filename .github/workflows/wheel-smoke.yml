@@ -134,32 +134,32 @@ jobs:
       - name: CLI --version
         run: |
           out=$(/tmp/amatelier-venv/bin/amatelier --version)
-          [ "$out" = "0.1.0" ] || { echo "unexpected version: $out"; exit 1; }
-          echo "✓ amatelier --version = $out"
+          [ "$out" = "0.2.0" ] || { echo "unexpected version: $out"; exit 1; }
+          echo "[OK] amatelier --version = $out"
 
       - name: CLI --help
         run: |
           /tmp/amatelier-venv/bin/amatelier --help 2>&1 | tee /tmp/help.out
           grep -q "roundtable" /tmp/help.out || { echo "help missing 'roundtable'"; exit 1; }
-          echo "✓ amatelier --help mentions all subcommands"
+          echo "[OK] amatelier --help mentions all subcommands"
 
       - name: Dispatch — roundtable --help
         run: |
           /tmp/amatelier-venv/bin/amatelier roundtable --help 2>&1 | tee /tmp/rt.out || true
           grep -q -- "--topic" /tmp/rt.out || { echo "roundtable --help didn't reach engine"; exit 1; }
-          echo "✓ amatelier roundtable dispatches to engine/roundtable_runner.py"
+          echo "[OK] amatelier roundtable dispatches to engine/roundtable_runner.py"
 
       - name: Dispatch — therapist --help
         run: |
           /tmp/amatelier-venv/bin/amatelier therapist --help 2>&1 | tee /tmp/th.out || true
           grep -q -- "--digest" /tmp/th.out || { echo "therapist --help didn't reach engine"; exit 1; }
-          echo "✓ amatelier therapist dispatches to engine/therapist.py"
+          echo "[OK] amatelier therapist dispatches to engine/therapist.py"
 
       - name: Dispatch — analytics --help
         run: |
           /tmp/amatelier-venv/bin/amatelier analytics --help 2>&1 | tee /tmp/an.out || true
           grep -q "report\|trends\|economy" /tmp/an.out || { echo "analytics --help didn't reach engine"; exit 1; }
-          echo "✓ amatelier analytics dispatches to engine/analytics.py"
+          echo "[OK] amatelier analytics dispatches to engine/analytics.py"
 
       - name: Unknown command produces usage
         run: |
