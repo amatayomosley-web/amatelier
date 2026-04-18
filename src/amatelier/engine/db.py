@@ -17,7 +17,17 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 SUITE_ROOT = Path(__file__).resolve().parent.parent
-DB_PATH = SUITE_ROOT / "roundtable-server" / "roundtable.db"
+
+# Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
+# (read-only post-install); mutable runtime state goes to WRITE_ROOT.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    WRITE_ROOT = _amatelier_paths.user_data_dir()
+except Exception:
+    WRITE_ROOT = SUITE_ROOT
+
+DB_PATH = WRITE_ROOT / "roundtable-server" / "roundtable.db"
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
 
 _migrated = False  # module-level flag — migrate once per process

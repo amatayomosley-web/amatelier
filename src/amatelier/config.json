@@ -1,5 +1,20 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "llm": {
+    "mode": "auto",
+    "note": "auto | claude-code | anthropic-sdk | openai-compat. Auto picks the first available: claude CLI on PATH > ANTHROPIC_API_KEY > OPENAI_API_KEY > OPENROUTER_API_KEY. Override via AMATELIER_MODE env var.",
+    "model_map": {
+      "sonnet": "claude-sonnet-4-20250514",
+      "haiku": "claude-haiku-4-5-20251001",
+      "opus": "claude-opus-4-20250514"
+    },
+    "openai_compat": {
+      "base_url": "",
+      "api_key_env": "",
+      "note": "Leave blank for defaults. OpenRouter: base_url=https://openrouter.ai/api/v1, api_key_env=OPENROUTER_API_KEY. Local Ollama: base_url=http://localhost:11434/v1, api_key_env=AMATELIER_LLM_API_KEY (any non-empty value).",
+      "model_map": {}
+    }
+  },
   "team": {
     "admin": {
       "name": "Opus Admin",

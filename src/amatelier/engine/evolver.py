@@ -16,6 +16,16 @@ logger = logging.getLogger(__name__)
 
 SUITE_ROOT = Path(__file__).resolve().parent.parent
 
+# Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
+# (read-only post-install); mutable runtime state goes to WRITE_ROOT.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    WRITE_ROOT = _amatelier_paths.user_data_dir()
+except Exception:
+    WRITE_ROOT = SUITE_ROOT
+
+
 DECAY_RATE = 0.05       # confidence lost per RT without confirmation
 FADE_THRESHOLD = 0.5    # Therapist gets nudge
 EXPIRE_THRESHOLD = 0.3  # marked (fading) in CLAUDE.md
@@ -23,7 +33,7 @@ REMOVE_THRESHOLD = 0.0  # Therapist prompted to remove
 
 
 def _behaviors_path(agent_name: str) -> Path:
-    return SUITE_ROOT / "agents" / agent_name / "behaviors.json"
+    return WRITE_ROOT / "agents" / agent_name / "behaviors.json"
 
 
 def load_behaviors(agent_name: str) -> list[dict]:
@@ -182,14 +192,14 @@ def get_behavior_decay_summary(agent_name: str) -> str:
 
 
 def read_claude_md(agent_name: str) -> str:
-    path = SUITE_ROOT / "agents" / agent_name / "CLAUDE.md"
+    path = WRITE_ROOT / "agents" / agent_name / "CLAUDE.md"
     return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
 def write_claude_md(agent_name: str, content: str):
-    path = SUITE_ROOT / "agents" / agent_name / "CLAUDE.md"
+    path = WRITE_ROOT / "agents" / agent_name / "CLAUDE.md"
     # Backup before overwriting
-    backup_dir = SUITE_ROOT / "agents" / agent_name / "sessions"
+    backup_dir = WRITE_ROOT / "agents" / agent_name / "sessions"
     backup_dir.mkdir(parents=True, exist_ok=True)
     backup = backup_dir / f"CLAUDE_backup_{time.strftime('%Y%m%d_%H%M%S')}.md"
     if path.exists():
@@ -210,7 +220,7 @@ def append_to_memory(agent_name: str, entry: str):
         pass  # Fall through to legacy
 
     # Legacy backup: append to MEMORY.md
-    path = SUITE_ROOT / "agents" / agent_name / "MEMORY.md"
+    path = WRITE_ROOT / "agents" / agent_name / "MEMORY.md"
     current = path.read_text(encoding="utf-8") if path.exists() else ""
     date = time.strftime("%Y-%m-%d")
     updated = current.rstrip() + f"\n\n## {date}\n{entry}\n"

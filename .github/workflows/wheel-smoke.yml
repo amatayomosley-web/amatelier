@@ -51,27 +51,47 @@ jobs:
       - name: Build sdist + wheel
         run: python -m build
 
-      - name: Inspect wheel contents
+      - name: Inspect wheel contents — expected files present
         run: |
-          echo "=== wheel contents ==="
-          python -m zipfile -l dist/amatelier-*.whl
-          echo ""
-          echo "=== expected files present? ==="
+          echo "=== checking required files ==="
           for expected in \
             "amatelier/__init__.py" \
             "amatelier/cli.py" \
+            "amatelier/paths.py" \
+            "amatelier/llm_backend.py" \
             "amatelier/config.json" \
             "amatelier/engine/roundtable_runner.py" \
             "amatelier/engine/gemini_client.py" \
             "amatelier/agents/elena/CLAUDE.md" \
             "amatelier/store/catalog.json" \
-            "amatelier/roundtable-server/db_client.py"
+            "amatelier/roundtable-server/db_client.py" \
+            "amatelier/docs/index.md" \
+            "amatelier/docs/guides/install.md" \
+            "amatelier/docs/reference/protocols/roundtable.md"
           do
             if python -m zipfile -l dist/amatelier-*.whl | grep -q "$expected"; then
-              echo "  ✓ $expected"
+              echo "  [OK] $expected"
             else
-              echo "  ✗ MISSING: $expected"
+              echo "  [--] MISSING: $expected"
               exit 1
+            fi
+          done
+
+      - name: Inspect wheel — clone-only paths must NOT ship
+        run: |
+          echo "=== checking excluded paths ==="
+          for forbidden in \
+            "examples/" \
+            "tests/" \
+            "scripts/regen_llm.py" \
+            ".github/workflows" \
+            "llm/SPEC.md"
+          do
+            if python -m zipfile -l dist/amatelier-*.whl | grep -q "$forbidden"; then
+              echo "  [--] LEAK: $forbidden should not be in the wheel"
+              exit 1
+            else
+              echo "  [OK] excluded: $forbidden"
             fi
           done
 
@@ -85,10 +105,14 @@ jobs:
         run: |
           /tmp/amatelier-venv/bin/python -c "
           import amatelier
-          assert amatelier.__version__ == '0.1.0', f'unexpected version: {amatelier.__version__}'
-          print('✓ import amatelier (version', amatelier.__version__, ')')
+          assert amatelier.__version__ == '0.2.0', f'unexpected version: {amatelier.__version__}'
+          print('[OK] import amatelier (version', amatelier.__version__, ')')
           print('  AMATELIER_ROOT:', amatelier.AMATELIER_ROOT)
-          print('  REPO_ROOT:', amatelier.REPO_ROOT)
+          from amatelier import paths, llm_backend
+          print('  user_data_dir:', paths.user_data_dir())
+          print('  bundled_docs_dir:', paths.bundled_docs_dir())
+          assert paths.bundled_docs_dir().exists(), 'bundled docs did not ship'
+          print('[OK] bundled docs accessible')
           "
 
       - name: Verify config.json ships and loads
@@ -140,12 +164,64 @@ jobs:
         run: |
           /tmp/amatelier-venv/bin/amatelier bogus-cmd 2>&1 | tee /tmp/bogus.out || true
           grep -q "unknown command" /tmp/bogus.out || { echo "unknown-command handling broken"; exit 1; }
-          echo "✓ unknown command produces 'unknown command' message"
+          echo "[OK] unknown command produces 'unknown command' message"
+
+      - name: docs subcommand — no args lists topics
+        run: |
+          /tmp/amatelier-venv/bin/amatelier docs 2>&1 | tee /tmp/docs.out
+          grep -q "tutorials/" /tmp/docs.out || { echo "docs listing missing tutorials"; exit 1; }
+          grep -q "guides/" /tmp/docs.out || { echo "docs listing missing guides"; exit 1; }
+          grep -q "reference/" /tmp/docs.out || { echo "docs listing missing reference"; exit 1; }
+          echo "[OK] amatelier docs lists all tiers"
+
+      - name: docs subcommand — specific topic prints content
+        run: |
+          /tmp/amatelier-venv/bin/amatelier docs guides/install 2>&1 | tee /tmp/install.out
+          grep -q "Install" /tmp/install.out || { echo "docs topic did not print"; exit 1; }
+          echo "[OK] amatelier docs guides/install prints markdown"
+
+      - name: config subcommand — shows mode + paths
+        run: |
+          # Force open mode since the container has no claude CLI
+          export ANTHROPIC_API_KEY="sk-ant-dummy-key-for-test-only"
+          /tmp/amatelier-venv/bin/amatelier config 2>&1 | tee /tmp/config.out || true
+          grep -q "active mode" /tmp/config.out || { echo "config missing mode"; exit 1; }
+          grep -q "bundled_assets_dir" /tmp/config.out || { echo "config missing paths"; exit 1; }
+          echo "[OK] amatelier config shows mode and paths"
+
+      - name: user_data_dir created on bootstrap
+        run: |
+          /tmp/amatelier-venv/bin/python -c "
+          from amatelier import paths
+          udir = paths.user_data_dir()
+          # Sentinel from ensure_user_data() at package import
+          assert (udir / '.bootstrap-complete').exists(), f'bootstrap sentinel missing at {udir}'
+          assert (udir / 'roundtable-server' / 'logs').exists(), 'logs dir missing'
+          assert (udir / 'agents').exists(), 'agents dir missing'
+          assert (udir / 'store' / 'ledger.json').exists(), 'ledger.json missing'
+          print('[OK] user_data_dir bootstrap complete at', udir)
+          "
+
+      - name: Open-mode backend detection (ANTHROPIC_API_KEY)
+        run: |
+          export ANTHROPIC_API_KEY="sk-ant-dummy-key-for-test-only"
+          unset OPENAI_API_KEY OPENROUTER_API_KEY
+          /tmp/amatelier-venv/bin/python -c "
+          import os
+          from amatelier import llm_backend
+          env = llm_backend.describe_environment()
+          assert env['anthropic-sdk']['available'] == True
+          # No claude binary in container, so active should be anthropic-sdk
+          assert env['active_mode'] == 'anthropic-sdk', f'active_mode={env[\"active_mode\"]}'
+          print('[OK] anthropic-sdk mode auto-detected')
+          "
 
       - name: Summary
         run: |
           echo ""
-          echo "════════════════════════════════════════════════════════════"
+          echo "============================================================="
           echo "  ALL CHECKS PASSED on Python ${{ matrix.python-version }}"
-          echo "  amatelier is pip-install-ready"
-          echo "════════════════════════════════════════════════════════════"
+          echo "  amatelier v0.2.0 is pip-install-ready"
+          echo "  Verified: dual-layer paths, open mode, bundled docs,"
+          echo "            examples excluded, CLI subcommands"
+          echo "============================================================="

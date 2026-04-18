@@ -28,6 +28,16 @@ from pathlib import Path
 logger = logging.getLogger("therapist")
 
 SUITE_ROOT = Path(__file__).resolve().parent.parent
+
+# Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
+# (read-only post-install); mutable runtime state goes to WRITE_ROOT.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    WRITE_ROOT = _amatelier_paths.user_data_dir()
+except Exception:
+    WRITE_ROOT = SUITE_ROOT
+
 WORKSPACE_ROOT = SUITE_ROOT.parent.parent.parent
 EVOLVER = SUITE_ROOT / "engine" / "evolver.py"
 SCORER = SUITE_ROOT / "engine" / "scorer.py"
@@ -35,7 +45,7 @@ SCORER = SUITE_ROOT / "engine" / "scorer.py"
 
 # ── Case Notes ──────────────────────────────────────────────────────────────
 
-CASE_NOTES_DIR = SUITE_ROOT / "agents" / "therapist" / "case_notes"
+CASE_NOTES_DIR = WRITE_ROOT / "agents" / "therapist" / "case_notes"
 
 
 def _load_case_notes(agent_name: str) -> dict:
@@ -191,7 +201,7 @@ def _update_case_notes(agent_name: str, notes: dict, conversation: list[dict],
 
     # Score risk flags
     risk_flags = []
-    metrics_path = SUITE_ROOT / "agents" / agent_name / "metrics.json"
+    metrics_path = WRITE_ROOT / "agents" / agent_name / "metrics.json"
     if metrics_path.exists():
         try:
             metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
@@ -213,7 +223,7 @@ def _update_case_notes(agent_name: str, notes: dict, conversation: list[dict],
 
 def _load_therapist_context() -> str:
     """Load the Therapist's CLAUDE.md."""
-    path = SUITE_ROOT / "agents" / "therapist" / "CLAUDE.md"
+    path = WRITE_ROOT / "agents" / "therapist" / "CLAUDE.md"
     if path.exists():
         return path.read_text(encoding="utf-8")
     return "You are the Therapist. Coach agents on their development."
@@ -221,7 +231,7 @@ def _load_therapist_context() -> str:
 
 def _load_agent_state(agent_name: str) -> dict:
     """Load agent's full state: CLAUDE.md, MEMORY.md, metrics.json."""
-    agent_dir = SUITE_ROOT / "agents" / agent_name
+    agent_dir = WRITE_ROOT / "agents" / agent_name
     state = {"memory": "", "claude": "", "metrics": {}}
 
     memory_path = agent_dir / "MEMORY.md"
@@ -1066,7 +1076,7 @@ def _resolve_agent_model(agent_name: str) -> str:
     tier_model_map = {0: None, 1: None, 2: "sonnet", 3: "opus"}
 
     default = default_models.get(agent_name, "sonnet")
-    metrics_path = SUITE_ROOT / "agents" / agent_name / "metrics.json"
+    metrics_path = WRITE_ROOT / "agents" / agent_name / "metrics.json"
     if not metrics_path.exists():
         return default
     try:
@@ -1180,7 +1190,7 @@ THIS ROUNDTABLE:
         logger.warning("Diary write failed for %s (non-fatal): %s", agent_name, e)
 
     # Save session transcript
-    session_dir = SUITE_ROOT / "agents" / agent_name / "sessions"
+    session_dir = WRITE_ROOT / "agents" / agent_name / "sessions"
     session_dir.mkdir(parents=True, exist_ok=True)
     session_file = session_dir / f"therapist_{time.strftime('%Y-%m-%d_%H%M%S')}.json"
     session_file.write_text(json.dumps({
@@ -1319,7 +1329,7 @@ def _generate_report(rt_id: str, digest: dict, agents: list[str], results: dict)
         ])
 
         # Load the session transcript for this agent
-        session_dir = SUITE_ROOT / "agents" / agent_name / "sessions"
+        session_dir = WRITE_ROOT / "agents" / agent_name / "sessions"
         transcript = _load_latest_session(session_dir, rt_id)
 
         if transcript:

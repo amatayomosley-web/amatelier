@@ -1,6 +1,6 @@
 # amatelier
 
-> A self-evolving multi-model AI team skill for Claude Code
+> A self-evolving multi-model AI team — runs in Claude Code or any OpenAI-compatible provider
 
 ## Canonical sources
 

@@ -12,7 +12,17 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 SUITE_ROOT = Path(__file__).resolve().parent.parent
-AGENTS_DIR = SUITE_ROOT / "agents"
+
+# Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
+# (read-only post-install); mutable runtime state goes to WRITE_ROOT.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    WRITE_ROOT = _amatelier_paths.user_data_dir()
+except Exception:
+    WRITE_ROOT = SUITE_ROOT
+
+AGENTS_DIR = WRITE_ROOT / "agents"
 CONFIG_PATH = SUITE_ROOT / "config.json"
 
 # Cross-platform file locking for metrics.json safety

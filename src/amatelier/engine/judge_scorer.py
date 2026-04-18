@@ -28,6 +28,16 @@ from pathlib import Path
 logger = logging.getLogger("judge_scorer")
 
 SUITE_ROOT = Path(__file__).resolve().parent.parent
+
+# Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
+# (read-only post-install); mutable runtime state goes to WRITE_ROOT.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    WRITE_ROOT = _amatelier_paths.user_data_dir()
+except Exception:
+    WRITE_ROOT = SUITE_ROOT
+
 WORKSPACE_ROOT = SUITE_ROOT.parent.parent.parent
 
 VALID_SCORES = {0, 1, 2, 3, 10}
@@ -132,7 +142,25 @@ def _format_transcript(transcript: list[dict]) -> str:
 
 
 def _call_sonnet(prompt: str) -> str | None:
-    """Call Claude Sonnet via CLI. Returns raw stdout or None on failure."""
+    """Call Claude Sonnet for scoring.
+
+    Tries the open-mode backend first (Anthropic SDK, OpenAI-compat).
+    Falls back to the ``claude`` CLI subprocess if backend is unavailable
+    or fails — preserving the claude-code mode path.
+    """
+    # Try backend first (works without Claude Code CLI)
+    try:
+        from amatelier.llm_backend import get_backend
+        backend = get_backend()
+        if backend.name != "claude-code":
+            result = backend.complete(
+                system="", prompt=prompt, model="sonnet",
+                max_tokens=8000, timeout=360,
+            )
+            return result.text
+    except Exception:
+        pass  # Fall through to CLI
+
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
 
@@ -238,7 +266,7 @@ def judge_score(
                 rt_id, len(workers), len(prompt))
 
     # S6: log raw output to trace directory
-    trace_dir = SUITE_ROOT / "agents" / "judge" / "trace"
+    trace_dir = WRITE_ROOT / "agents" / "judge" / "trace"
     trace_dir.mkdir(parents=True, exist_ok=True)
 
     # First attempt

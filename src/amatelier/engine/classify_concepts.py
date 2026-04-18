@@ -22,7 +22,17 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 SUITE_ROOT = Path(__file__).resolve().parent.parent
-DB_PATH = SUITE_ROOT / "novel_concepts.json"
+
+# Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
+# (read-only post-install); mutable runtime state goes to WRITE_ROOT.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    WRITE_ROOT = _amatelier_paths.user_data_dir()
+except Exception:
+    WRITE_ROOT = SUITE_ROOT
+
+DB_PATH = WRITE_ROOT / "novel_concepts.json"
 BATCH_SIZE = 15
 
 

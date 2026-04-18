@@ -26,8 +26,18 @@ from scorer import load_metrics, save_metrics
 logger = logging.getLogger("store")
 
 SUITE_ROOT = Path(__file__).resolve().parent.parent
+
+# Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
+# (read-only post-install); mutable runtime state goes to WRITE_ROOT.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    WRITE_ROOT = _amatelier_paths.user_data_dir()
+except Exception:
+    WRITE_ROOT = SUITE_ROOT
+
 CATALOG_PATH = SUITE_ROOT / "store" / "catalog.json"
-LEDGER_PATH = SUITE_ROOT / "store" / "ledger.json"
+LEDGER_PATH = WRITE_ROOT / "store" / "ledger.json"
 AGENTS_DIR = SUITE_ROOT / "agents"
 
 

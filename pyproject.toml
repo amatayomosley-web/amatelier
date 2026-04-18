@@ -4,20 +4,30 @@ build-backend = "hatchling.build"
 
 [project]
 name = "amatelier"
-version = "0.1.0"
-description = "A self-evolving multi-model AI team skill for Claude Code"
+version = "0.2.0"
+description = "A self-evolving multi-model AI team — runs in Claude Code or any OpenAI-compatible provider"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
 authors = [{ name = "Maximillian" }]
-keywords = []
+keywords = ["claude-code", "multi-agent", "ai-team", "roundtable", "llm", "anthropic", "openai", "gemini", "openrouter"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Libraries",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
 ]
 dependencies = [
+  "platformdirs>=4.0",
+  "anthropic>=0.40.0",
+  "openai>=1.0",
   "google-genai>=1.51.0",
 ]
 
@@ -31,14 +41,21 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/amatayomosley-web/amatelier"
+Documentation = "https://amatayomosley-web.github.io/amatelier/"
 Issues = "https://github.com/amatayomosley-web/amatelier/issues"
 Changelog = "https://github.com/amatayomosley-web/amatelier/blob/main/CHANGELOG.md"
+Repository = "https://github.com/amatayomosley-web/amatelier"
 
 [project.scripts]
 amatelier = "amatelier.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/amatelier"]
+
+# docs/ bundled into the wheel so pip-install users get offline reference.
+# examples/, tests/, .github/, scripts/, llm/ stay clone-only by default.
+[tool.hatch.build.targets.wheel.force-include]
+"docs" = "amatelier/docs"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

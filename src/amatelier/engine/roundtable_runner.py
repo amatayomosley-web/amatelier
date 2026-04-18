@@ -41,6 +41,16 @@ from steward_dispatch import (
 logger = logging.getLogger("runner")
 
 SUITE_ROOT = Path(__file__).resolve().parent.parent
+
+# Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
+# (read-only post-install); mutable runtime state goes to WRITE_ROOT.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    WRITE_ROOT = _amatelier_paths.user_data_dir()
+except Exception:
+    WRITE_ROOT = SUITE_ROOT
+
 # Workspace root = where the user runs commands. Defaults to .../skills/claude-suite
 # ancestor at +3 (skill -> skills -> .claude -> project). Override with
 # AMATELIER_WORKSPACE env var when the install layout differs.
@@ -82,7 +92,7 @@ DEFAULT_MODELS = {
 # Model upgrades are request-based — no automatic tier overrides
 
 DEFAULT_WORKERS = ["elena", "marcus", "clare", "simon"]
-AGENTS_DIR = SUITE_ROOT / "agents"
+AGENTS_DIR = WRITE_ROOT / "agents"
 
 
 def load_config() -> dict:
@@ -472,7 +482,7 @@ def run_roundtable(
         logger.error("Agent %s crashed (exit %d): %s", agent_name, exit_code, stderr_out)
         # Point to the detailed error log for Gemini issues
         if agent_name == "naomi":
-            gemini_log = SUITE_ROOT / "roundtable-server" / "logs" / "gemini_errors.log"
+            gemini_log = WRITE_ROOT / "roundtable-server" / "logs" / "gemini_errors.log"
             if gemini_log.exists():
                 logger.error("Gemini error details: %s", gemini_log)
             agent_procs[agent_name] = _launch_gemini(agent_name)
@@ -930,7 +940,7 @@ def run_roundtable(
                             failure_report += f" — {stderr_peek}"
                         failure_report += "\n"
 
-                result_path = SUITE_ROOT / "roundtable-server" / "latest-result.md"
+                result_path = WRITE_ROOT / "roundtable-server" / f"latest-result.md"
                 result_path.write_text(failure_report, encoding="utf-8")
                 logger.error("Failure report written to %s", result_path)
 
@@ -1043,13 +1053,13 @@ def run_roundtable(
     )
 
     # Save digest
-    digest_path = SUITE_ROOT / "roundtable-server" / f"digest-{rt_id}.json"
+    digest_path = WRITE_ROOT / "roundtable-server" / f"digest-{rt_id}.json"
     digest_path.write_text(json.dumps(digest, indent=2), encoding="utf-8")
     logger.info("Digest saved to %s", digest_path)
 
     # Save Steward log (if any requests were made)
     if steward_log.entries:
-        steward_log_path = SUITE_ROOT / "roundtable-server" / f"steward-log-{rt_id}.json"
+        steward_log_path = WRITE_ROOT / "roundtable-server" / f"steward-log-{rt_id}.json"
         steward_log.save(str(steward_log_path))
         digest["steward_requests"] = len(steward_log.entries)
         logger.info("Steward log saved: %d requests (%s)", len(steward_log.entries), steward_log_path)
@@ -1182,7 +1192,7 @@ def run_roundtable(
 
 def _notify_completion(topic: str, rt_id: str, rounds: int, digest_path: Path) -> None:
     """Write summary to known file and fire a Windows toast notification."""
-    summary_path = SUITE_ROOT / "roundtable-server" / "latest-result.md"
+    summary_path = WRITE_ROOT / "roundtable-server" / f"latest-result.md"
     summary_path.write_text(
         f"# RT Complete: {rt_id}\n\n"
         f"**Topic:** {topic}\n"

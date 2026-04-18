@@ -14,6 +14,303 @@ path: src\amatelier\cli.py
 description: ""
 ```
 
+### `BackendUnavailable`
+
+```yaml
+name: BackendUnavailable
+kind: class
+path: src\amatelier\llm_backend.py
+description: "Raised when no backend can satisfy the current environment."
+```
+
+### `Completion`
+
+```yaml
+name: Completion
+kind: class
+path: src\amatelier\llm_backend.py
+description: ""
+```
+
+### `LLMBackend`
+
+```yaml
+name: LLMBackend
+kind: class
+path: src\amatelier\llm_backend.py
+description: ""
+```
+
+### `ClaudeCLIBackend`
+
+```yaml
+name: ClaudeCLIBackend
+kind: class
+path: src\amatelier\llm_backend.py
+description: ""
+```
+
+### `AnthropicSDKBackend`
+
+```yaml
+name: AnthropicSDKBackend
+kind: class
+path: src\amatelier\llm_backend.py
+description: ""
+```
+
+### `OpenAICompatBackend`
+
+```yaml
+name: OpenAICompatBackend
+kind: class
+path: src\amatelier\llm_backend.py
+description: ""
+```
+
+### `describe_environment`
+
+```yaml
+name: describe_environment
+kind: function
+path: src\amatelier\llm_backend.py
+description: "Diagnostic snapshot — used by ``amatelier config``."
+```
+
+### `resolve_mode`
+
+```yaml
+name: resolve_mode
+kind: function
+path: src\amatelier\llm_backend.py
+description: "Resolve the mode to use."
+```
+
+### `get_backend`
+
+```yaml
+name: get_backend
+kind: function
+path: src\amatelier\llm_backend.py
+description: "Return a singleton backend instance configured for the current env."
+```
+
+### `call_claude`
+
+```yaml
+name: call_claude
+kind: function
+path: src\amatelier\llm_backend.py
+description: "Backward-compatible shim matching the original claude_agent.call_claude API."
+```
+
+### `complete`
+
+```yaml
+name: complete
+kind: function
+path: src\amatelier\llm_backend.py
+description: ""
+```
+
+### `available`
+
+```yaml
+name: available
+kind: function
+path: src\amatelier\llm_backend.py
+description: ""
+```
+
+### `complete`
+
+```yaml
+name: complete
+kind: function
+path: src\amatelier\llm_backend.py
+description: ""
+```
+
+### `available`
+
+```yaml
+name: available
+kind: function
+path: src\amatelier\llm_backend.py
+description: ""
+```
+
+### `complete`
+
+```yaml
+name: complete
+kind: function
+path: src\amatelier\llm_backend.py
+description: ""
+```
+
+### `available`
+
+```yaml
+name: available
+kind: function
+path: src\amatelier\llm_backend.py
+description: ""
+```
+
+### `complete`
+
+```yaml
+name: complete
+kind: function
+path: src\amatelier\llm_backend.py
+description: ""
+```
+
+### `bundled_assets_dir`
+
+```yaml
+name: bundled_assets_dir
+kind: function
+path: src\amatelier\paths.py
+description: "The read-only bundled-assets root. Inside the installed package."
+```
+
+### `bundled_docs_dir`
+
+```yaml
+name: bundled_docs_dir
+kind: function
+path: src\amatelier\paths.py
+description: "The bundled human docs (Diátaxis tree) shipped inside the wheel."
+```
+
+### `bundled_agent_dir`
+
+```yaml
+name: bundled_agent_dir
+kind: function
+path: src\amatelier\paths.py
+description: "Seed persona directory for an agent (ships in wheel, read-only)."
+```
+
+### `bundled_store_catalog`
+
+```yaml
+name: bundled_store_catalog
+kind: function
+path: src\amatelier\paths.py
+description: "Default skill template catalog."
+```
+
+### `bundled_config`
+
+```yaml
+name: bundled_config
+kind: function
+path: src\amatelier\paths.py
+description: "Default config.json."
+```
+
+### `user_data_dir`
+
+```yaml
+name: user_data_dir
+kind: function
+path: src\amatelier\paths.py
+description: "The user-writable root for runtime state."
+```
+
+### `user_agent_dir`
+
+```yaml
+name: user_agent_dir
+kind: function
+path: src\amatelier\paths.py
+description: "Per-agent mutable state (MEMORY, metrics, behaviors, sessions, skills)."
+```
+
+### `user_db_path`
+
+```yaml
+name: user_db_path
+kind: function
+path: src\amatelier\paths.py
+description: "SQLite database for the roundtable chat."
+```
+
+### `user_logs_dir`
+
+```yaml
+name: user_logs_dir
+kind: function
+path: src\amatelier\paths.py
+description: "Runtime logs (gemini_errors, runner logs, etc.)."
+```
+
+### `user_digest_dir`
+
+```yaml
+name: user_digest_dir
+kind: function
+path: src\amatelier\paths.py
+description: "Where ``digest-<rt_id>.json`` and related transcripts land."
+```
+
+### `user_briefing_dir`
+
+```yaml
+name: user_briefing_dir
+kind: function
+path: src\amatelier\paths.py
+description: "Where user-authored briefing-*.md files are expected."
+```
+
+### `user_store_ledger`
+
+```yaml
+name: user_store_ledger
+kind: function
+path: src\amatelier\paths.py
+description: "Spark economy ledger (evolves as agents earn and spend)."
+```
+
+### `user_novel_concepts`
+
+```yaml
+name: user_novel_concepts
+kind: function
+path: src\amatelier\paths.py
+description: "DERIVE skill concepts accumulated across roundtables."
+```
+
+### `user_shared_skills_index`
+
+```yaml
+name: user_shared_skills_index
+kind: function
+path: src\amatelier\paths.py
+description: "Curated shared skills from Admin distillation."
+```
+
+### `user_config_override`
+
+```yaml
+name: user_config_override
+kind: function
+path: src\amatelier\paths.py
+description: "Optional user-level override for config.json."
+```
+
+### `ensure_user_data`
+
+```yaml
+name: ensure_user_data
+kind: function
+path: src\amatelier\paths.py
+description: "Create the user-data tree on first use."
+```
+
 ### `load_memory`
 
 ```yaml
@@ -380,7 +677,7 @@ description: "Load the agent's full context: CLAUDE.md + MEMORY.md + metrics + s
 name: call_claude
 kind: function
 path: src\amatelier\engine\claude_agent.py
-description: "Call Claude via CLI."
+description: "Call Claude."
 ```
 
 ### `run_agent`

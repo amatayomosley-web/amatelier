@@ -25,7 +25,17 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 SUITE_ROOT = Path(__file__).resolve().parent.parent
-DIGEST_DIR = SUITE_ROOT / "roundtable-server"
+
+# Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
+# (read-only post-install); mutable runtime state goes to WRITE_ROOT.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    WRITE_ROOT = _amatelier_paths.user_data_dir()
+except Exception:
+    WRITE_ROOT = SUITE_ROOT
+
+DIGEST_DIR = WRITE_ROOT / "roundtable-server"
 VALID_AGENTS = {"elena", "marcus", "clare", "simon", "naomi"}
 
 
@@ -35,7 +45,7 @@ def _append_novel_concepts(skills: list[dict], rt_id: str, topic: str) -> int:
     if not derives:
         return 0
 
-    db_path = SUITE_ROOT / "novel_concepts.json"
+    db_path = WRITE_ROOT / "novel_concepts.json"
     if db_path.exists():
         db = json.loads(db_path.read_text(encoding="utf-8"))
     else:

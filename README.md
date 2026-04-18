@@ -6,15 +6,24 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Amatayo Standard](https://img.shields.io/badge/Amatayo%20Standard-v1.0-blueviolet)](https://github.com/amatayomosley-web/amatelier/blob/main/CLAUDE.md)
 
-> A self-evolving multi-model AI team skill for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
+> A self-evolving multi-model AI team. Runs in [Claude Code](https://docs.anthropic.com/en/docs/claude-code) **or** with any API you bring.
 
 <!-- DEMO_PLACEHOLDER: drop a GIF of a live roundtable here. 1280×640 PNG/JPG is ideal. -->
 
-Ten agents with distinct personalities compete in structured roundtable discussions, earn sparks, buy skills, and evolve through therapist-led debrief sessions. Cross-model — Claude Sonnet, Claude Haiku, and Gemini Flash — with a live Judge moderator who intervenes in real time.
-
-The name **Amatelier** is the project identity. The skill installs as `~/.claude/skills/claude-suite/` to match the internal path references agents use to find each other.
+Ten agents with distinct personalities compete in structured roundtable discussions, earn sparks, buy skills, and evolve through therapist-led debrief sessions. Cross-model — Claude Sonnet, Claude Haiku, and Gemini Flash by default; or any OpenAI-compatible provider you configure.
 
 **Full documentation:** [amatayomosley-web.github.io/amatelier](https://amatayomosley-web.github.io/amatelier/) · **LLM context:** [llms-full.txt](https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llms-full.txt)
+
+## Two modes
+
+| Mode | Prereqs | Best for |
+|---|---|---|
+| **Claude Code** | `claude` binary on PATH | You're already inside Claude Code |
+| **Open** | Any of: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY` | Standalone, containers, CI, anywhere |
+
+Atelier auto-detects. Explicit override: `AMATELIER_MODE=claude-code|anthropic-sdk|openai-compat`.
+
+Run `amatelier config` to see which mode is active.
 
 ---
 
@@ -59,23 +68,58 @@ An 8-step workflow, orchestrated by the runner:
 
 ## Quick Start
 
+Pick a backend, install, run.
+
+### With an Anthropic API key
+
 ```bash
 pip install amatelier
-export GEMINI_API_KEY=<your key from https://aistudio.google.com/apikey>
-amatelier roundtable --topic "Your topic here" --budget 3 --summary
+export ANTHROPIC_API_KEY=<your key>
+export GEMINI_API_KEY=<your key>         # for Naomi; optional — use --skip-naomi to omit
+amatelier roundtable --topic "Your topic" --briefing path/to/brief.md --budget 3 --summary
 ```
 
-The runner opens a SQLite-backed chat, spawns the workers + Judge as subprocesses, and prints a human-readable summary when the roundtable completes.
+### With any OpenAI-compatible provider (OpenRouter example)
 
-See [install guide](docs/guides/install.md) for DevContainer and source-install paths.
+```bash
+pip install amatelier
+export OPENROUTER_API_KEY=<your key>
+amatelier roundtable --topic "Your topic" --briefing path/to/brief.md --budget 3 --summary
+```
 
-## Develop from source
+OpenRouter gives you 100+ models under one key — Claude, GPT, Gemini, DeepSeek, Llama, everything.
+
+### Already running Claude Code?
+
+```bash
+pip install amatelier
+amatelier roundtable --topic "Your topic" --briefing path/to/brief.md --budget 3 --summary
+```
+
+No API keys needed — atelier uses your Claude Code session.
+
+### Verify your setup
+
+```bash
+amatelier config       # shows active mode, detected credentials, paths
+amatelier docs         # bundled documentation
+```
+
+See the [install guide](docs/guides/install.md) for DevContainer, local Ollama, and source-install paths.
+
+## Pip vs clone
+
+- **`pip install amatelier`** — self-contained, runs out of the box, bundled docs included. Ideal for users.
+- **`git clone`** — everything above plus `examples/` (sample briefings), `tests/`, CI workflows, LLM-facing docs. Ideal for contributors and remixers.
+
+Develop from source:
 
 ```bash
 git clone https://github.com/amatayomosley-web/amatelier
 cd amatelier
 pip install -e ".[dev]"
 make test
+amatelier roundtable --topic "hello" --briefing examples/briefings/hello-world.md --budget 1 --summary
 ```
 
 Or open in a DevContainer / GitHub Codespace — the `.devcontainer/` config handles everything.

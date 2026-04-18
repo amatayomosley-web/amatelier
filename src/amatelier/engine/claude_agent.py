@@ -24,6 +24,16 @@ from db import get_active_roundtable, init_read_cursor, is_roundtable_open, list
 logger = logging.getLogger(__name__)
 
 SUITE_ROOT = Path(__file__).resolve().parent.parent
+
+# Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
+# (read-only post-install); mutable runtime state goes to WRITE_ROOT.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    WRITE_ROOT = _amatelier_paths.user_data_dir()
+except Exception:
+    WRITE_ROOT = SUITE_ROOT
+
 WORKSPACE_ROOT = SUITE_ROOT.parent.parent.parent
 
 
@@ -36,7 +46,7 @@ def _load_config() -> dict:
 
 def load_agent_context(agent_name: str) -> str:
     """Load the agent's full context: CLAUDE.md + MEMORY.md + metrics + skills."""
-    agent_dir = SUITE_ROOT / "agents" / agent_name
+    agent_dir = WRITE_ROOT / "agents" / agent_name
     parts = []
 
     claude_md = agent_dir / "CLAUDE.md"
@@ -213,7 +223,34 @@ It's your turn. Respond as {agent_name}.
 
 
 def call_claude(system_prompt: str, prompt: str, agent_name: str, model: str) -> str:
-    """Call Claude via CLI."""
+    """Call Claude.
+
+    In ``claude-code`` mode: uses the ``claude`` CLI (the way atelier
+    originally worked; preserves all agent-specific flags).
+    In ``anthropic-sdk`` or ``openai-compat`` mode: routes through the
+    SDK backend — no Claude Code installation required.
+    """
+    # Try open-mode backend first. Returns None if we should fall through
+    # to the CLI path (claude-code mode, or backend unavailable).
+    try:
+        from amatelier.llm_backend import get_backend, BackendUnavailable
+        backend = get_backend()
+        if backend.name != "claude-code":
+            try:
+                result = backend.complete(
+                    system=system_prompt, prompt=prompt,
+                    model=model, max_tokens=8000, timeout=300,
+                )
+                return result.text
+            except BackendUnavailable:
+                pass
+            except Exception:
+                # SDK failure — fall back to CLI if available
+                pass
+    except ImportError:
+        pass
+
+    # Legacy CLI path
     config = _load_config()
     context_limit = config.get("roundtable", {}).get("context_limit", 8000)
     agent_def = json.dumps({
@@ -427,7 +464,7 @@ def run_agent(agent_name: str, model: str):
     logger.info("Roundtable %s closed. %s exiting.", rt_id, agent_name)
 
     # Save session transcript
-    session_dir = SUITE_ROOT / "agents" / agent_name / "sessions"
+    session_dir = WRITE_ROOT / "agents" / agent_name / "sessions"
     session_dir.mkdir(parents=True, exist_ok=True)
     session_file = session_dir / f"{time.strftime('%Y-%m-%d_%H%M%S')}.json"
     session_file.write_text(json.dumps({

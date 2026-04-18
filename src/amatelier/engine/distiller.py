@@ -11,8 +11,18 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 SUITE_ROOT = Path(__file__).resolve().parent.parent
-SHARED_SKILLS_DIR = SUITE_ROOT / "shared-skills" / "entries"
-INDEX_PATH = SUITE_ROOT / "shared-skills" / "index.json"
+
+# Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
+# (read-only post-install); mutable runtime state goes to WRITE_ROOT.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    WRITE_ROOT = _amatelier_paths.user_data_dir()
+except Exception:
+    WRITE_ROOT = SUITE_ROOT
+
+SHARED_SKILLS_DIR = WRITE_ROOT / "shared-skills" / "entries"
+INDEX_PATH = WRITE_ROOT / "shared-skills" / "index.json"
 
 
 def load_index() -> list[dict]:
@@ -111,7 +121,7 @@ def _update_index_entry(skill_id: str, updates: dict):
 
 def save_skill_to_agent(agent_name: str, entry: dict):
     """Save a skill to an agent's local skills directory."""
-    skills_dir = SUITE_ROOT / "agents" / agent_name / "skills"
+    skills_dir = WRITE_ROOT / "agents" / agent_name / "skills"
     skills_dir.mkdir(parents=True, exist_ok=True)
     path = skills_dir / f"{entry['id']}.md"
 
@@ -178,7 +188,7 @@ def search_shared_skills(query: str, limit: int = 5) -> list[dict]:
 
 def list_agent_skills(agent_name: str) -> list[str]:
     """List all skills an agent has accumulated."""
-    skills_dir = SUITE_ROOT / "agents" / agent_name / "skills"
+    skills_dir = WRITE_ROOT / "agents" / agent_name / "skills"
     if not skills_dir.exists():
         return []
     return [f.stem for f in skills_dir.glob("*.md")]
@@ -223,7 +233,7 @@ if __name__ == "__main__":
     elif args.command == "promote":
         skills = list_agent_skills(args.agent)
         if args.skill_id in skills:
-            skill_path = SUITE_ROOT / "agents" / args.agent / "skills" / f"{args.skill_id}.md"
+            skill_path = WRITE_ROOT / "agents" / args.agent / "skills" / f"{args.skill_id}.md"
             # Infer original type from skill ID prefix (e.g. "capture-abc123" -> "CAPTURE")
             original_type = "UNKNOWN"
             for prefix in ("capture", "fix", "derive"):

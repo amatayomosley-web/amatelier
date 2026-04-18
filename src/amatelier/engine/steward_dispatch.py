@@ -26,6 +26,16 @@ logger = logging.getLogger("steward")
 
 ENGINE_DIR = Path(__file__).resolve().parent
 SUITE_ROOT = ENGINE_DIR.parent
+
+# Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
+# (read-only post-install); mutable runtime state goes to WRITE_ROOT.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    WRITE_ROOT = _amatelier_paths.user_data_dir()
+except Exception:
+    WRITE_ROOT = SUITE_ROOT
+
 # Workspace root = where the user actually runs commands from. When installed
 # at .claude/skills/claude-suite, ascending three levels from SUITE_ROOT lands
 # in the project workspace (skill -> skills -> .claude -> project). The

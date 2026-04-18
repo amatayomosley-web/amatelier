@@ -15,11 +15,21 @@ from db import get_active_roundtable, init_read_cursor, is_roundtable_open, list
 logger = logging.getLogger(__name__)
 
 SUITE_ROOT = Path(__file__).resolve().parent.parent
-LOG_DIR = SUITE_ROOT / "roundtable-server" / "logs"
+
+# Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
+# (read-only post-install); mutable runtime state goes to WRITE_ROOT.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    WRITE_ROOT = _amatelier_paths.user_data_dir()
+except Exception:
+    WRITE_ROOT = SUITE_ROOT
+
+LOG_DIR = WRITE_ROOT / "roundtable-server" / "logs"
 
 
 def load_agent_context(agent_name: str) -> str:
-    agent_dir = SUITE_ROOT / "agents" / agent_name
+    agent_dir = WRITE_ROOT / "agents" / agent_name
     parts = []
     claude_md = agent_dir / "CLAUDE.md"
     memory_md = agent_dir / "MEMORY.md"
@@ -247,7 +257,7 @@ def run_agent(agent_name: str):
 
     logger.info("Roundtable %s closed. %s exiting.", rt_id, agent_name)
 
-    session_dir = SUITE_ROOT / "agents" / agent_name / "sessions"
+    session_dir = WRITE_ROOT / "agents" / agent_name / "sessions"
     session_dir.mkdir(parents=True, exist_ok=True)
     session_file = session_dir / f"{time.strftime('%Y-%m-%d_%H%M%S')}.json"
     session_file.write_text(json.dumps({
