@@ -263,6 +263,122 @@ class AnthropicSDKBackend:
             output_tokens=getattr(usage, "output_tokens", None),
         )
 
+    def complete_with_tools(
+        self,
+        *,
+        system: str,
+        user: str,
+        tools: list[dict],
+        tool_executor,
+        model: str = "sonnet",
+        max_tokens: int = 4000,
+        timeout: float = 180.0,
+        max_iterations: int = 10,
+    ) -> Completion:
+        """Run a tool-use loop: model calls tools, we execute them locally.
+
+        `tool_executor` is a callable `(name: str, input: dict) -> str` that
+        executes a tool and returns its text result. Looping continues until
+        the model returns a message without tool_use blocks or until
+        `max_iterations` is hit.
+
+        Not part of the LLMBackend Protocol — only implemented on Anthropic
+        since OpenAI-compat tool schemas differ. Callers must check for
+        availability via `hasattr(backend, "complete_with_tools")`.
+        """
+        client = self._get_client()
+        resolved = self._resolve(model)
+        start = time.monotonic()
+        messages: list[dict] = [{"role": "user", "content": user}]
+        final_text = ""
+        input_tokens_total = 0
+        output_tokens_total = 0
+
+        for _ in range(max_iterations):
+            msg = client.messages.create(
+                model=resolved,
+                max_tokens=max_tokens,
+                system=system,
+                messages=messages,
+                tools=tools,
+                timeout=timeout,
+            )
+            usage = getattr(msg, "usage", None)
+            if usage:
+                input_tokens_total += getattr(usage, "input_tokens", 0) or 0
+                output_tokens_total += getattr(usage, "output_tokens", 0) or 0
+
+            blocks = list(getattr(msg, "content", []))
+            tool_uses = [b for b in blocks if getattr(b, "type", "") == "tool_use"]
+            text_chunks = [
+                (getattr(b, "text", "") or "")
+                for b in blocks if getattr(b, "type", "") == "text"
+            ]
+            stop_reason = getattr(msg, "stop_reason", "")
+
+            if not tool_uses:
+                final_text = "".join(text_chunks)
+                break
+
+            # Record the assistant turn with all its tool_use blocks
+            assistant_content = []
+            for b in blocks:
+                bt = getattr(b, "type", "")
+                if bt == "text":
+                    assistant_content.append({
+                        "type": "text",
+                        "text": getattr(b, "text", "") or "",
+                    })
+                elif bt == "tool_use":
+                    assistant_content.append({
+                        "type": "tool_use",
+                        "id": getattr(b, "id", ""),
+                        "name": getattr(b, "name", ""),
+                        "input": getattr(b, "input", {}) or {},
+                    })
+            messages.append({"role": "assistant", "content": assistant_content})
+
+            # Execute each tool and build the tool_result user turn
+            tool_results = []
+            for tu in tool_uses:
+                try:
+                    result = tool_executor(
+                        getattr(tu, "name", ""),
+                        getattr(tu, "input", {}) or {},
+                    )
+                    tool_results.append({
+                        "type": "tool_result",
+                        "tool_use_id": getattr(tu, "id", ""),
+                        "content": str(result),
+                    })
+                except Exception as e:  # noqa: BLE001
+                    tool_results.append({
+                        "type": "tool_result",
+                        "tool_use_id": getattr(tu, "id", ""),
+                        "content": f"Error: {e}",
+                        "is_error": True,
+                    })
+            messages.append({"role": "user", "content": tool_results})
+
+            if stop_reason != "tool_use":
+                final_text = "".join(text_chunks)
+                break
+        else:
+            logger.warning(
+                "complete_with_tools: hit max_iterations=%d without final text",
+                max_iterations,
+            )
+
+        elapsed_ms = (time.monotonic() - start) * 1000
+        return Completion(
+            text=final_text,
+            model=resolved,
+            backend=self.name,
+            latency_ms=elapsed_ms,
+            input_tokens=input_tokens_total or None,
+            output_tokens=output_tokens_total or None,
+        )
+
 
 # ── OpenAI-compatible backend ─────────────────────────────────────────────────
 

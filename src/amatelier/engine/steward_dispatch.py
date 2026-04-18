@@ -284,25 +284,69 @@ def spawn_steward_subagent(
         }
     })
 
-    # Steward requires a tool-using subagent (Read/Grep/Glob). This capability
-    # is specific to the Claude CLI's agent spawning — it cannot be replicated
-    # through the Anthropic SDK or OpenAI-compatible endpoints without a full
-    # tool-use implementation. In open mode, degrade gracefully.
+    # Open-mode Steward: real tool-use via the Anthropic SDK.
+    # Claude-code mode falls through to the subprocess path below.
+    # OpenAI-compat degrades (tool schemas differ across providers).
     try:
         from amatelier.llm_backend import get_backend
         backend = get_backend()
-        if backend.name != "claude-code":
+        if backend.name == "anthropic-sdk" and hasattr(backend, "complete_with_tools"):
+            from amatelier.engine.steward_tools import (
+                STEWARD_TOOL_SPECS,
+                dispatch_tool,
+            )
+
+            def _exec(name: str, input_dict: dict) -> str:
+                return dispatch_tool(WORKSPACE_ROOT, name, input_dict)
+
+            start = time.monotonic()
+            try:
+                completion = backend.complete_with_tools(
+                    system=system,
+                    user=prompt,
+                    tools=STEWARD_TOOL_SPECS,
+                    tool_executor=_exec,
+                    model=model,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    max_iterations=10,
+                )
+                elapsed = time.monotonic() - start
+                output = (completion.text or "").strip()
+                char_limit = max_tokens * 4
+                if len(output) > char_limit:
+                    output = output[:char_limit] + "\n... [truncated]"
+                if not output:
+                    return {
+                        "status": "error",
+                        "result": "Steward tool-use loop returned empty output",
+                        "elapsed_s": round(elapsed, 2),
+                    }
+                return {
+                    "status": "success",
+                    "result": output,
+                    "elapsed_s": round(elapsed, 2),
+                }
+            except Exception as e:  # noqa: BLE001
+                elapsed = time.monotonic() - start
+                logger.warning("Steward tool-use failed: %s", e)
+                return {
+                    "status": "error",
+                    "result": f"Steward tool-use error: {e}",
+                    "elapsed_s": round(elapsed, 2),
+                }
+
+        if backend.name == "openai-compat":
             logger.info(
-                "Steward unavailable in %s mode — returning degradation message",
-                backend.name,
+                "Steward unavailable in openai-compat mode — returning degradation message",
             )
             return {
                 "status": "unavailable",
                 "result": (
-                    "Steward subagent lookups require claude-code mode "
-                    "(tool-using agent spawning). Set AMATELIER_MODE=claude-code "
-                    "and install the Claude CLI, or proceed without empirical "
-                    "grounding via [[request: ...]] tags for this backend."
+                    "Steward subagent lookups require claude-code or "
+                    "anthropic-sdk mode. OpenAI-compatible providers vary in "
+                    "tool-use schemas — set AMATELIER_MODE=anthropic-sdk with "
+                    "ANTHROPIC_API_KEY, or install the Claude CLI."
                 ),
                 "elapsed_s": 0.0,
             }
