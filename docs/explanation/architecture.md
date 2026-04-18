@@ -1,6 +1,6 @@
 # Architecture
 
-Technical reference for Amatelier's internals. If you want a conceptual overview, read [README](../../README.md) first.
+Technical reference for Amatelier's internals. If you want a conceptual overview, read the [README on GitHub](https://github.com/amatayomosley-web/amatelier#readme) first.
 
 ---
 
