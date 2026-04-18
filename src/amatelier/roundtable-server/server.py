@@ -12,7 +12,13 @@ from mcp.server.fastmcp import FastMCP
 
 logger = logging.getLogger(__name__)
 
-DB_PATH = Path(__file__).parent / "roundtable.db"
+# Amatayo Standard dual-layer paths: DB is user-writable runtime state.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    DB_PATH = _amatelier_paths.user_db_path()
+except Exception:
+    DB_PATH = Path(__file__).parent / "roundtable.db"
 
 mcp = FastMCP("Roundtable")
 

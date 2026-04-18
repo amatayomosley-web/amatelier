@@ -12,7 +12,13 @@ import time
 import uuid
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "roundtable.db"
+# Amatayo Standard dual-layer paths: DB is user-writable runtime state.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    DB_PATH = _amatelier_paths.user_db_path()
+except Exception:
+    DB_PATH = Path(__file__).parent / "roundtable.db"
 
 PASS = 0
 FAIL = 0

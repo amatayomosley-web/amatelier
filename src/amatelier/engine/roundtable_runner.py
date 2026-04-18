@@ -1504,7 +1504,7 @@ def _resolve_first_speaker(workers: list[str]) -> str | None:
     """Check if any agent purchased a first-speaker slot. Race condition: highest rank wins."""
     # Check each worker's inventory for a first-speaker consumable
     # For now, check store/ledger.json for pending first-speaker purchases
-    ledger_path = SUITE_ROOT / "store" / "ledger.json"
+    ledger_path = WRITE_ROOT / "store" / "ledger.json"
     if not ledger_path.exists():
         return None
 

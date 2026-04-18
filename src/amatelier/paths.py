@@ -31,6 +31,8 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import sqlite3
+import time
 from pathlib import Path
 
 from platformdirs import user_data_dir as _platform_user_data_dir
@@ -49,8 +51,19 @@ def bundled_assets_dir() -> Path:
 
 
 def bundled_docs_dir() -> Path:
-    """The bundled human docs (Diátaxis tree) shipped inside the wheel."""
-    return _BUNDLED / "docs"
+    """The bundled human docs (Diátaxis tree).
+
+    In a wheel-installed package this is ``<site-packages>/amatelier/docs``.
+    In editable installs, hatchling's force-include only activates at wheel
+    build — we fall back to the repo-root ``docs/`` so dev + tests work.
+    """
+    in_package = _BUNDLED / "docs"
+    if in_package.exists():
+        return in_package
+    candidate = _BUNDLED.parent.parent / "docs"
+    if candidate.exists():
+        return candidate
+    return in_package
 
 
 def bundled_agent_dir(agent_name: str) -> Path:
@@ -217,6 +230,9 @@ def ensure_user_data(force: bool = False) -> Path:
     _init_json(user_novel_concepts(), [])
     _init_json(user_shared_skills_index(), {"entries": []})
 
+    # Run SQL migrations so db_client subprocesses find tables ready.
+    _initialize_db_schema(root)
+
     sentinel.write_text("1", encoding="utf-8")
     return root
 
@@ -229,6 +245,58 @@ def _init_json(path: Path, default_value) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists():
         path.write_text(json.dumps(default_value), encoding="utf-8")
+
+
+def _initialize_db_schema(root: Path) -> None:
+    """Apply versioned SQL migrations to the user's roundtable DB.
+
+    This mirrors what ``engine.db.get_db()`` does on its first connection,
+    but runs at bootstrap time so that every subprocess that opens the DB
+    directly (notably ``roundtable-server/db_client.py``, invoked by the
+    runner) finds tables ready. Without this, the first roundtable fails
+    with ``no such table: roundtables`` because db_client connects raw
+    and never imports engine.db.
+
+    Idempotent — uses the same ``_migrations`` version-tracking table
+    the engine's own migrator uses, so double-application is a no-op.
+    """
+    db_path = root / "roundtable-server" / "roundtable.db"
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+
+    migrations_dir = _BUNDLED / "engine" / "migrations"
+    if not migrations_dir.exists():
+        return
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS _migrations ("
+            "version INTEGER PRIMARY KEY, "
+            "filename TEXT NOT NULL, "
+            "applied_at REAL NOT NULL)"
+        )
+        conn.commit()
+        applied = {
+            row[0]
+            for row in conn.execute("SELECT version FROM _migrations").fetchall()
+        }
+        for sql_file in sorted(migrations_dir.glob("*.sql")):
+            try:
+                version = int(sql_file.stem.split("_", 1)[0])
+            except ValueError:
+                continue
+            if version in applied:
+                continue
+            sql = sql_file.read_text(encoding="utf-8")
+            conn.executescript(sql)
+            conn.execute(
+                "INSERT INTO _migrations (version, filename, applied_at) "
+                "VALUES (?, ?, ?)",
+                (version, sql_file.name, time.time()),
+            )
+            conn.commit()
+    finally:
+        conn.close()
 
 
 __all__ = [

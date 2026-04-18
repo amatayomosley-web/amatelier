@@ -23,7 +23,15 @@ from pathlib import Path
 if hasattr(sys.stdout, "buffer"):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-DB_PATH = Path(__file__).parent / "roundtable.db"
+# Amatayo Standard dual-layer paths: DB is user-writable runtime state,
+# so it must resolve to user_data_dir — not next to this source file.
+# Fall back to the source-relative path only if amatelier isn't importable.
+try:
+    from amatelier import paths as _amatelier_paths
+    _amatelier_paths.ensure_user_data()
+    DB_PATH = _amatelier_paths.user_db_path()
+except Exception:
+    DB_PATH = Path(__file__).parent / "roundtable.db"
 
 
 def get_db() -> sqlite3.Connection:
