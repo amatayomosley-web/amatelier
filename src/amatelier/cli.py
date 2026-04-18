@@ -566,13 +566,19 @@ def _team_import(args: list[str]) -> int:
         if not entry.is_dir():
             continue
         dest = user_agents / entry.name
-        if dest.exists():
-            print(f"  (already present, skipping) {entry.name}")
-            continue
-        shutil.copytree(entry, dest)
-        # If it's a worker (not admin/judge/therapist), register in config
-        if entry.name not in ("admin", "judge", "therapist"):
-            # Try to read IDENTITY.md for model hint
+        if not dest.exists():
+            shutil.copytree(entry, dest)
+        else:
+            print(f"  (folder already present, keeping) {entry.name}")
+        # Register worker in config regardless of whether the folder was
+        # copied fresh — after --replace, the config was cleared, so we
+        # need to re-register workers even when their folders persist.
+        # Admin-side roles (admin/judge/therapist and v0.3 aliases) are
+        # filesystem-only; they don't appear in config.team.workers.
+        if entry.name not in (
+            "admin", "judge", "therapist",
+            "opus-admin", "opus-therapist", "haiku-assistant",
+        ):
             imported.append(entry.name)
             cfg["team"]["workers"].setdefault(entry.name, {
                 "model": "sonnet",
@@ -611,10 +617,21 @@ def _team_validate(_args: list[str]) -> int:
         if backend not in ("claude", "gemini", "openai-compat"):
             warnings.append(f"{name}: unknown backend {backend!r}; defaulting to claude")
 
-    # Check admin-side roles
-    for role in ("admin", "judge", "therapist"):
-        if not (user_agents / role).exists():
-            warnings.append(f"Admin-side role {role!r} missing at {user_agents / role}")
+    # Check admin-side roles. v0.4.0: templates use generic names
+    # (admin/judge/therapist), but v0.3.x bundled names (opus-admin,
+    # opus-therapist) are still accepted for backward-compat. Warn only
+    # when BOTH candidates are absent.
+    role_candidates = {
+        "admin": ("admin", "opus-admin"),
+        "judge": ("judge",),
+        "therapist": ("therapist", "opus-therapist"),
+    }
+    for role, candidates in role_candidates.items():
+        if not any((user_agents / c).exists() for c in candidates):
+            warnings.append(
+                f"Admin-side role {role!r} missing — expected one of "
+                f"{list(candidates)} under {user_agents}"
+            )
 
     if not errors and not warnings:
         print(f"Roster OK. {len(workers)} workers, all folders present.")
