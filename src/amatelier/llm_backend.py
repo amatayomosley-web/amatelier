@@ -100,6 +100,7 @@ class LLMBackend(Protocol):
         max_tokens: int = 8000,
         timeout: float = 300.0,
         effort: str | None = None,
+        json_mode: bool = False,
     ) -> Completion: ...
 
 
@@ -146,7 +147,11 @@ class ClaudeCLIBackend:
         max_tokens: int = 8000,
         timeout: float = 300.0,
         effort: str | None = None,
+        json_mode: bool = False,
     ) -> Completion:
+        # json_mode is a hint for providers that benefit from it (OpenAI-compat).
+        # Claude handles JSON instructions inline — ignore silently.
+        del json_mode
         start = time.monotonic()
         resolved = self._resolve(model)
         cmd = [
@@ -227,7 +232,11 @@ class AnthropicSDKBackend:
         max_tokens: int = 8000,
         timeout: float = 300.0,
         effort: str | None = None,
+        json_mode: bool = False,
     ) -> Completion:
+        # json_mode is a hint for OpenAI-compat providers. Claude handles
+        # JSON instructions inline — ignore silently.
+        del json_mode
         client = self._get_client()
         resolved = self._resolve(model)
         start = time.monotonic()
@@ -290,19 +299,48 @@ class AnthropicSDKBackend:
         resolved = self._resolve(model)
         start = time.monotonic()
         messages: list[dict] = [{"role": "user", "content": user}]
+        # Accumulate text from every iteration, not just the final one
+        # (Open-mode RT fix #1, digest d29eab18f423). Intermediate narration
+        # like "Let me check X" in iteration 1 is preserved alongside the
+        # final-turn synthesis in iteration N.
+        accumulated_text_parts: list[str] = []
         final_text = ""
         input_tokens_total = 0
         output_tokens_total = 0
 
         for _ in range(max_iterations):
-            msg = client.messages.create(
-                model=resolved,
-                max_tokens=max_tokens,
-                system=system,
-                messages=messages,
-                tools=tools,
-                timeout=timeout,
-            )
+            try:
+                msg = client.messages.create(
+                    model=resolved,
+                    max_tokens=max_tokens,
+                    system=system,
+                    messages=messages,
+                    tools=tools,
+                    timeout=timeout,
+                )
+            except Exception as e:  # noqa: BLE001
+                # Open-mode RT fix #2: guard the API call, preserve
+                # accumulated state. Callers get a Completion with whatever
+                # text the model produced before the failure.
+                logger.warning(
+                    "complete_with_tools: SDK error after %d iterations "
+                    "(%d messages accumulated): %s",
+                    len(accumulated_text_parts), len(messages), e,
+                )
+                elapsed_ms = (time.monotonic() - start) * 1000
+                partial_text = "".join(accumulated_text_parts)
+                if partial_text:
+                    partial_text += f"\n\n[tool-use loop interrupted: {e}]"
+                else:
+                    partial_text = f"[tool-use loop failed on first iteration: {e}]"
+                return Completion(
+                    text=partial_text,
+                    model=resolved,
+                    backend=self.name,
+                    latency_ms=elapsed_ms,
+                    input_tokens=input_tokens_total or None,
+                    output_tokens=output_tokens_total or None,
+                )
             usage = getattr(msg, "usage", None)
             if usage:
                 input_tokens_total += getattr(usage, "input_tokens", 0) or 0
@@ -314,10 +352,16 @@ class AnthropicSDKBackend:
                 (getattr(b, "text", "") or "")
                 for b in blocks if getattr(b, "type", "") == "text"
             ]
+            # Capture this iteration's text BEFORE we decide whether to
+            # continue looping — covers the case where the model narrates
+            # then calls tools in the same turn
+            iter_text = "".join(text_chunks)
+            if iter_text:
+                accumulated_text_parts.append(iter_text)
             stop_reason = getattr(msg, "stop_reason", "")
 
             if not tool_uses:
-                final_text = "".join(text_chunks)
+                final_text = "".join(accumulated_text_parts)
                 break
 
             # Record the assistant turn with all its tool_use blocks
@@ -361,12 +405,15 @@ class AnthropicSDKBackend:
             messages.append({"role": "user", "content": tool_results})
 
             if stop_reason != "tool_use":
-                final_text = "".join(text_chunks)
+                final_text = "".join(accumulated_text_parts)
                 break
         else:
+            # Hit max_iterations — return whatever text we accumulated
+            final_text = "".join(accumulated_text_parts)
             logger.warning(
-                "complete_with_tools: hit max_iterations=%d without final text",
-                max_iterations,
+                "complete_with_tools: hit max_iterations=%d without final text "
+                "(returning %d chars of accumulated narration)",
+                max_iterations, len(final_text),
             )
 
         elapsed_ms = (time.monotonic() - start) * 1000
@@ -431,6 +478,7 @@ class OpenAICompatBackend:
         max_tokens: int = 8000,
         timeout: float = 300.0,
         effort: str | None = None,
+        json_mode: bool = False,
     ) -> Completion:
         client = self._get_client()
         resolved = self._resolve(model)
@@ -440,15 +488,23 @@ class OpenAICompatBackend:
                 "provider; ignoring", effort,
             )
         start = time.monotonic()
-        response = client.chat.completions.create(
-            model=resolved,
-            max_tokens=max_tokens,
-            messages=[
+        # OpenAI-compat JSON mode: translates `json_mode=True` to the
+        # response_format param. GPT-4o and compatible models return valid
+        # JSON instead of markdown-fenced content. Fix #3 from Open-mode RT
+        # (digest d29eab18f423). Engines that request JSON-shaped output
+        # (judge scoring, classify, distill) set json_mode=True.
+        kwargs: dict = {
+            "model": resolved,
+            "max_tokens": max_tokens,
+            "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": prompt},
             ],
-            timeout=timeout,
-        )
+            "timeout": timeout,
+        }
+        if json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+        response = client.chat.completions.create(**kwargs)
         elapsed_ms = (time.monotonic() - start) * 1000
         text = response.choices[0].message.content or ""
         usage = getattr(response, "usage", None)

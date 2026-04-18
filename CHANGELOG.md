@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (Open-mode integration)
+- **`complete_with_tools` text accumulation.** Previously only the final
+  iteration's text chunks were returned; intermediate-turn narration
+  ("Let me check X", etc.) was lost. Now accumulates across all iterations.
+- **`complete_with_tools` SDK exception guard.** Wraps
+  `client.messages.create()` in try/except. On rate-limit or network
+  failure, returns a `Completion` with whatever text accumulated so far
+  plus a diagnostic marker, instead of propagating an unhandled exception
+  and losing the partial Steward state.
+- **OpenAI-compat JSON mode.** Added `json_mode: bool = False` param to
+  `LLMBackend.complete()`. `OpenAICompatBackend` translates
+  `json_mode=True` → `response_format={"type": "json_object"}`. Fixes
+  first-run crash for GPT-4o users on JSON-requiring engine calls (judge
+  scoring, skill classification, skill distillation). Claude backends
+  accept and ignore the hint (Claude handles JSON instructions inline).
+- Four engine call sites now pass `json_mode=True`: `judge_scorer`,
+  `classify_concepts`, `backfill_distill`, `roundtable_runner._distill_skills`.
+
 ### Security
 - **Steward credential denylist.** `read_file()` and `grep()` now refuse
   to read filenames matching credential patterns even when they live

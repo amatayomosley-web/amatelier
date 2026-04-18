@@ -1442,6 +1442,7 @@ TRANSCRIPT:
             res = backend.complete(
                 system="", prompt=prompt, model="sonnet",
                 max_tokens=8000, timeout=180,
+                json_mode=True,
             )
             raw = (res.text or "").strip() or None
     except Exception as e:

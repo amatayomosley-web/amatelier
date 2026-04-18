@@ -103,6 +103,7 @@ CONCEPTS:
             res = backend.complete(
                 system="", prompt=prompt, model="sonnet",
                 max_tokens=8000, timeout=120,
+                json_mode=True,
             )
             raw = (res.text or "").strip()
             js, je = raw.find("["), raw.rfind("]") + 1

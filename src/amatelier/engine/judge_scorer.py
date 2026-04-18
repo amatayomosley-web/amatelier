@@ -177,7 +177,7 @@ def _call_sonnet(prompt: str) -> str | None:
             result = backend.complete(
                 system="", prompt=prompt, model="sonnet",
                 max_tokens=8000, timeout=360,
-                effort=effort,
+                effort=effort, json_mode=True,
             )
             return result.text
     except Exception:
