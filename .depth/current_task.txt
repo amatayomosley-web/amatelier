@@ -1,1 +1,1 @@
-wire-judge-max-effort
+manual-ci-local

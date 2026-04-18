@@ -1,4 +1,4 @@
-.PHONY: setup test lint format demo clean build publish
+.PHONY: setup test lint format demo clean build publish ci
 
 setup:
 	pip install -e ".[dev]"
@@ -27,3 +27,9 @@ build: clean
 # Publish is performed by CI via trusted publishing; this target is manual fallback only.
 publish: build
 	python -m twine upload dist/*
+
+# Run the same checks the GitHub workflows run, locally.
+# Cross-platform; Windows users without `make` can run the script directly:
+#   python scripts/ci_local.py
+ci:
+	python scripts/ci_local.py

@@ -5,10 +5,11 @@
 name: Docs
 
 on:
+  # Manual-only: run `mkdocs build` locally to verify. Trigger via Actions UI
+  # when you want to publish the docs site. Fires on v* tags for releases.
+  workflow_dispatch:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    tags: ['v*']
 
 permissions:
   contents: read

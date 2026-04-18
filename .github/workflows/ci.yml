@@ -5,22 +5,11 @@ name: CI
 # thorough without burning minutes on every commit.
 
 on:
+  # Manual-only: run `make ci` locally before pushing. Fires on v* tags
+  # for release validation, and can be triggered via the Actions UI.
+  workflow_dispatch:
   push:
-    branches: [main]
     tags: ['v*']
-    # Doc-only changes skip CI entirely (Docs workflow still fires)
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'examples/**'
-      - '.github/ISSUE_TEMPLATE/**'
-  pull_request:
-    branches: [main]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'examples/**'
-      - '.github/ISSUE_TEMPLATE/**'
 
 permissions:
   contents: read
