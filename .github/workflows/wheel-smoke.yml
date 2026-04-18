@@ -19,11 +19,25 @@
 
 name: Wheel smoke test
 
+# Matrix policy: fast path on every push/PR (just Python 3.12). Full matrix
+# on v* tags for release validation. Saves ~66% of minutes per commit.
+
 on:
   push:
     branches: [main]
+    tags: ['v*']
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'examples/**'
+      - '.github/ISSUE_TEMPLATE/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'examples/**'
+      - '.github/ISSUE_TEMPLATE/**'
   workflow_dispatch:
 
 permissions:
@@ -35,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ${{ startsWith(github.ref, 'refs/tags/v') && fromJSON('["3.10", "3.11", "3.12"]') || fromJSON('["3.12"]') }}
 
     steps:
       - uses: actions/checkout@v4
@@ -202,6 +216,16 @@ jobs:
           assert (udir / 'store' / 'ledger.json').exists(), 'ledger.json missing'
           print('[OK] user_data_dir bootstrap complete at', udir)
           "
+
+      - name: DB integration test (real schema + real code paths)
+        run: |
+          # Install dev extras for pytest
+          /tmp/amatelier-venv/bin/pip install --quiet pytest
+          # The integration test owns its own workspace via AMATELIER_WORKSPACE
+          # fixture, so we don't leak into the already-bootstrapped
+          # user_data_dir above. Runs the same test that passes in Docker.
+          /tmp/amatelier-venv/bin/pytest tests/test_db_integration.py -v --tb=short
+          echo "[OK] DB integration test — real schema, real migrations, real render path"
 
       - name: Open-mode backend detection (ANTHROPIC_API_KEY)
         run: |
