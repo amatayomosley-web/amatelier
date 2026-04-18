@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+- **`llm/SPEC.md`** — qualified the "OpenAI-compatible provider" claim to
+  disclose that the Steward empirical-lookup subagent is unavailable in
+  `openai-compat` mode.
+- **`llms-full.txt`** — regenerated from updated SPEC.md to keep the
+  machine-layer surface synchronized.
+- **`docs/guides/configure-backend.md`** — added Steward limitation
+  caveat to the OpenAI mode section.
+- **`docs/guides/troubleshooting.md`** — added two entries: Steward
+  `status: unavailable` in openai-compat mode, and runtime consent
+  prompt on first `amatelier roundtable`.
+- **`docs/guides/install.md`** — added Environment variables table
+  documenting `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
+  `GEMINI_API_KEY`, `AMATELIER_MODE`, `AMATELIER_WORKSPACE`,
+  `AMATELIER_STEWARD_CONSENT`.
+
 ### Fixed (Open-mode integration)
 - **`complete_with_tools` text accumulation.** Previously only the final
   iteration's text chunks were returned; intermediate-turn narration

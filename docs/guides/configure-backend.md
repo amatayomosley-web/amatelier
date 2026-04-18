@@ -94,6 +94,8 @@ Override per backend via `llm.openai_compat.model_map` in `config.json`.
 
 **Caveat.** The engine is written against Anthropic-style role names. OpenAI models have different strengths — expect scoring calibration to drift. Re-tune your briefings if you rely on Sonnet-specific behavior.
 
+**Steward limitation in openai-compat mode.** The Steward subagent (the `[[request: ...]]` empirical-lookup helper used during debates) is **not available** in `openai-compat` mode. Every Steward dispatch returns `{"status": "unavailable", ...}` with a message pointing users to `anthropic-sdk` or `claude-code`. Tool-use schemas differ across OpenAI-compatible providers, and cross-provider tool-use abstraction was deliberately deferred. If your RTs rely on Steward empirical grounding, set `AMATELIER_MODE=anthropic-sdk` with `ANTHROPIC_API_KEY` or install the Claude CLI.
+
 ## OpenRouter mode
 
 **Prerequisites.** An API key from [openrouter.ai](https://openrouter.ai/keys).

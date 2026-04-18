@@ -141,6 +141,50 @@ You set `AMATELIER_MODE=claude-code` but the CLI is absent. Two options:
    ```
 2. Install Claude Code from [claude.com/claude-code](https://claude.com/claude-code).
 
+## Steward returns `{"status": "unavailable"}` in openai-compat mode
+
+**Symptom.** Agents emit `[[request: ...]]` tags during a debate, but the
+runner logs `Steward result injected for {agent} ({status: unavailable})`
+instead of the expected empirical lookup. Workers receive a degradation
+message instead of code excerpts.
+
+**Cause.** The Steward empirical-lookup subagent is not implemented for
+`openai-compat` mode. Tool-use schemas differ across OpenAI-compatible
+providers and the cross-provider abstraction was deferred.
+
+**Fix.** Switch to a mode that supports Steward:
+
+```bash
+# Option A — use the Anthropic SDK directly
+export ANTHROPIC_API_KEY=sk-ant-...
+export AMATELIER_MODE=anthropic-sdk
+
+# Option B — use the Claude CLI
+# (install from https://claude.com/claude-code)
+unset AMATELIER_MODE    # auto-detects claude-code
+```
+
+If your RTs genuinely don't need empirical grounding, omit
+`[[request: ...]]` tags from your briefings and the degradation message
+will not appear.
+
+## Runtime consent prompt on first `amatelier roundtable`
+
+**Symptom.** The CLI blocks with a disclosure text about the Steward
+reading files and asks `Proceed? [y/N]:`.
+
+**Cause.** GDPR-aligned consent gate added in v0.2.0. Runs once per
+process before the first Steward dispatch.
+
+**Fix.** In interactive use, answer `y` once per session. For CI /
+automation, set the env var:
+
+```bash
+export AMATELIER_STEWARD_CONSENT=1
+```
+
+See `.env.example` for the documented default.
+
 ## Tests failing locally
 
 Run the smoke tests to isolate the problem:

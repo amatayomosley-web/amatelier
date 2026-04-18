@@ -26,7 +26,7 @@ entry_module: amatelier.cli:main
 
 ## Purpose
 
-A self-evolving multi-model AI team. Ten persona agents debate topics in a SQLite-backed chat, earn sparks on a 0-3-10 scoring rubric, buy skills from a store, and evolve persona seeds through therapist-led debriefs. Cross-model by design — Claude Sonnet, Claude Haiku, and Gemini Flash by default, with full support for any OpenAI-compatible provider. Ships as a single pip-installable package that runs inside Claude Code or standalone against an API.
+A self-evolving multi-model AI team. Ten persona agents debate topics in a SQLite-backed chat, earn sparks on a 0-3-10 scoring rubric, buy skills from a store, and evolve persona seeds through therapist-led debriefs. Cross-model by design — Claude Sonnet, Claude Haiku, and Gemini Flash by default, with full support for any OpenAI-compatible provider (except the Steward empirical-lookup subagent, which is unavailable in `openai-compat` mode — use `claude-code` or `anthropic-sdk` if you need Steward). Ships as a single pip-installable package that runs inside Claude Code or standalone against an API.
 
 ## Modes
 

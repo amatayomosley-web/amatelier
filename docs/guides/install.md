@@ -85,6 +85,20 @@ amatelier config
 
 Expected: the version string, followed by the backend diagnostic. If `active mode` says `none`, you still need a backend — see [configure a backend](configure-backend.md).
 
+## Environment variables
+
+| Variable | Purpose | Example |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | Enables `anthropic-sdk` backend | `sk-ant-...` |
+| `OPENAI_API_KEY` | Enables `openai-compat` backend against `api.openai.com` | `sk-...` |
+| `OPENROUTER_API_KEY` | Enables `openai-compat` backend against OpenRouter (preferred over OpenAI if both set) | `sk-or-...` |
+| `GEMINI_API_KEY` | Required for the Gemini Flash worker (Naomi). Skip with `--skip-naomi` if absent | `AIza...` |
+| `AMATELIER_MODE` | Force a specific backend. Values: `claude-code`, `anthropic-sdk`, `openai-compat`. If unset, amatelier auto-detects in that order of preference | `anthropic-sdk` |
+| `AMATELIER_WORKSPACE` | Override where mutable state (DB, digests, ledger) lives. Defaults to OS user-data dir. Use `.` to pin to the current working tree | `/path/to/project` |
+| `AMATELIER_STEWARD_CONSENT` | Pre-approve the consent gate for `amatelier roundtable` in CI / non-interactive contexts. Set to `1`, `yes`, or `true` | `1` |
+
+Set via shell (`export FOO=bar`), a `.env` file at the repo root (see `.env.example`), or your CI secret store.
+
 ## Alternatives and caveats
 
 - **Python version.** Amatelier requires Python 3.10 or newer. Check with `python --version`.
