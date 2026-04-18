@@ -141,13 +141,34 @@ def _format_transcript(transcript: list[dict]) -> str:
     return "\n\n".join(lines)
 
 
+def _get_judge_effort() -> str | None:
+    """Read config.judge.effort (e.g. 'max') or None if unset."""
+    try:
+        from amatelier import paths
+        user_cfg = paths.user_config_override()
+        bundled_cfg = paths.bundled_config()
+        src = user_cfg if user_cfg.exists() else bundled_cfg
+        if not src.exists():
+            return None
+        data = json.loads(src.read_text(encoding="utf-8"))
+        effort = data.get("team", {}).get("judge", {}).get("effort")
+        return str(effort) if effort else None
+    except Exception:
+        return None
+
+
 def _call_sonnet(prompt: str) -> str | None:
     """Call Claude Sonnet for scoring.
 
     Tries the open-mode backend first (Anthropic SDK, OpenAI-compat).
     Falls back to the ``claude`` CLI subprocess if backend is unavailable
     or fails — preserving the claude-code mode path.
+
+    When ``config.judge.effort == "max"``, enables Anthropic extended
+    thinking via the backend protocol. Other backends ignore the effort
+    hint gracefully.
     """
+    effort = _get_judge_effort()
     # Try backend first (works without Claude Code CLI)
     try:
         from amatelier.llm_backend import get_backend
@@ -156,6 +177,7 @@ def _call_sonnet(prompt: str) -> str | None:
             result = backend.complete(
                 system="", prompt=prompt, model="sonnet",
                 max_tokens=8000, timeout=360,
+                effort=effort,
             )
             return result.text
     except Exception:
@@ -165,11 +187,14 @@ def _call_sonnet(prompt: str) -> str | None:
     env["PYTHONIOENCODING"] = "utf-8"
 
     try:
+        cmd = ["claude", "-p", "--model", "sonnet",
+               "--no-session-persistence", "--output-format", "json",
+               "--disable-slash-commands", "--dangerously-skip-permissions",
+               "--max-budget-usd", "5.00"]
+        if effort in ("low", "medium", "high", "max"):
+            cmd.extend(["--effort", effort])
         result = subprocess.run(
-            ["claude", "-p", "--model", "sonnet",
-             "--no-session-persistence", "--output-format", "json",
-             "--disable-slash-commands", "--dangerously-skip-permissions",
-             "--max-budget-usd", "5.00"],
+            cmd,
             input=prompt, capture_output=True, text=True, timeout=360,
             cwd=str(WORKSPACE_ROOT), encoding="utf-8", errors="replace", env=env,
         )

@@ -99,7 +99,17 @@ class LLMBackend(Protocol):
         model: str,
         max_tokens: int = 8000,
         timeout: float = 300.0,
+        effort: str | None = None,
     ) -> Completion: ...
+
+
+# Extended-thinking budget per effort level (tokens). None = no thinking block.
+EFFORT_BUDGETS: dict[str, int] = {
+    "low": 2048,
+    "medium": 4096,
+    "high": 8192,
+    "max": 16000,
+}
 
 
 # ── Claude Code CLI backend ───────────────────────────────────────────────────
@@ -135,6 +145,7 @@ class ClaudeCLIBackend:
         model: str,
         max_tokens: int = 8000,
         timeout: float = 300.0,
+        effort: str | None = None,
     ) -> Completion:
         start = time.monotonic()
         resolved = self._resolve(model)
@@ -144,6 +155,9 @@ class ClaudeCLIBackend:
             "--model", resolved,
             "--append-system-prompt", system,
         ]
+        if effort in ("low", "medium", "high", "max"):
+            cmd.extend(["--effort", effort])
+            logger.info("claude-code: --effort=%s", effort)
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -212,17 +226,28 @@ class AnthropicSDKBackend:
         model: str,
         max_tokens: int = 8000,
         timeout: float = 300.0,
+        effort: str | None = None,
     ) -> Completion:
         client = self._get_client()
         resolved = self._resolve(model)
         start = time.monotonic()
-        msg = client.messages.create(
-            model=resolved,
-            max_tokens=max_tokens,
-            system=system,
-            messages=[{"role": "user", "content": prompt}],
-            timeout=timeout,
-        )
+        kwargs: dict = {
+            "model": resolved,
+            "max_tokens": max_tokens,
+            "system": system,
+            "messages": [{"role": "user", "content": prompt}],
+            "timeout": timeout,
+        }
+        budget = EFFORT_BUDGETS.get(effort or "") if effort else None
+        if budget:
+            # Anthropic requires max_tokens > budget_tokens; give headroom.
+            kwargs["max_tokens"] = max(max_tokens, budget + 4096)
+            kwargs["thinking"] = {"type": "enabled", "budget_tokens": budget}
+            logger.info(
+                "anthropic-sdk: extended thinking effort=%s budget=%d",
+                effort, budget,
+            )
+        msg = client.messages.create(**kwargs)
         elapsed_ms = (time.monotonic() - start) * 1000
         text = "".join(
             (getattr(block, "text", "") or "")
@@ -289,9 +314,15 @@ class OpenAICompatBackend:
         model: str,
         max_tokens: int = 8000,
         timeout: float = 300.0,
+        effort: str | None = None,
     ) -> Completion:
         client = self._get_client()
         resolved = self._resolve(model)
+        if effort:
+            logger.debug(
+                "openai-compat backend: effort=%s has no equivalent on this "
+                "provider; ignoring", effort,
+            )
         start = time.monotonic()
         response = client.chat.completions.create(
             model=resolved,

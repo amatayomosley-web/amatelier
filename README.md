@@ -41,8 +41,8 @@ Run `amatelier config` to see which mode is active.
 | Agent | Model | Role |
 |-------|-------|------|
 | Opus Admin | Opus 4.6 | Strategy, directives, final sign-off. You talk to this one. |
-| Haiku Assistant | Haiku 4.5 | Mechanics: spawning, round management, digest, scripts. |
-| Judge | Sonnet 4 | Live referee. Active in chat, keeps workers on track, enforces directive compliance. |
+| Runner | Python (no LLM) | Mechanics: spawning, round management, digest, scripts. `engine/roundtable_runner.py`. |
+| Judge | Sonnet 4 (max effort) | Live referee. Active in chat, keeps workers on track, enforces directive compliance. |
 | Opus Therapist | Opus 4.6 | Observation: debriefs, scoring supervision, persona evolution. Not live in chat. |
 
 ### Worker side (competition, persona evolution, scoring)
@@ -54,7 +54,6 @@ Run `amatelier config` to see which mode is active.
 | Clare | Haiku 4.5 | Fast worker — concise, structural analysis. |
 | Simon | Haiku 4.5 | Fast worker — triage, fix sequencing. |
 | Naomi | Gemini Flash | Cross-model worker — catches Claude blind spots. |
-| Therapist | Haiku | Interviewer — runs the post-roundtable debrief cycle. |
 
 ---
 
