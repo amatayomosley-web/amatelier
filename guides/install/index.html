@@ -16,7 +16,7 @@
         <link rel="prev" href="../../tutorials/first-run/">
       
       
-        <link rel="next" href="../troubleshooting/">
+        <link rel="next" href="../configure-backend/">
       
       
         
@@ -605,10 +605,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#consumer-you-just-want-to-use-it" class="md-nav__link">
+  <a href="#path-1-consumer-pip" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Consumer — you just want to use it
+        Path 1 — Consumer (pip)
       
     </span>
   </a>
@@ -616,10 +616,38 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#contributor-you-want-to-hack-on-it" class="md-nav__link">
+  <a href="#path-2-contributor-editable-clone" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Contributor — you want to hack on it
+        Path 2 — Contributor (editable clone)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Path 2 — Contributor (editable clone)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pin-runtime-state-to-the-working-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pin runtime state to the working tree
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#path-3-devcontainer-zero-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Path 3 — DevContainer (zero setup)
       
     </span>
   </a>
@@ -627,10 +655,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#devcontainer-you-want-zero-setup" class="md-nav__link">
+  <a href="#verify-your-install" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DevContainer — you want zero setup
+        Verify your install
       
     </span>
   </a>
@@ -638,10 +666,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#verify" class="md-nav__link">
+  <a href="#alternatives-and-caveats" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verify
+        Alternatives and caveats
       
     </span>
   </a>
@@ -663,6 +691,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configure-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure a backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -936,10 +992,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#consumer-you-just-want-to-use-it" class="md-nav__link">
+  <a href="#path-1-consumer-pip" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Consumer — you just want to use it
+        Path 1 — Consumer (pip)
       
     </span>
   </a>
@@ -947,10 +1003,38 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#contributor-you-want-to-hack-on-it" class="md-nav__link">
+  <a href="#path-2-contributor-editable-clone" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Contributor — you want to hack on it
+        Path 2 — Contributor (editable clone)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Path 2 — Contributor (editable clone)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pin-runtime-state-to-the-working-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pin runtime state to the working tree
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#path-3-devcontainer-zero-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Path 3 — DevContainer (zero setup)
       
     </span>
   </a>
@@ -958,10 +1042,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#devcontainer-you-want-zero-setup" class="md-nav__link">
+  <a href="#verify-your-install" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DevContainer — you want zero setup
+        Verify your install
       
     </span>
   </a>
@@ -969,10 +1053,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#verify" class="md-nav__link">
+  <a href="#alternatives-and-caveats" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verify
+        Alternatives and caveats
       
     </span>
   </a>
@@ -1025,39 +1109,63 @@
 
 <h1 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Guide</strong> — task-oriented. For a guided walkthrough see <a href="../../tutorials/first-run/">Tutorials</a>. For design rationale see <a href="../../explanation/architecture/">Explanation</a>.</p>
-<p><strong>Note on naming.</strong> The PyPI package is <code>amatelier</code>; the Python import is <code>amatelier</code>. This is common practice (e.g. <code>pip install scikit-learn</code> → <code>import sklearn</code>). All code, docs, and tooling in this repo use <code>amatelier</code> as the import name.
-Three install paths, depending on what you want to do.</p>
+<p><strong>Guide</strong> — task-oriented. Pick one of the three paths below. For a guided first-run walkthrough, see the <a href="../../tutorials/first-run/">first-run tutorial</a>.</p>
 </blockquote>
-<h2 id="consumer-you-just-want-to-use-it">Consumer — you just want to use it<a class="headerlink" href="#consumer-you-just-want-to-use-it" title="Permanent link">&para;</a></h2>
+<p>Amatelier ships two surfaces: a <strong>pip wheel</strong> (self-contained, bundled docs) and a <strong>git clone</strong> (wheel contents plus <code>examples/</code>, <code>tests/</code>, CI workflows, and LLM-facing docs). Think of the wheel as "the build" and the clone as "the workshop". Example briefings live only in the clone.</p>
+<h2 id="path-1-consumer-pip">Path 1 — Consumer (pip)<a class="headerlink" href="#path-1-consumer-pip" title="Permanent link">&para;</a></h2>
+<p>Install from PyPI:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>amatelier
 </span></code></pre></div>
+<p>Verify:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>amatelier<span class="w"> </span>--version
+</span></code></pre></div>
 <p>Upgrade:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>amatelier
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>amatelier
 </span></code></pre></div>
 <p>Uninstall:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>uninstall<span class="w"> </span>amatelier
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pip<span class="w"> </span>uninstall<span class="w"> </span>amatelier
 </span></code></pre></div>
-<h2 id="contributor-you-want-to-hack-on-it">Contributor — you want to hack on it<a class="headerlink" href="#contributor-you-want-to-hack-on-it" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/amatayomosley-web/amatelier
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">cd</span><span class="w"> </span>amatelier
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>make<span class="w"> </span><span class="nb">test</span>
+<p>Pip gives you the CLI, bundled docs accessible via <code>amatelier docs</code>, and first-run bootstrap that seeds <code>user_data_dir</code> with agent persona files. No example briefings ship in the wheel — write your own, or clone the repo for the stock examples.</p>
+<h2 id="path-2-contributor-editable-clone">Path 2 — Contributor (editable clone)<a class="headerlink" href="#path-2-contributor-editable-clone" title="Permanent link">&para;</a></h2>
+<p>Clone and install in editable mode with dev extras:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/amatayomosley-web/amatelier
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">cd</span><span class="w"> </span>amatelier
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
 </span></code></pre></div>
-<p><code>-e</code> installs in editable mode — changes to source take effect immediately. <code>[dev]</code> adds pytest, ruff, mypy.</p>
-<h2 id="devcontainer-you-want-zero-setup">DevContainer — you want zero setup<a class="headerlink" href="#devcontainer-you-want-zero-setup" title="Permanent link">&para;</a></h2>
-<p>If you have VS Code with the Dev Containers extension, or you're using GitHub Codespaces:</p>
+<p>Run the tests:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>make<span class="w"> </span><span class="nb">test</span>
+</span></code></pre></div>
+<p>Or directly:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pytest<span class="w"> </span>tests/test_smoke.py<span class="w"> </span>-v
+</span></code></pre></div>
+<p><code>-e</code> makes source edits take effect without reinstalling. <code>[dev]</code> adds pytest, ruff, and mypy. You now have <code>examples/briefings/hello-world.md</code>, <code>single-worker.md</code>, and <code>full-demo.md</code> available as ready-to-run scripts.</p>
+<h3 id="pin-runtime-state-to-the-working-tree">Pin runtime state to the working tree<a class="headerlink" href="#pin-runtime-state-to-the-working-tree" title="Permanent link">&para;</a></h3>
+<p>By default, mutable state (databases, digests, ledgers) lives in the OS user-data directory. Clone users often prefer everything in one place:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AMATELIER_WORKSPACE</span><span class="o">=</span>.
+</span></code></pre></div>
+<p>This pins <code>user_data_dir()</code> to the current working directory. Run <code>amatelier config</code> to confirm.</p>
+<h2 id="path-3-devcontainer-zero-setup">Path 3 — DevContainer (zero setup)<a class="headerlink" href="#path-3-devcontainer-zero-setup" title="Permanent link">&para;</a></h2>
+<p>If you have VS Code with the Dev Containers extension or you are working in GitHub Codespaces:</p>
 <ol>
-<li>Open the repo</li>
-<li>VS Code: <code>F1</code> → "Dev Containers: Reopen in Container"</li>
-<li>Codespaces: "Code" button → "Codespaces" → "Create"</li>
+<li>Open the repository root</li>
+<li>VS Code: press <code>F1</code>, run <strong>Dev Containers: Reopen in Container</strong></li>
+<li>Codespaces: <strong>Code</strong> button → <strong>Codespaces</strong> → <strong>Create codespace on main</strong></li>
 </ol>
-<p>Everything installs automatically. ~2 minutes to working environment.</p>
-<h2 id="verify">Verify<a class="headerlink" href="#verify" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>amatelier<span class="w"> </span>--version
+<p>The container spec at <code>.devcontainer/devcontainer.json</code> provisions Python, the dev extras, and the CLI in roughly two minutes.</p>
+<h2 id="verify-your-install">Verify your install<a class="headerlink" href="#verify-your-install" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>amatelier<span class="w"> </span>--version
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>amatelier<span class="w"> </span>config
 </span></code></pre></div>
+<p>Expected: the version string, followed by the backend diagnostic. If <code>active mode</code> says <code>none</code>, you still need a backend — see <a href="../configure-backend/">configure a backend</a>.</p>
+<h2 id="alternatives-and-caveats">Alternatives and caveats<a class="headerlink" href="#alternatives-and-caveats" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Python version.</strong> Amatelier requires Python 3.10 or newer. Check with <code>python --version</code>.</li>
+<li><strong>Virtualenvs.</strong> Install into a project venv if you already run multiple Python projects. <code>pip install amatelier</code> works identically inside any standard venv.</li>
+<li><strong>Windows.</strong> The CLI handles UTF-8 stdout reconfiguration at import time, so the console renders arrows and em-dashes correctly on <code>cp1252</code> defaults.</li>
+<li><strong>Offline docs.</strong> <code>amatelier docs</code> prints the bundled Diátaxis tree. No network required.</li>
+</ul>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<p>See <a href="../troubleshooting/">troubleshooting guide</a>.</p>
+<p>If install succeeds but <code>amatelier</code> is not found, or editable installs fail to import, see the <a href="../troubleshooting/">troubleshooting guide</a>.</p>
 
 
 

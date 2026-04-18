@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://amatayomosley-web.github.io/amatelier/guides/troubleshooting/">
       
       
-        <link rel="prev" href="../install/">
+        <link rel="prev" href="../configure-backend/">
       
       
         <link rel="next" href="../../reference/cli/">
@@ -570,6 +570,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../configure-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure a backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -633,6 +661,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#command-not-found-amatelier" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -655,10 +694,87 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tests-fail-with-import-errors" class="md-nav__link">
+  <a href="#backendunavailable-no-llm-backend-available" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tests fail with import errors
+        BackendUnavailable: No LLM backend available
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#anthropic-sdk-not-installed-openai-sdk-not-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        anthropic SDK not installed / openai SDK not installed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#naomi-silent-or-gemini-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naomi silent or Gemini errors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#permission-errors-on-user_data_dir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permission errors on user_data_dir
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reset-agent-rules-or-start-over" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reset agent rules or start over
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#claude-command-not-found-with-explicit-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        claude: command not found with explicit mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tests-failing-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests failing locally
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mkdocs-build-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MkDocs build issues
       
     </span>
   </a>
@@ -925,6 +1041,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#command-not-found-amatelier" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -947,10 +1074,87 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tests-fail-with-import-errors" class="md-nav__link">
+  <a href="#backendunavailable-no-llm-backend-available" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tests fail with import errors
+        BackendUnavailable: No LLM backend available
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#anthropic-sdk-not-installed-openai-sdk-not-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        anthropic SDK not installed / openai SDK not installed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#naomi-silent-or-gemini-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naomi silent or Gemini errors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#permission-errors-on-user_data_dir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permission errors on user_data_dir
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reset-agent-rules-or-start-over" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reset agent rules or start over
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#claude-command-not-found-with-explicit-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        claude: command not found with explicit mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tests-failing-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests failing locally
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mkdocs-build-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MkDocs build issues
       
     </span>
   </a>
@@ -1003,29 +1207,167 @@
 
 <h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Guide</strong> — lookup table of common errors and fixes.</p>
+<p><strong>Guide</strong> — symptom → cause → fix. Scan the table first; narrative sections below go deeper.</p>
 </blockquote>
+<h2 id="quick-reference">Quick reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Likely cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>command not found: amatelier</code></td>
+<td>CLI script directory not on <code>PATH</code></td>
+<td>Run <code>python -m amatelier --version</code>; add pip's script dir to <code>PATH</code></td>
+</tr>
+<tr>
+<td><code>ModuleNotFoundError: amatelier</code> after clone</td>
+<td>Installed with <code>pip install .</code> instead of editable</td>
+<td>Reinstall with <code>pip install -e ".[dev]"</code></td>
+</tr>
+<tr>
+<td><code>BackendUnavailable: No LLM backend available</code></td>
+<td>No credentials detected, no <code>claude</code> CLI</td>
+<td>Set one of the four documented credentials</td>
+</tr>
+<tr>
+<td><code>anthropic SDK not installed</code></td>
+<td>Partial venv; <code>anthropic</code> missing</td>
+<td><code>pip install anthropic</code> (or reinstall amatelier)</td>
+</tr>
+<tr>
+<td><code>openai SDK not installed</code></td>
+<td><code>openai</code> missing for openai-compat mode</td>
+<td><code>pip install openai</code></td>
+</tr>
+<tr>
+<td><code>google-genai not installed</code> / Naomi silent</td>
+<td>Gemini deps missing or rate-limited</td>
+<td><code>pip install google-generativeai</code>; check <code>gemini_errors.log</code></td>
+</tr>
+<tr>
+<td><code>PermissionError</code> writing to user data</td>
+<td>OS blocked the platformdirs location</td>
+<td>Set <code>AMATELIER_WORKSPACE=/writable/path</code></td>
+</tr>
+<tr>
+<td>Roundtable uses old persona rules after package upgrade</td>
+<td>Local seeds diverged from bundled</td>
+<td><code>amatelier refresh-seeds --force</code></td>
+</tr>
+<tr>
+<td><code>claude: command not found</code> with <code>AMATELIER_MODE=claude-code</code></td>
+<td>Claude Code CLI not installed</td>
+<td>Unset <code>AMATELIER_MODE</code> or install Claude Code</td>
+</tr>
+<tr>
+<td><code>pytest</code> fails with import errors</td>
+<td><code>[dev]</code> extras missing</td>
+<td><code>pip install -e ".[dev]"</code></td>
+</tr>
+<tr>
+<td><code>mkdocs build</code> warnings or failures</td>
+<td>Broken links from doc edits</td>
+<td>Run <code>mkdocs build --strict</code> and fix each warning</td>
+</tr>
+</tbody>
+</table>
 <h2 id="command-not-found-amatelier"><code>command not found: amatelier</code><a class="headerlink" href="#command-not-found-amatelier" title="Permanent link">&para;</a></h2>
-<p>Pip installed the package but the CLI isn't on your <code>PATH</code>. Check:</p>
+<p>Pip installed the package but the entry-point script is not on your <code>PATH</code>. Test:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-m<span class="w"> </span>amatelier<span class="w"> </span>--version
 </span></code></pre></div>
-<p>If that works, the script location isn't on <code>PATH</code>. Usually fixed by:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>amatelier
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># and then ensure ~/.local/bin is on PATH</span>
+<p>If that prints a version, the script directory is the missing piece. On Linux and macOS, user-site installs go to <code>~/.local/bin</code>. Add it:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.local/bin:</span><span class="nv">$PATH</span><span class="s2">&quot;</span>
+</span></code></pre></div>
+<p>On Windows, the script dir is usually <code>%APPDATA%\Python\PythonXY\Scripts</code>. Add it to your user <code>PATH</code> via System Properties, or launch a fresh shell if you just installed.</p>
+<p>Reinstall with <code>--user</code> if you need per-user isolation:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>amatelier
 </span></code></pre></div>
 <h2 id="modulenotfounderror-after-editable-install"><code>ModuleNotFoundError</code> after editable install<a class="headerlink" href="#modulenotfounderror-after-editable-install" title="Permanent link">&para;</a></h2>
-<p>You probably installed with <code>pip install .</code> instead of <code>pip install -e .</code>. Uninstall and reinstall:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>uninstall<span class="w"> </span>amatelier
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
+<p>You probably ran <code>pip install .</code> from the clone — that installs a snapshot, not a link. Uninstall and redo:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pip<span class="w"> </span>uninstall<span class="w"> </span>amatelier
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
 </span></code></pre></div>
-<h2 id="tests-fail-with-import-errors">Tests fail with import errors<a class="headerlink" href="#tests-fail-with-import-errors" title="Permanent link">&para;</a></h2>
-<p>Make sure you installed with the <code>dev</code> extras:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
+<p>The <code>-e</code> flag creates the editable link; <code>[dev]</code> adds pytest, ruff, mypy.</p>
+<h2 id="backendunavailable-no-llm-backend-available"><code>BackendUnavailable: No LLM backend available</code><a class="headerlink" href="#backendunavailable-no-llm-backend-available" title="Permanent link">&para;</a></h2>
+<p>Raised by <code>llm_backend.get_backend()</code> when every auto-detection channel fails. Run:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>amatelier<span class="w"> </span>config
 </span></code></pre></div>
+<p>Look at <code>Credentials seen in environment:</code>. Every row says <code>[  ]</code>. Pick one:</p>
+<ul>
+<li><strong>Claude Code</strong> — install the CLI from <a href="https://claude.com/claude-code">claude.com/claude-code</a></li>
+<li><strong>Anthropic SDK</strong> — <code>export ANTHROPIC_API_KEY=sk-ant-...</code> from <a href="https://console.anthropic.com">console.anthropic.com</a></li>
+<li><strong>OpenAI</strong> — <code>export OPENAI_API_KEY=sk-...</code> from <a href="https://platform.openai.com/api-keys">platform.openai.com</a></li>
+<li><strong>OpenRouter</strong> — <code>export OPENROUTER_API_KEY=sk-or-...</code> from <a href="https://openrouter.ai/keys">openrouter.ai/keys</a></li>
+</ul>
+<p>Rerun <code>amatelier config</code> after setting the var. One row should now say <code>[OK]</code>.</p>
+<p>See the <a href="../configure-backend/">backend configuration guide</a> for per-backend setup and caveats.</p>
+<h2 id="anthropic-sdk-not-installed-openai-sdk-not-installed"><code>anthropic SDK not installed</code> / <code>openai SDK not installed</code><a class="headerlink" href="#anthropic-sdk-not-installed-openai-sdk-not-installed" title="Permanent link">&para;</a></h2>
+<p>Raised lazily when the selected backend imports its client library. <code>anthropic</code> and <code>openai</code> are listed as runtime dependencies and install by default, so this typically means a broken venv or a manual uninstall. Reinstall:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pip<span class="w"> </span>install<span class="w"> </span>anthropic<span class="w"> </span>openai
+</span></code></pre></div>
+<p>Or reinstall amatelier itself:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pip<span class="w"> </span>install<span class="w"> </span>--force-reinstall<span class="w"> </span>amatelier
+</span></code></pre></div>
+<h2 id="naomi-silent-or-gemini-errors">Naomi silent or Gemini errors<a class="headerlink" href="#naomi-silent-or-gemini-errors" title="Permanent link">&para;</a></h2>
+<p>Naomi runs on Google's Gemini SDK with a 5-second minimum call interval (preview tier rate limits are tight). Check the error log in your user data dir:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>amatelier<span class="w"> </span>config<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import json,sys,pathlib; d=json.load(sys.stdin)[&#39;paths&#39;][&#39;user_data_dir&#39;]; print(pathlib.Path(d) / &#39;roundtable-server&#39; / &#39;logs&#39; / &#39;gemini_errors.log&#39;)&quot;</span>
+</span></code></pre></div>
+<p>Common causes:</p>
+<ul>
+<li><code>GEMINI_API_KEY</code> missing — amatelier checks <code>os.environ</code>, a <code>.env</code> next to the installed package, and a <code>.env</code> at the workspace root</li>
+<li><code>google-generativeai</code> not installed — <code>pip install google-generativeai</code></li>
+<li>Quota exhausted — wait for the window to reset or upgrade the Gemini tier</li>
+<li>Preview model deprecated — update <code>config.json → gemini.model</code></li>
+</ul>
+<p>Omit Naomi from a run:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>amatelier<span class="w"> </span>roundtable<span class="w"> </span>--topic<span class="w"> </span>...<span class="w"> </span>--briefing<span class="w"> </span>...<span class="w"> </span>--skip-naomi
+</span></code></pre></div>
+<h2 id="permission-errors-on-user_data_dir">Permission errors on <code>user_data_dir</code><a class="headerlink" href="#permission-errors-on-user_data_dir" title="Permanent link">&para;</a></h2>
+<p>The bootstrap writes to the OS-default user data directory:</p>
+<ul>
+<li>Linux: <code>~/.local/share/amatelier/</code></li>
+<li>macOS: <code>~/Library/Application Support/amatelier/</code></li>
+<li>Windows: <code>%LOCALAPPDATA%\amatelier\</code></li>
+</ul>
+<p>If the user running amatelier lacks write permission (sandboxed CI, hardened containers), redirect:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AMATELIER_WORKSPACE</span><span class="o">=</span>/tmp/amatelier
+</span></code></pre></div>
+<p>Any absolute writable path works. <code>amatelier config</code> shows the resolved value.</p>
+<h2 id="reset-agent-rules-or-start-over">Reset agent rules or start over<a class="headerlink" href="#reset-agent-rules-or-start-over" title="Permanent link">&para;</a></h2>
+<p>Amatelier never clobbers local persona edits on package upgrade. When you do want the latest shipped rules — e.g. after a release that improved the therapist framework — run:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>amatelier<span class="w"> </span>refresh-seeds<span class="w"> </span>--force
+</span></code></pre></div>
+<p>Add <code>--agent &lt;name&gt;</code> to target a single worker. <code>--dry-run</code> previews without writing. Accumulated <code>MEMORY.md</code>, <code>behaviors.json</code>, and <code>metrics.json</code> are preserved; only <code>CLAUDE.md</code> and <code>IDENTITY.md</code> refresh.</p>
+<h2 id="claude-command-not-found-with-explicit-mode"><code>claude: command not found</code> with explicit mode<a class="headerlink" href="#claude-command-not-found-with-explicit-mode" title="Permanent link">&para;</a></h2>
+<p>You set <code>AMATELIER_MODE=claude-code</code> but the CLI is absent. Two options:</p>
+<ol>
+<li>Unset the override and let auto-detection pick another backend:
+   <div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nb">unset</span><span class="w"> </span>AMATELIER_MODE
+</span></code></pre></div></li>
+<li>Install Claude Code from <a href="https://claude.com/claude-code">claude.com/claude-code</a>.</li>
+</ol>
+<h2 id="tests-failing-locally">Tests failing locally<a class="headerlink" href="#tests-failing-locally" title="Permanent link">&para;</a></h2>
+<p>Run the smoke tests to isolate the problem:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pytest<span class="w"> </span>tests/test_smoke.py<span class="w"> </span>-v
+</span></code></pre></div>
+<p>If imports fail, reinstall with dev extras:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
+</span></code></pre></div>
+<p>If specific tests fail on a fresh clone, check that your Python version matches the <code>pyproject.toml</code> minimum (3.10) and that you are running from the repository root.</p>
+<h2 id="mkdocs-build-issues">MkDocs build issues<a class="headerlink" href="#mkdocs-build-issues" title="Permanent link">&para;</a></h2>
+<p>When developing docs, run the strict build to catch broken links:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
+</span></code></pre></div>
+<p>Every warning becomes a hard error. Fix each one before committing. Missing <code>--strict</code> lets silent link rot through.</p>
 <h2 id="still-stuck">Still stuck<a class="headerlink" href="#still-stuck" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Search <a href="https://github.com/amatayomosley-web/amatelier/issues">existing issues</a></li>
-<li>Open a new issue with the bug report template</li>
+<li>Open a new issue with the bug report template; include the output of <code>amatelier config --json</code></li>
 </ul>
 
 
