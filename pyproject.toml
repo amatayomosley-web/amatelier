@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "amatelier"
-version = "0.2.0"
+version = "0.3.0"
 description = "A self-evolving multi-model AI team — runs in Claude Code or any OpenAI-compatible provider"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -12,7 +12,7 @@ requires-python = ">=3.10"
 authors = [{ name = "Maximillian" }]
 keywords = ["claude-code", "multi-agent", "ai-team", "roundtable", "llm", "anthropic", "openai", "gemini", "openrouter"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
@@ -24,12 +24,15 @@ classifiers = [
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
 ]
+# Upper bounds pin to the next major version to prevent a future breaking SDK
+# release from silently breaking `pip install amatelier`. Revisit at each
+# minor version bump. (Open-mode / Docs / PyPI RT consensus.)
 dependencies = [
-  "platformdirs>=4.0",
-  "anthropic>=0.40.0",
-  "openai>=1.0",
-  "google-genai>=1.51.0",
-  "rich>=13.0",
+  "platformdirs>=4.0,<5",
+  "anthropic>=0.40.0,<1",
+  "openai>=1.0,<2",
+  "google-genai>=1.51.0,<2",
+  "rich>=13.0,<15",
 ]
 
 [project.optional-dependencies]
@@ -52,6 +55,16 @@ amatelier = "amatelier.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/amatelier"]
+# Exclude developer-environment artifacts that the recursive package sweep
+# would otherwise ship (PyPI Hygiene RT findings, digest bdb8c9ac3f28):
+# - store/ledger.json: one developer's spark balance state
+# - roundtable-server/test_roundtable.py: local-only integration helper
+# - shared-skills/index.json: empty scaffolding, no runtime value in wheel
+exclude = [
+  "src/amatelier/store/ledger.json",
+  "src/amatelier/roundtable-server/test_roundtable.py",
+  "src/amatelier/shared-skills/index.json",
+]
 
 # docs/ bundled into the wheel so pip-install users get offline reference.
 # examples/, tests/, .github/, scripts/, llm/ stay clone-only by default.

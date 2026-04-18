@@ -44,7 +44,7 @@ Top-level keys in `config.json`:
 
 | Key | Type | Purpose |
 |---|---|---|
-| `version` | string | Package version marker. Bundled default ships `"0.2.0"`. Informational. |
+| `version` | string | Package version marker. Bundled default ships `"0.3.0"`. Informational. |
 | `llm` | object | Backend selection + role-to-model mapping. |
 | `team` | object | Agent roster with model assignments and counters. |
 | `roundtable` | object | Runner budgets and persistence. |

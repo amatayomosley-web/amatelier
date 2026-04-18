@@ -27,7 +27,7 @@ amatelier --version
 Expected output:
 
 ```text
-0.2.0
+0.3.0
 ```
 
 If you see `command not found`, read the [troubleshooting guide](../guides/troubleshooting.md#command-not-found-amatelier).
@@ -43,7 +43,7 @@ amatelier config
 Expected output (before you set any credentials):
 
 ```text
-amatelier 0.2.0
+amatelier 0.3.0
 
 LLM backend
   active mode: none

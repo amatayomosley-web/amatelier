@@ -7,7 +7,7 @@
 ```yaml
 name: amatelier
 display_name: Amatelier
-version: 0.2.0
+version: 0.3.0
 license: MIT
 author: Maximillian
 standard: Amatayo Standard v1.0

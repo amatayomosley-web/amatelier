@@ -48,7 +48,7 @@ amatelier roundtable \
 Expected output:
 
 ```text
-amatelier 0.2.0
+amatelier 0.3.0
 
 LLM backend
   active mode: anthropic-sdk
@@ -111,7 +111,7 @@ Expected snippet of `amatelier config --json`:
 
 ```text
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "llm": {
     ...
     "active_mode": "openai-compat",

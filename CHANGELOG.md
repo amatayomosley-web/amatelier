@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-18
+
 ### Documentation
 - **`llm/SPEC.md`** — qualified the "OpenAI-compatible provider" claim to
   disclose that the Steward empirical-lookup subagent is unavailable in
