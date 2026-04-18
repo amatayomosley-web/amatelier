@@ -123,11 +123,12 @@ jobs:
           cfg = AMATELIER_ROOT / 'config.json'
           assert cfg.exists(), f'config.json missing at {cfg}'
           data = json.loads(cfg.read_text())
-          assert data['version'] == '0.1.0'
+          assert data['version'] == '0.2.0', f'unexpected version: {data[\"version\"]}'
           workers = list(data['team']['workers'].keys())
           assert set(workers) == {'elena', 'marcus', 'clare', 'simon', 'naomi'}, \
               f'unexpected workers: {workers}'
-          print('✓ config.json loaded,', len(workers), 'workers configured')
+          assert 'llm' in data, 'config.json missing llm section (0.2.0)'
+          print('[OK] config.json v0.2.0 loaded,', len(workers), 'workers configured')
           "
 
       - name: CLI --version
