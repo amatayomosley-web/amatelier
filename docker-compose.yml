@@ -1,0 +1,24 @@
+# docker compose config for the amatelier integration test container.
+#
+# Usage:
+#   docker compose run --rm integration          # run default CMD (pytest)
+#   docker compose run --rm integration bash     # shell in the container
+#   docker compose build                          # rebuild after Dockerfile change
+
+services:
+  integration:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: amatelier-test:latest
+    # Mount the live source so code edits take effect without a rebuild
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+      - ./scripts:/app/scripts:ro
+      - ./docs:/app/docs:ro
+      - ./examples:/app/examples:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
+    environment:
+      AMATELIER_WORKSPACE: /tmp/amatelier-test-workspace
+      PYTHONDONTWRITEBYTECODE: "1"
