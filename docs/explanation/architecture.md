@@ -190,19 +190,35 @@ The full journey of an agent across a single roundtable:
    scores per agent. scorer.score persists to scores table, processes GATE
    signals from judge_messages for bonuses.
 
-9. DISTILLATION
-   distiller extracts 10–15 skill candidates from transcript via a
-   separate Sonnet call. classify_concepts adds taxonomy tags. DERIVE
-   skills appended to novel_concepts.json. Admin later curates the best
-   3–5 for shared-skills/index.json.
+9. OBSERVER (consolidated: observations + skills + taxonomy)
+   sonnet_observer.observe_rt runs ONE Sonnet pass per batch of workers
+   (default batch_size=3, so ≤2 calls for 5 agents). For each worker it
+   emits grounded observations (cognitive moves, rhetorical moves,
+   evidence practice, engagement pattern, peer refs, judge feedback) and
+   writes agents/<name>/observations/obs-<rt_id>.json. In the same pass
+   it extracts CAPTURE/FIX/DERIVE skill candidates with pre-tagged
+   taxonomy. On each successful obs write, the agent's
+   case_notes.obs_since_last_trait_review counter is bumped by 1.
+   Skills flow back into the digest for downstream persistence; DERIVE
+   skills are appended to novel_concepts.json. Admin later curates the
+   best 3–5 for shared-skills/index.json. Observations are descriptive
+   only — trait labels are never assigned here.
 
-10. THERAPIST (post-RT debrief)
+10. THERAPIST (post-RT debrief + conditional trait review)
     therapist.py iterates each worker. For each:
-      - Builds context from digest + memory + behaviors + session
+      - Builds context from digest + memory + behaviors + case_notes + session
+      - If case_notes.obs_since_last_trait_review ≥ TRAIT_REVIEW_THRESHOLD
+        (10), loads the last 10 observation files and appends a TRAIT
+        REVIEW block to the opening (asks the agent to propose a confirm
+        / candidate / reject verdict).
       - Runs 2–4 turn interview with Opus
       - Parses therapist output for behavioral_deltas, memory_updates,
-        session_summary, trait adjustments
-      - Writes to behaviors.json, MEMORY.md, MEMORY.json,
+        session_summary, and (when trait branch fired) a TRAIT verdict
+      - If verdict is confirm/candidate, evolver.apply_trait_action
+        applies the evidence gate (≥3 supporting RTs + ≥2 signal types +
+        RT presence in observations/), writes traits.json, and resets
+        the counter to 0.
+      - Writes to behaviors.json, MEMORY.md, MEMORY.json, traits.json,
         sessions/<rt_id>.md
 
 11. POST-RT CLEANUP
@@ -371,6 +387,9 @@ Per agent (in `agents/<name>/`):
 | `MEMORY.json` | Structured state — goals, skills_owned, session pointers, active episodes | Runtime |
 | `behaviors.json` | Therapist-proposed behavioral deltas (accepted and pending) | Runtime |
 | `metrics.json` | Current sparks, rank, trait adjustments | Runtime |
+| `traits.json` | Confirmed / candidate / rejected traits, evidence history | Seeded (empty skeletons shipped); Runtime after bootstrap |
+| `case_notes/<name>.json` | Therapist's long-arc case notes (owned by therapist, not the agent) — includes `obs_since_last_trait_review` counter | Runtime |
+| `observations/obs-<rt_id>.json` | Per-RT Sonnet-observer notes (cognitive moves, rhetorical moves, judge feedback, peer refs) | Runtime |
 | `sessions/<rt_id>.md` | Per-RT debrief summary from Therapist | Runtime |
 | `skills/<skill_id>.md` | Delivered purchased skills | Runtime |
 

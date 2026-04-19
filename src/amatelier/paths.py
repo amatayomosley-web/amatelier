@@ -171,6 +171,23 @@ def _copy_agent_seed(agent_name: str) -> None:
         p = dst / fname
         if not p.exists():
             p.write_text(default, encoding="utf-8")
+    # Seed traits.json from bundled source if present, else empty skeleton.
+    traits_target = dst / "traits.json"
+    if not traits_target.exists():
+        bundled_traits = seed / "traits.json"
+        if bundled_traits.exists():
+            shutil.copy2(bundled_traits, traits_target)
+        else:
+            skeleton = {
+                "agent": agent_name,
+                "schema_version": 1,
+                "updated_at": "",
+                "confirmed": [],
+                "candidate": [],
+                "rejected": [],
+                "history": [],
+            }
+            traits_target.write_text(json.dumps(skeleton, indent=2), encoding="utf-8")
 
 
 def _load_config_for_bootstrap() -> dict:

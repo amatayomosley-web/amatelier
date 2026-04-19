@@ -76,6 +76,230 @@ def _save_case_notes(agent_name: str, notes: dict):
     logger.info("Case notes updated for %s (session #%d)", agent_name, notes.get("sessions_conducted", 0))
 
 
+# ── Trait-Review Branch (conditional, evidence-gated) ───────────────────────
+
+TRAIT_REVIEW_THRESHOLD = 10  # obs files required before therapist evaluates traits
+
+
+def _should_evaluate_traits(case_notes: dict) -> bool:
+    """True when obs_since_last_trait_review >= TRAIT_REVIEW_THRESHOLD."""
+    return int(case_notes.get("obs_since_last_trait_review", 0)) >= TRAIT_REVIEW_THRESHOLD
+
+
+def _load_obs_bundle(agent_name: str, n: int = TRAIT_REVIEW_THRESHOLD) -> list[dict]:
+    """Load the last n observation entries for an agent (oldest first)."""
+    obs_dir = WRITE_ROOT / "agents" / agent_name / "observations"
+    if not obs_dir.exists():
+        return []
+    entries: list[dict] = []
+    for p in obs_dir.glob("obs-*.json"):
+        try:
+            entries.append(json.loads(p.read_text(encoding="utf-8")))
+        except (json.JSONDecodeError, OSError):
+            continue
+    entries.sort(key=lambda d: d.get("timestamp", ""))
+    return entries[-n:]
+
+
+def _render_obs_entry(d: dict) -> str:
+    """Render one observation entry as compact text for the therapist prompt."""
+    rt = (d.get("rt_id") or "?")[:12]
+    ts = (d.get("timestamp") or "")[:10]
+    pc = d.get("post_count", "?")
+    scores = d.get("scores") or {}
+    sc_line = (
+        f"N={scores.get('novelty')} A={scores.get('accuracy')} "
+        f"I={scores.get('impact')} C={scores.get('challenge')} total={scores.get('total')}"
+    )
+    obs = d.get("observations", {}) or {}
+    lines = [f"--- RT {rt} ({ts})  posts={pc}  scores=[{sc_line}] ---"]
+    for k in ("cognitive_moves", "rhetorical_moves", "evidence_practice"):
+        items = obs.get(k) or []
+        if not items:
+            continue
+        lines.append(f"{k}:")
+        for item in items:
+            lines.append(f"  - {item}")
+    ep = (obs.get("engagement_pattern") or "").strip()
+    if ep:
+        lines.append(f"engagement_pattern: {ep}")
+    pr = obs.get("peer_references") or []
+    if pr:
+        lines.append("peer_references:")
+        for r in pr[:5]:
+            lines.append(f"  [{r.get('by','?')}] {str(r.get('text',''))[:140]}")
+    jf = obs.get("judge_feedback") or []
+    if jf:
+        lines.append("judge_feedback:")
+        for line in jf[:5]:
+            lines.append(f"  {str(line)[:180]}")
+    return "\n".join(lines)
+
+
+def _load_traits_file(agent_name: str) -> dict:
+    """Load the agent's traits.json. Returns empty skeleton if missing."""
+    path = WRITE_ROOT / "agents" / agent_name / "traits.json"
+    if path.exists():
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {
+        "agent": agent_name,
+        "schema_version": 1,
+        "updated_at": "",
+        "confirmed": [],
+        "candidate": [],
+        "rejected": [],
+        "history": [],
+    }
+
+
+def _build_trait_section(agent_name: str, obs_bundle: list[dict]) -> str:
+    """Build the trait-review prompt section appended to the therapist's
+    opening context. Only included when _should_evaluate_traits is True.
+    """
+    if not obs_bundle:
+        return ""
+
+    current_traits = _load_traits_file(agent_name)
+    rendered = "\n\n".join(_render_obs_entry(d) for d in obs_bundle)
+
+    confirmed = current_traits.get("confirmed") or []
+    candidate = current_traits.get("candidate") or []
+    cur_lines = []
+    if confirmed:
+        cur_lines.append("CONFIRMED (already on file):")
+        for t in confirmed:
+            cur_lines.append(f"  - {t.get('label','?')}: {t.get('rationale','')[:100]}")
+    if candidate:
+        cur_lines.append("CANDIDATE (previously seen, not yet confirmed):")
+        for t in candidate:
+            cur_lines.append(f"  - {t.get('label','?')}: {t.get('why_candidate','')[:100]}")
+    if not cur_lines:
+        cur_lines.append("  (no traits on file yet)")
+
+    current_state = "\n".join(cur_lines)
+    n = len(obs_bundle)
+
+    return f"""
+---
+TRAIT REVIEW (PERIODIC — not every session):
+
+This agent has accumulated {n} observation notes since their last trait review.
+As part of your development duty, review whether any persistent trait has
+emerged. Traits are optional — only confirm one when the evidence is strong.
+
+EVIDENCE GATE for CONFIRMED trait (all three required):
+  1. Cites >=3 distinct RT IDs from the observations below.
+  2. Cites >=2 converging signal types — from: cognitive_moves, rhetorical_moves,
+     evidence_practice, peer_references, judge_feedback.
+  3. The label names the specific pattern, not a stock descriptor.
+
+If the evidence is weaker (2 RTs, or only 1 signal type), the verdict is
+"candidate", not "confirmed". If nothing consistent emerges, verdict is "none".
+
+CURRENT TRAITS ON FILE for {agent_name}:
+{current_state}
+
+OBSERVATION WINDOW ({n} RTs, oldest first):
+{rendered}
+
+Include a TRAIT_EVALUATION block in your SESSION OUTCOMES using this exact
+format. Omit the block entirely if verdict is "none" and you have nothing to
+promote to candidate.
+
+TRAIT_EVALUATION:
+VERDICT: <confirm | candidate | none>
+LABEL: <2-4 word label>
+RATIONALE: <one sentence tying label to observed pattern>
+EVIDENCE_RTS: [rt_id1, rt_id2, rt_id3]
+CONVERGING_SIGNALS:
+  cognitive_moves: <quote (rt_id)>
+  rhetorical_moves: <quote (rt_id)>
+  evidence_practice: <quote (rt_id)>
+  peer_references: <quote (rt_id)>
+  judge_feedback: <quote (rt_id)>
+END_TRAIT_EVALUATION
+
+Only include signal lines that actually converge in the observations. Minimum 2
+signal types for a confirm verdict. Do not invent quotes.
+"""
+
+
+def _increment_obs_counters(agents: list[str], skip: set[str]) -> None:
+    """Bump obs_since_last_trait_review for agents whose trait branch did not fire."""
+    for a in agents:
+        if a in skip:
+            continue
+        try:
+            notes = _load_case_notes(a)
+            notes["obs_since_last_trait_review"] = int(
+                notes.get("obs_since_last_trait_review", 0)
+            ) + 1
+            _save_case_notes(a, notes)
+        except Exception as e:
+            logger.warning("Counter bump failed for %s: %s", a, e)
+
+
+def _parse_trait_evaluation(text: str) -> dict:
+    """Parse the TRAIT_EVALUATION ... END_TRAIT_EVALUATION block from therapist text."""
+    import re as _re
+    m = _re.search(
+        r"TRAIT_EVALUATION:\s*(.*?)\s*END_TRAIT_EVALUATION",
+        text, _re.DOTALL | _re.IGNORECASE,
+    )
+    if not m:
+        return {}
+    block = m.group(1)
+    out = {
+        "verdict": "",
+        "label": "",
+        "rationale": "",
+        "evidence_rts": [],
+        "converging_signals": {},
+    }
+    in_signals = False
+    for line in block.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        upper = stripped.upper()
+        if upper.startswith("VERDICT:"):
+            v = stripped.split(":", 1)[1].strip().lower()
+            if v.startswith("confirm"):
+                out["verdict"] = "confirm"
+            elif v.startswith("candidate"):
+                out["verdict"] = "candidate"
+            else:
+                out["verdict"] = "none"
+            in_signals = False
+        elif upper.startswith("LABEL:"):
+            out["label"] = stripped.split(":", 1)[1].strip()
+            in_signals = False
+        elif upper.startswith("RATIONALE:"):
+            out["rationale"] = stripped.split(":", 1)[1].strip()
+            in_signals = False
+        elif upper.startswith("EVIDENCE_RTS:"):
+            val = stripped.split(":", 1)[1].strip()
+            val = val.strip("[]")
+            out["evidence_rts"] = [
+                x.strip().strip("'\"") for x in val.split(",") if x.strip()
+            ]
+            in_signals = False
+        elif upper.startswith("CONVERGING_SIGNALS"):
+            in_signals = True
+        elif in_signals and ":" in stripped:
+            key, _, val = stripped.partition(":")
+            key_norm = key.strip().lower().replace(" ", "_").lstrip("-").strip()
+            if key_norm in {
+                "cognitive_moves", "rhetorical_moves", "evidence_practice",
+                "peer_references", "judge_feedback",
+            }:
+                out["converging_signals"][key_norm] = val.strip()
+    return out
+
+
 def _format_case_notes(notes: dict) -> str:
     """Format case notes as text for the Therapist's prompt context.
 
@@ -741,6 +965,7 @@ def _parse_outcomes(conversation: list[dict]) -> dict:
     outcomes = {
         "memory_entry": "",
         "trait": "",
+        "trait_evaluation": {},
         "add_behaviors": [],
         "remove_behaviors": [],
         "store_requests": [],
@@ -764,6 +989,10 @@ def _parse_outcomes(conversation: list[dict]) -> dict:
                 break
         return outcomes
 
+    # Trait-review block (optional) — parsed separately so a malformed
+    # block can't corrupt the main outcomes parser.
+    outcomes["trait_evaluation"] = _parse_trait_evaluation(final_msg)
+
     # Parse the structured block
     in_outcomes = False
     for line in final_msg.split("\n"):
@@ -779,7 +1008,15 @@ def _parse_outcomes(conversation: list[dict]) -> dict:
         if upper.startswith("MEMORY:"):
             outcomes["memory_entry"] = stripped.split(":", 1)[1].strip()
         elif upper.startswith("TRAIT:"):
-            outcomes["trait"] = stripped.split(":", 1)[1].strip()
+            val = stripped.split(":", 1)[1].strip()
+            # Reject "none" and "none (...)" status markers that historically
+            # leaked into the Emerging Traits section. Any value whose first
+            # token is "none" (case-insensitive) is treated as empty.
+            first_tok = val.split(None, 1)[0].lower() if val else ""
+            if first_tok == "none":
+                outcomes["trait"] = ""
+            else:
+                outcomes["trait"] = val
         elif upper.startswith("ADD BEHAVIOR:"):
             val = stripped.split(":", 1)[1].strip()
             if val.lower() != "none":
@@ -849,14 +1086,30 @@ def _apply_outcomes(agent_name: str, outcomes: dict, rt_id: str):
             )
             logger.info("Updated MEMORY.md for %s (legacy)", agent_name)
 
-    # 1b. Emerging trait → CLAUDE.md "Emerging Traits" section
-    if outcomes["trait"] and outcomes["trait"].lower() != "none":
-        subprocess.run(
-            [sys.executable, str(EVOLVER), "trait", agent_name, outcomes["trait"]],
-            capture_output=True, text=True, timeout=15,
-            encoding="utf-8", errors="replace", env=env,
-        )
-        logger.info("Updated Emerging Traits for %s: %s", agent_name, outcomes["trait"][:60])
+    # 1b. Trait verdict (evidence-gated) — TRAIT_EVALUATION block is authoritative.
+    # Legacy `trait` field retained for digest compatibility but no longer drives state.
+    trait_eval = outcomes.get("trait_evaluation") or {}
+    if trait_eval.get("verdict") in ("confirm", "candidate"):
+        try:
+            from amatelier.engine.evolver import apply_trait_action
+            result = apply_trait_action(agent_name, trait_eval, rt_id=rt_id)
+            if result.get("accepted"):
+                logger.info(
+                    "Trait %s for %s: %s (%s)",
+                    result.get("action", "?"), agent_name,
+                    trait_eval.get("label", "?")[:60],
+                    result.get("reason", ""),
+                )
+            else:
+                logger.info(
+                    "Trait verdict rejected for %s: %s (%s)",
+                    agent_name, trait_eval.get("label", "?")[:60],
+                    result.get("reason", "evidence gate failed"),
+                )
+        except ImportError:
+            logger.warning("evolver.apply_trait_action unavailable — trait not persisted")
+        except Exception as e:
+            logger.error("apply_trait_action failed for %s: %s", agent_name, e)
 
     # 2. Add behaviors — each entry is {text, fires_when}. fires_when is
     # optional prose the therapist authored; the runner uses it to
@@ -1181,6 +1434,17 @@ def run_session(agent_name: str, digest: dict, max_turns: int = 2) -> dict:
 ---
 THIS ROUNDTABLE:
 {rt_data}"""
+
+    # Trait-review branch: only fires every TRAIT_REVIEW_THRESHOLD observations.
+    # Requires an observations/ directory for this agent (populated by the
+    # oneoff observer script). Safely no-ops if obs are missing.
+    trait_branch_fired = False
+    if _should_evaluate_traits(case_notes):
+        obs_bundle = _load_obs_bundle(agent_name)
+        trait_section = _build_trait_section(agent_name, obs_bundle)
+        if trait_section:
+            opening_data += trait_section
+            trait_branch_fired = True
 
     conversation: list[dict] = []
 

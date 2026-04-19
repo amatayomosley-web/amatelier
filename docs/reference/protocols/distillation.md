@@ -69,15 +69,19 @@ On promotion:
 
 ## The Distillation Pipeline
 
+Skill extraction runs inline inside the per-RT Sonnet observer, not as a separate pass. `sonnet_observer.observe_rt` emits CAPTURE / FIX / DERIVE candidates with pre-tagged taxonomy (structural_category, trigger_phase, primary_actor, problem_nature, agent_dynamic) in the same Sonnet call that produces per-agent observations. The runner consumes `obs_summary["skills_observed"]` and persists what passes the JUDGE gate.
+
 ```
-1. DETECT  — Therapist or Assistant identifies distillation opportunity
-2. EXTRACT — Read source material, identify the pattern
-3. WRITE   — Create skill entry in standard format
-4. STORE   — Save to agent's skills/ directory
+1. EXTRACT — sonnet_observer emits skill candidates from each RT
+2. GATE    — distiller.JUDGE filter (imperative verb, title shape, taxonomy complete)
+3. STORE   — Persist to shared-skills/index.json; DERIVE also appended to novel_concepts.json
+4. CURATE  — Admin selects best 3–5 for promotion
 5. TEST    — Apply in next relevant task, record outcome
-6. PROMOTE — If successful, move to shared-skills/
+6. PROMOTE — If successful, mark as promoted in the shared index
 7. EVOLVE  — Update confidence and content based on ongoing use
 ```
+
+Legacy agent-specific `skills/` directories still receive explicit store-purchased skill deliveries; the observer pipeline feeds the shared index.
 
 ## Quality Gates
 

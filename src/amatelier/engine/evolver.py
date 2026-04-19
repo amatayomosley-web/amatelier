@@ -459,6 +459,253 @@ def sync_skills_owned(agent_name: str):
     logger.info("Synced Skills Owned for %s: %d skills", agent_name, len(skills))
 
 
+# ── traits.json persistence + CLAUDE.md render ──────────────────────────────
+
+
+def _traits_path(agent_name: str) -> Path:
+    return WRITE_ROOT / "agents" / agent_name / "traits.json"
+
+
+def _load_traits(agent_name: str) -> dict:
+    path = _traits_path(agent_name)
+    if path.exists():
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {
+        "agent": agent_name,
+        "schema_version": 1,
+        "updated_at": "",
+        "confirmed": [],
+        "candidate": [],
+        "rejected": [],
+        "history": [],
+    }
+
+
+def _save_traits(agent_name: str, data: dict) -> None:
+    path = _traits_path(agent_name)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _observation_rt_ids(agent_name: str) -> set[str]:
+    obs_dir = WRITE_ROOT / "agents" / agent_name / "observations"
+    if not obs_dir.exists():
+        return set()
+    ids: set[str] = set()
+    for p in obs_dir.glob("obs-*.json"):
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+            rid = d.get("rt_id")
+            if rid:
+                ids.add(str(rid))
+        except Exception:
+            continue
+    return ids
+
+
+def apply_trait_action(agent_name: str, trait_eval: dict, rt_id: str = "") -> dict:
+    """Evidence-gated trait writer.
+
+    Evaluates the therapist's TRAIT_EVALUATION verdict against the evidence
+    gate and writes the result to traits.json. Also resets the
+    obs_since_last_trait_review counter in case_notes and rebuilds the
+    CLAUDE.md Emerging Traits section from the new traits.json state.
+
+    CONFIRM gate: verdict "confirm" + >=3 matched rt_ids + >=2 signal types.
+    CANDIDATE gate: verdict "candidate" + >=1 matched rt + >=1 signal.
+    """
+    trait_eval = trait_eval or {}
+    verdict = (trait_eval.get("verdict") or "").lower()
+    label = (trait_eval.get("label") or "").strip()
+    rationale = (trait_eval.get("rationale") or "").strip()
+    evidence_rts = [str(x).strip() for x in (trait_eval.get("evidence_rts") or []) if str(x).strip()]
+    signals = trait_eval.get("converging_signals") or {}
+    signal_types = [k for k, v in signals.items() if v and str(v).strip()]
+
+    if not label:
+        _reset_trait_counter(agent_name, rt_id)
+        return {"accepted": False, "action": "rejected", "reason": "missing label"}
+
+    obs_ids = _observation_rt_ids(agent_name)
+    matched = [r for r in evidence_rts if r in obs_ids]
+
+    data = _load_traits(agent_name)
+    now = time.strftime("%Y-%m-%dT%H:%M:%S")
+    entry_base = {
+        "label": label,
+        "rationale": rationale,
+        "evidence_rts": evidence_rts,
+        "matched_rts": matched,
+        "converging_signals": signals,
+        "rt_id": rt_id,
+        "timestamp": now,
+    }
+
+    if verdict == "confirm":
+        if len(matched) < 3:
+            data.setdefault("history", []).append({
+                "action": "rejected_bad_evidence",
+                "label": label, "rt_id": rt_id, "timestamp": now,
+                "reason": f"need >=3 matched RTs, got {len(matched)}/{len(evidence_rts)}",
+            })
+            _save_traits(agent_name, data)
+            _render_traits_section(agent_name, data)
+            _reset_trait_counter(agent_name, rt_id)
+            return {"accepted": False, "action": "rejected_bad_evidence",
+                    "reason": f"only {len(matched)} RTs matched observations"}
+        if len(signal_types) < 2:
+            data.setdefault("history", []).append({
+                "action": "rejected_bad_evidence",
+                "label": label, "rt_id": rt_id, "timestamp": now,
+                "reason": f"need >=2 signal types, got {len(signal_types)}",
+            })
+            _save_traits(agent_name, data)
+            _render_traits_section(agent_name, data)
+            _reset_trait_counter(agent_name, rt_id)
+            return {"accepted": False, "action": "rejected_bad_evidence",
+                    "reason": f"only {len(signal_types)} signal types"}
+
+        confirmed = data.setdefault("confirmed", [])
+        if any(c.get("label", "").lower() == label.lower() for c in confirmed):
+            for c in confirmed:
+                if c.get("label", "").lower() == label.lower():
+                    c.update(entry_base)
+                    c["confirmed_at"] = c.get("confirmed_at") or now
+                    break
+            data.setdefault("history", []).append({
+                "action": "re_confirmed", "label": label, "rt_id": rt_id, "timestamp": now,
+            })
+        else:
+            entry = dict(entry_base)
+            entry["confirmed_at"] = now
+            confirmed.append(entry)
+            data["candidate"] = [c for c in data.get("candidate", [])
+                                 if c.get("label", "").lower() != label.lower()]
+            data.setdefault("history", []).append({
+                "action": "confirmed", "label": label, "rt_id": rt_id, "timestamp": now,
+            })
+
+        _save_traits(agent_name, data)
+        _render_traits_section(agent_name, data)
+        _reset_trait_counter(agent_name, rt_id)
+        return {"accepted": True, "action": "confirmed",
+                "reason": f"{len(matched)} RTs, {len(signal_types)} signal types"}
+
+    if verdict == "candidate":
+        if not matched or not signal_types:
+            data.setdefault("history", []).append({
+                "action": "rejected_bad_evidence",
+                "label": label, "rt_id": rt_id, "timestamp": now,
+                "reason": "candidate needs >=1 matched RT and >=1 signal",
+            })
+            _save_traits(agent_name, data)
+            _reset_trait_counter(agent_name, rt_id)
+            return {"accepted": False, "action": "rejected_bad_evidence",
+                    "reason": "candidate lacks evidence"}
+
+        candidate = data.setdefault("candidate", [])
+        found = False
+        for c in candidate:
+            if c.get("label", "").lower() == label.lower():
+                c.update(entry_base)
+                c["why_candidate"] = rationale or c.get("why_candidate", "")
+                found = True
+                break
+        if not found:
+            entry = dict(entry_base)
+            entry["why_candidate"] = rationale
+            candidate.append(entry)
+        data.setdefault("history", []).append({
+            "action": "candidate", "label": label, "rt_id": rt_id, "timestamp": now,
+        })
+        _save_traits(agent_name, data)
+        _render_traits_section(agent_name, data)
+        _reset_trait_counter(agent_name, rt_id)
+        return {"accepted": True, "action": "candidate",
+                "reason": f"{len(matched)} RTs, {len(signal_types)} signal types"}
+
+    _reset_trait_counter(agent_name, rt_id)
+    return {"accepted": False, "action": "rejected",
+            "reason": f"unknown verdict {verdict!r}"}
+
+
+def _reset_trait_counter(agent_name: str, rt_id: str) -> None:
+    """Reset obs_since_last_trait_review to 0 in case_notes."""
+    path = WRITE_ROOT / "agents" / "therapist" / "case_notes" / f"{agent_name}.json"
+    if not path.exists():
+        return
+    try:
+        notes = json.loads(path.read_text(encoding="utf-8"))
+        notes["obs_since_last_trait_review"] = 0
+        if rt_id:
+            notes["last_trait_review_rt"] = rt_id
+        path.write_text(json.dumps(notes, indent=2), encoding="utf-8")
+    except Exception as e:
+        logger.warning("Failed to reset trait counter for %s: %s", agent_name, e)
+
+
+def _render_traits_section(agent_name: str, data: dict | None = None) -> None:
+    """Deterministically rebuild the ## Emerging Traits section in CLAUDE.md
+    from traits.json. Only writer of this section.
+    """
+    if data is None:
+        data = _load_traits(agent_name)
+
+    lines = ["## Emerging Traits"]
+    confirmed = data.get("confirmed") or []
+    candidate = data.get("candidate") or []
+    if not confirmed and not candidate:
+        lines.append("None yet.")
+    if confirmed:
+        lines.append("")
+        lines.append("**Confirmed** (evidence-gated):")
+        for t in confirmed:
+            label = t.get("label", "?")
+            rationale = t.get("rationale", "")
+            n_rts = len(t.get("matched_rts") or t.get("evidence_rts") or [])
+            if rationale:
+                lines.append(f"- **{label}** — {rationale} ({n_rts} RTs)")
+            else:
+                lines.append(f"- **{label}** ({n_rts} RTs)")
+    if candidate:
+        lines.append("")
+        lines.append("**Candidate** (needs more data):")
+        for t in candidate:
+            label = t.get("label", "?")
+            why = t.get("why_candidate", "")
+            if why:
+                lines.append(f"- {label} — {why}")
+            else:
+                lines.append(f"- {label}")
+    new_section = "\n".join(lines) + "\n"
+
+    content = read_claude_md(agent_name)
+    if not content:
+        logger.warning("No CLAUDE.md for %s — cannot render traits", agent_name)
+        return
+
+    if "## Emerging Traits" in content:
+        idx = content.index("## Emerging Traits")
+        end_idx = content.find("\n## ", idx + 1)
+        if end_idx == -1:
+            end_idx = len(content)
+        content = content[:idx] + new_section + content[end_idx:]
+    else:
+        content = content.rstrip() + "\n\n" + new_section
+
+    write_claude_md(agent_name, content)
+    logger.info("Rendered Emerging Traits for %s (confirmed=%d, candidate=%d)",
+                agent_name, len(confirmed), len(candidate))
+
+
+def render_traits_section(agent_name: str) -> None:
+    _render_traits_section(agent_name)
+
+
 if __name__ == "__main__":
     import argparse
     import json

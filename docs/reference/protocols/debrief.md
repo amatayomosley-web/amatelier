@@ -76,6 +76,38 @@ Track which questions yielded genuine insight vs rehearsed answers. After 5 debr
 - Develop new questions based on patterns in the agent's behavior
 - The question bank itself is a skill that improves over time
 
+## Trait Review (every 10 observations)
+
+The therapist fires a trait-review branch on a 10-RT cadence, decoupled from per-RT debriefs. The wiring is observation-driven, not time-driven.
+
+### How the Counter Accumulates
+
+After every roundtable, `sonnet_observer.observe_rt` writes one `obs-<rt_id>.json` per worker. On each successful write, the agent's `case_notes.obs_since_last_trait_review` is bumped by 1. Failed writes do not bump the counter.
+
+### When the Branch Fires
+
+When the therapist runs for an agent and `obs_since_last_trait_review ≥ TRAIT_REVIEW_THRESHOLD` (10), it:
+
+1. Loads the most recent 10 observation files
+2. Appends a TRAIT REVIEW block to the therapist's opening prompt summarizing the observed patterns
+3. Asks the agent to propose one of: **confirm** a candidate trait, **promote** an emerging pattern to candidate, **reject** a prior candidate, or **none** if the evidence is insufficient
+
+If the counter is at or over threshold but no observation files are present on disk, the branch is skipped and logged — the counter keeps climbing until obs actually accumulate (self-healing).
+
+### Evidence Gate
+
+When the agent returns a confirm or candidate verdict, `evolver.apply_trait_action` applies a gate before writing `traits.json`:
+
+- **≥3 supporting RTs** cited in the evidence
+- **≥2 distinct signal types** (cognitive move, rhetorical move, evidence practice, engagement pattern, peer ref, judge feedback)
+- **RT IDs must exist** in the agent's `observations/` directory (no phantom citations)
+
+Verdicts that fail the gate are logged and discarded. Successful writes update `traits.json` (moving between `candidate` / `confirmed` / `rejected` + `history`) and reset `obs_since_last_trait_review` to 0. The counter climbs again over the next ~10 RTs.
+
+### Defensive Filter
+
+`_parse_outcomes` strips any `TRAIT:` line whose first token is "none" (case-insensitive — covers `none`, `none (Phase 3 pending)`, etc.) so stale placeholder lines never reach the evidence gate.
+
 ## Self-Determined Interview
 
 When an agent reaches the Self-Determined threshold (from config.json):

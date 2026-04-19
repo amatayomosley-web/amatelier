@@ -37,6 +37,7 @@ from steward_dispatch import (
     StewardBudget, StewardTask, StewardLog,
     load_registered_files,
 )
+from sonnet_observer import observe_rt
 
 logger = logging.getLogger("runner")
 
@@ -1292,12 +1293,33 @@ def run_roundtable(
     # 10. Update analytics for all agents (pre-therapist — feeds into session context)
     _update_analytics()
 
-    # 10b. Skill distillation — always runs (moved out of skip_post gate)
-    distill_results = _distill_skills(rt_id, transcript, all_workers)
-    digest["distilled_skills"] = distill_results
+    # 10b+c+d. Consolidated Sonnet observer — writes per-agent obs files AND
+    # extracts skills (CAPTURE/FIX/DERIVE with taxonomy) in the same batched
+    # pass. Replaces the older separate _distill_skills call.
+    obs_summary = {}
+    try:
+        scoring = digest.get("scoring") or []
+        if isinstance(scoring, dict):
+            scoring = scoring.get("scores", [])
+        scores_by_agent = {s.get("agent"): s for s in scoring if isinstance(s, dict) and s.get("agent")}
+        obs_summary = observe_rt(rt_id, transcript, list(all_workers), scores_by_agent, digest)
+        digest["observations"] = obs_summary
+        logger.info("observer: observed=%d skipped=%d errors=%d skills=%d for RT %s",
+                    len(obs_summary.get("observed", [])),
+                    len(obs_summary.get("skipped", [])),
+                    len(obs_summary.get("errors", [])),
+                    len(obs_summary.get("skills_observed", [])),
+                    rt_id[:12])
+    except Exception as e:
+        logger.warning("observer: step skipped (non-fatal): %s", e)
+        digest["observations"] = {"rt_id": rt_id, "error": str(e)[:200]}
 
-    # 10c. Append DERIVE skills to novel concepts database
-    _append_novel_concepts(distill_results.get("skills", []), rt_id, topic)
+    # Run observer-produced skills through the distiller's JUDGE gate +
+    # append DERIVE skills to novel concepts database (always)
+    raw_skills = obs_summary.get("skills_observed") or []
+    distill_results = {"skills": raw_skills, "raw_count": len(raw_skills)}
+    digest["distilled_skills"] = distill_results
+    _append_novel_concepts(raw_skills, rt_id, topic)
 
     # Re-save digest with scoring + distillation results (always, regardless of skip_post)
     digest_path.write_text(json.dumps(digest, indent=2, ensure_ascii=False), encoding="utf-8")
