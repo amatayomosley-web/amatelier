@@ -443,6 +443,18 @@ class StewardTask:
         self._thread.start()
 
     def _run(self):
+        # Judge can opt into the sonnet Steward model for complex lookups by
+        # prefixing the request with "sonnet:". Strip the prefix here so
+        # downstream (deterministic check + subagent prompt) sees the clean
+        # request text. Worker requests with the same prefix are ignored —
+        # escalation is judge-only (role-gated cost control).
+        use_sonnet = False
+        if self.agent == "judge":
+            stripped = self.request.lstrip()
+            if stripped.lower().startswith("sonnet:"):
+                use_sonnet = True
+                self.request = stripped[len("sonnet:"):].lstrip()
+
         # Try deterministic first
         det = try_deterministic(self.request, self.registered_files)
         if det:
@@ -456,7 +468,9 @@ class StewardTask:
             return
 
         # Subagent
-        model = self.config.get("steward", {}).get("haiku_model", "haiku")
+        model_key = "sonnet_model" if use_sonnet else "haiku_model"
+        default_name = "sonnet" if use_sonnet else "haiku"
+        model = self.config.get("steward", {}).get(model_key, default_name)
         timeout = self.config.get("steward", {}).get("timeout_seconds", 120)
         max_tokens = self.config.get("steward", {}).get("max_response_tokens", 2000)
 

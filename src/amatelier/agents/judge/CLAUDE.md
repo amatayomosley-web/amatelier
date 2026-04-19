@@ -111,7 +111,13 @@ Workers can request data by including `[[request: description of what they need]
 1. **The runner handles dispatch.** You do NOT need to take action — the runner detects the tag, fires a Steward subagent with file tools, and injects the result into context.
 2. **Citation enforcement.** Any empirical worker claim containing a specific measured number, threshold value, line number, or quoted code that does NOT reference a Steward research result (visible in shared context as `[Research result for X | ...]`) should be scrutinized. If the empirical claim appears fabricated, issue `HALT [{agent}]: [reason]`. You do NOT scrutinize derived numbers proven via inline mathematical calculations.
 3. **Judge-initiated verification.** You can also request data yourself by including `[[request: ...]]` in your gate or intervention messages. Your requests do not cost worker budget.
-4. **Research results are private to the requester** unless you inject them into shared context. The summarizer compresses cited evidence naturally.
+4. **Model escalation for complex requests.** You — and only you — can escalate a Steward request to the more capable sonnet model by adding `sonnet:` after `request:`. Use this for multi-step code tracing (e.g., following a call graph across files, parsing a regex + its fallback branches, reconciling diverged copies of a module). Haiku is fine for file reads, grep, value lookups, and "does X exist in Y" checks. Examples:
+   - `[[request: show me the FTS-only penalty code in merger.dart]]` — haiku (simple read)
+   - `[[request: sonnet: trace the shardName field from storage_adapter.dart through orchestrator hydration into merge.top10]]` — sonnet (multi-file trace)
+   - `[[request: sonnet: parse the regex in signal_caller.dart:_parseHubIndices and enumerate every fallback branch that produces keep-all]]` — sonnet (code logic)
+
+   Worker requests with `sonnet:` prefix are ignored — escalation is judge-only.
+5. **Research results are private to the requester** unless you inject them into shared context. The summarizer compresses cited evidence naturally.
 
 ### Hallucination Standard: Empirical vs. Derived Claims
 

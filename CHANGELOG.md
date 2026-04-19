@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Judge model escalation for Steward lookups.** The Judge can prefix a
+  research request with `sonnet:` (e.g., `[[request: sonnet: trace X
+  across Y]]`) to route the Steward subagent through the `sonnet_model`
+  configured in `config.steward.sonnet_model` instead of the default
+  `haiku_model`. Designed for multi-step code tracing, regex+fallback
+  parsing, and cross-module reconciliation — lookups where haiku has
+  been empirically weaker. Worker requests with the same prefix are
+  ignored (escalation is judge-only, role-gated cost control).
+  - `src/amatelier/engine/steward_dispatch.py`: `StewardTask._run`
+    parses the `sonnet:` prefix before the deterministic check, strips
+    it from the request text, and selects `sonnet_model` when the
+    caller is the judge.
+  - `src/amatelier/agents/judge/CLAUDE.md` §4: documents the syntax
+    with three worked examples and the rationale for when to use it.
+
 ## [0.4.0] — 2026-04-18
 
 ### Added
