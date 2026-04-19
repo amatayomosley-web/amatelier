@@ -105,10 +105,18 @@ jobs:
           /tmp/amatelier-venv/bin/pip install dist/amatelier-*.whl
 
       - name: Verify import
+        # Read the expected version from pyproject.toml instead of
+        # hardcoding — every release bump used to require a parallel
+        # edit here, and the assertion drifted (stayed at 0.2.0 while
+        # 0.3.0 / 0.4.0 / 0.5.0 shipped, failing this job silently each
+        # time). Now the check just confirms installed == source.
         run: |
+          EXPECTED_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          echo "EXPECTED_VERSION=$EXPECTED_VERSION" >> $GITHUB_ENV
           /tmp/amatelier-venv/bin/python -c "
           import amatelier
-          assert amatelier.__version__ == '0.2.0', f'unexpected version: {amatelier.__version__}'
+          expected = '$EXPECTED_VERSION'
+          assert amatelier.__version__ == expected, f'version mismatch: installed={amatelier.__version__} pyproject={expected}'
           print('[OK] import amatelier (version', amatelier.__version__, ')')
           print('  AMATELIER_ROOT:', amatelier.AMATELIER_ROOT)
           from amatelier import paths, llm_backend
@@ -126,18 +134,20 @@ jobs:
           cfg = AMATELIER_ROOT / 'config.json'
           assert cfg.exists(), f'config.json missing at {cfg}'
           data = json.loads(cfg.read_text())
-          assert data['version'] == '0.2.0', f'unexpected version: {data[\"version\"]}'
+          expected = '$EXPECTED_VERSION'
+          assert data['version'] == expected, f'config.json version {data[\"version\"]!r} != pyproject {expected!r}'
           workers = list(data['team']['workers'].keys())
-          assert set(workers) == {'elena', 'marcus', 'clare', 'simon', 'naomi'}, \
-              f'unexpected workers: {workers}'
-          assert 'llm' in data, 'config.json missing llm section (0.2.0)'
-          print('[OK] config.json v0.2.0 loaded,', len(workers), 'workers configured')
+          worker_names = {w for w in workers if not w.startswith('_')}
+          assert worker_names == {'elena', 'marcus', 'clare', 'simon', 'naomi'}, \
+              f'unexpected workers: {worker_names}'
+          assert 'llm' in data, 'config.json missing llm section'
+          print('[OK] config.json version', expected, 'loaded,', len(worker_names), 'workers configured')
           "
 
       - name: CLI --version
         run: |
           out=$(/tmp/amatelier-venv/bin/amatelier --version)
-          [ "$out" = "0.2.0" ] || { echo "unexpected version: $out"; exit 1; }
+          [ "$out" = "$EXPECTED_VERSION" ] || { echo "amatelier --version = $out, expected $EXPECTED_VERSION"; exit 1; }
           echo "[OK] amatelier --version = $out"
 
       - name: CLI --help
@@ -235,7 +245,7 @@ jobs:
           echo ""
           echo "============================================================="
           echo "  ALL CHECKS PASSED on Python ${{ matrix.python-version }}"
-          echo "  amatelier v0.2.0 is pip-install-ready"
+          echo "  amatelier v$EXPECTED_VERSION is pip-install-ready"
           echo "  Verified: dual-layer paths, open mode, bundled docs,"
           echo "            examples excluded, CLI subcommands"
           echo "============================================================="
