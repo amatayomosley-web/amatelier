@@ -50,7 +50,43 @@ def load_behaviors(agent_name: str) -> list[dict]:
 def save_behaviors(agent_name: str, behaviors: list[dict]):
     path = _behaviors_path(agent_name)
     path.parent.mkdir(parents=True, exist_ok=True)
+    # Auto-compute any missing fires_when embeddings so the runner can do
+    # semantic selection without calling the embedder on the hot path.
+    # Safe on every save — already-embedded rows are skipped.
+    _ensure_fires_when_embeddings(behaviors)
     path.write_text(json.dumps(behaviors, indent=2), encoding="utf-8")
+
+
+def _ensure_fires_when_embeddings(behaviors: list[dict]) -> None:
+    """Populate `fires_when_embedding` for any behavior that has `fires_when`
+    but no embedding yet. Silent no-op when no embedder is configured.
+
+    Called from save_behaviors. Idempotent.
+    """
+    try:
+        from embeddings import embed_batch
+    except ImportError:
+        try:
+            from .embeddings import embed_batch  # package-relative fallback
+        except ImportError:
+            return
+    pending_idx: list[int] = []
+    pending_text: list[str] = []
+    for i, b in enumerate(behaviors):
+        fw = (b.get("fires_when") or "").strip()
+        if not fw:
+            continue
+        if b.get("fires_when_embedding"):
+            continue
+        pending_idx.append(i)
+        pending_text.append(fw)
+    if not pending_text:
+        return
+    vectors = embed_batch(pending_text)
+    for pos, idx in enumerate(pending_idx):
+        v = vectors[pos] if pos < len(vectors) else None
+        if v is not None:
+            behaviors[idx]["fires_when_embedding"] = v
 
 
 def _find_behavior(behaviors: list[dict], text: str) -> dict | None:
@@ -244,8 +280,22 @@ def _behavior_is_duplicate(existing_section: str, new_behavior: str) -> bool:
     return False
 
 
-def add_learned_behavior(agent_name: str, behavior: str, rt_id: str = ""):
-    """Add a learned behavior to CLAUDE.md + behaviors.json. Skips duplicates (>70% word overlap)."""
+def add_learned_behavior(
+    agent_name: str,
+    behavior: str,
+    rt_id: str = "",
+    fires_when: str = "",
+):
+    """Add a learned behavior to CLAUDE.md + behaviors.json.
+
+    Skips duplicates (>70% word overlap on behavior text).
+
+    `fires_when` is optional prose describing briefing contexts where this
+    behavior applies — authored by the therapist at add time. When present,
+    save_behaviors() auto-computes its embedding so the runner can semantically
+    match it to a briefing at RT spawn. Old callers without fires_when continue
+    to work; those behaviors will be selected by confidence-only fallback.
+    """
     content = read_claude_md(agent_name)
     # S3: fuzzy-match dedup gate
     if "## Learned Behaviors" in content:
@@ -271,14 +321,18 @@ def add_learned_behavior(agent_name: str, behavior: str, rt_id: str = ""):
 
     # Write to structured behaviors.json
     behaviors = load_behaviors(agent_name)
-    behaviors.append({
+    entry: dict = {
         "text": behavior,
         "confidence": 1.0,
         "added_at": time.time(),
         "added_rt": rt_id,
         "last_confirmed_rt": rt_id,
         "last_confirmed_at": time.time(),
-    })
+    }
+    if fires_when and fires_when.strip():
+        entry["fires_when"] = fires_when.strip()
+        # fires_when_embedding populated by save_behaviors below.
+    behaviors.append(entry)
     save_behaviors(agent_name, behaviors)
     logger.info("Added learned behavior to %s: %s", agent_name, behavior[:60])
 
@@ -422,6 +476,10 @@ if __name__ == "__main__":
     p_behavior = sub.add_parser("behavior", help="Add a learned behavior to CLAUDE.md")
     p_behavior.add_argument("agent", help="Agent name")
     p_behavior.add_argument("text", help="Behavior description")
+    p_behavior.add_argument("--fires-when", default="",
+                            help="Prose describing briefing contexts where this behavior applies. "
+                                 "Used for semantic selection at RT spawn (optional).")
+    p_behavior.add_argument("--rt", default="", help="RT id (for provenance)")
 
     p_remove = sub.add_parser("remove-behavior", help="Remove a learned behavior from CLAUDE.md")
     p_remove.add_argument("agent", help="Agent name")
@@ -466,8 +524,18 @@ if __name__ == "__main__":
         update_emerging_trait(args.agent, args.text)
         print(json.dumps({"updated": True, "agent": args.agent, "trait": args.text[:60]}))
     elif args.command == "behavior":
-        add_learned_behavior(args.agent, args.text)
-        print(json.dumps({"added": True, "agent": args.agent, "behavior": args.text[:60]}))
+        add_learned_behavior(
+            args.agent,
+            args.text,
+            rt_id=getattr(args, "rt", ""),
+            fires_when=getattr(args, "fires_when", ""),
+        )
+        print(json.dumps({
+            "added": True,
+            "agent": args.agent,
+            "behavior": args.text[:60],
+            "has_fires_when": bool(getattr(args, "fires_when", "")),
+        }))
     elif args.command == "sync-skills":
         sync_skills_owned(args.agent)
         print(json.dumps({"synced": True, "agent": args.agent}))

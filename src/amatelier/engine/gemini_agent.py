@@ -31,6 +31,15 @@ LOG_DIR = WRITE_ROOT / "roundtable-server" / "logs"
 def load_agent_context(agent_name: str) -> str:
     agent_dir = WRITE_ROOT / "agents" / agent_name
     parts = []
+
+    # JIT active heuristics — written by the runner per RT (see
+    # roundtable_runner._write_active_heuristics). Placed FIRST so it wins
+    # attention precedence over stale content in CLAUDE.md.
+    active_heuristics = agent_dir / "active_heuristics_current.md"
+    if active_heuristics.exists():
+        parts.append(active_heuristics.read_text(encoding="utf-8"))
+        parts.append("\n---\n")
+
     claude_md = agent_dir / "CLAUDE.md"
     memory_md = agent_dir / "MEMORY.md"
     if claude_md.exists():

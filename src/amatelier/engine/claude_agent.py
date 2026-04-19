@@ -45,9 +45,21 @@ def _load_config() -> dict:
 
 
 def load_agent_context(agent_name: str) -> str:
-    """Load the agent's full context: CLAUDE.md + MEMORY.md + metrics + skills."""
+    """Load the agent's full context: CLAUDE.md + MEMORY.md + metrics + skills.
+
+    Also prepends a JIT-selected "Active Heuristics" block when the runner
+    has written one for this RT (see roundtable_runner._write_active_heuristics).
+    Placed FIRST so it wins attention precedence over stale content in
+    CLAUDE.md — the runner's per-RT selection supersedes anything the
+    agent may still carry in its learned behaviors section.
+    """
     agent_dir = WRITE_ROOT / "agents" / agent_name
     parts = []
+
+    active_heuristics = agent_dir / "active_heuristics_current.md"
+    if active_heuristics.exists():
+        parts.append(active_heuristics.read_text(encoding="utf-8"))
+        parts.append("\n---\n")
 
     claude_md = agent_dir / "CLAUDE.md"
     if claude_md.exists():

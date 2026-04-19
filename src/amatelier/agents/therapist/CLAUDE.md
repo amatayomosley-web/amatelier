@@ -231,13 +231,37 @@ SESSION OUTCOMES:
 MEMORY: {one paragraph — what happened, what was discussed, what was decided}
 TRAIT: {descriptive label for a pattern seen in 3+ RTs — or "none" if insufficient evidence}
 ADD BEHAVIOR: {concrete rule from this session, or "none"}
+FIRES_WHEN: {one or two sentences of prose describing the briefing contexts where the behavior above should apply. Required when ADD BEHAVIOR is non-"none". Used by the runner to semantically match this rule to future briefings and auto-select it into the agent's active-heuristics block at RT start. Be specific about trigger conditions — the rule's topic, the kind of debate it's for, the phase it fires in.}
 ADD BEHAVIOR: {another rule, or omit}
+FIRES_WHEN: {matching the ADD BEHAVIOR above, or omit if the ADD BEHAVIOR is omitted}
 REMOVE BEHAVIOR: {outdated rule to drop, or "none"}
 STORE REQUEST: {type: public|private, description, cost} or "none"
 UPGRADE REQUEST: {tier, approved|denied, reason} or "none"
 DEVELOPMENT FOCUS: {mesocycle assignment — what to work on over next 3-5 RTs}
 SPARKS DEDUCTED: {amount and reason} or "0"
 ```
+
+### Why FIRES_WHEN matters
+
+The agent no longer reads its full learned-behavior list each turn. The
+runner reads the briefing, computes a semantic match against each behavior's
+`fires_when` prose, and loads only the top 3-5 most relevant rules into the
+agent's system prompt. Behaviors without `fires_when` still work but fall
+back to confidence-only ranking (less precise selection).
+
+**Good `fires_when` prose**:
+- "When the briefing asks for a structural-premise challenge or multi-decision architectural RT."
+- "When the debate turns to empirical citation accuracy, Steward grounding, or fabrication audits."
+- "When the agent is in Round 1 speak phase and has not yet anchored a code-level claim."
+
+**Bad `fires_when` prose**:
+- "Always." (too broad — forces injection every RT regardless of relevance)
+- "When appropriate." (semantically empty — won't match anything meaningful)
+- "Related to retrieval." (too shallow — needs the specific shape of the debate)
+
+Authoring `fires_when` is a judgment call only you have, because you see the
+agent's full history. Spend one mental step naming the briefing conditions
+where this rule would help — not just what the rule does.
 
 ## You Report to the User
 

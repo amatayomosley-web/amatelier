@@ -166,7 +166,10 @@ def _update_case_notes(agent_name: str, notes: dict, conversation: list[dict],
     # Record intervention (what behavior was added/removed, what was recommended)
     interventions = []
     for b in outcomes.get("add_behaviors", []):
-        interventions.append(f"Added behavior: {b[:80]}")
+        # Backward-compat: earlier add_behaviors entries were plain strings;
+        # now they're dicts with `text` and `fires_when`.
+        text = b["text"] if isinstance(b, dict) else str(b)
+        interventions.append(f"Added behavior: {text[:80]}")
     for b in outcomes.get("remove_behaviors", []):
         interventions.append(f"Removed behavior: {b[:80]}")
     for req in outcomes.get("store_requests", []):
@@ -780,7 +783,19 @@ def _parse_outcomes(conversation: list[dict]) -> dict:
         elif upper.startswith("ADD BEHAVIOR:"):
             val = stripped.split(":", 1)[1].strip()
             if val.lower() != "none":
-                outcomes["add_behaviors"].append(val)
+                # Stored as a dict so a following FIRES_WHEN line can attach
+                # to it. FIRES_WHEN stays empty if none is provided.
+                outcomes["add_behaviors"].append({"text": val, "fires_when": ""})
+        elif upper.startswith("FIRES_WHEN:") or upper.startswith("FIRES WHEN:"):
+            val = stripped.split(":", 1)[1].strip()
+            # Attach to the most recently-added behavior if one exists and
+            # doesn't already have a fires_when. Silently ignore if no
+            # preceding ADD BEHAVIOR (prevents malformed blocks from
+            # corrupting state).
+            if outcomes["add_behaviors"]:
+                last = outcomes["add_behaviors"][-1]
+                if isinstance(last, dict) and not last.get("fires_when") and val.lower() != "none":
+                    last["fires_when"] = val
         elif upper.startswith("REMOVE BEHAVIOR:"):
             val = stripped.split(":", 1)[1].strip()
             if val.lower() != "none":
@@ -843,14 +858,32 @@ def _apply_outcomes(agent_name: str, outcomes: dict, rt_id: str):
         )
         logger.info("Updated Emerging Traits for %s: %s", agent_name, outcomes["trait"][:60])
 
-    # 2. Add behaviors
+    # 2. Add behaviors — each entry is {text, fires_when}. fires_when is
+    # optional prose the therapist authored; the runner uses it to
+    # semantically pick this behavior for future briefings.
     for behavior in outcomes["add_behaviors"]:
+        # Backward-compat: accept plain strings from older digests.
+        if isinstance(behavior, dict):
+            text = behavior.get("text", "")
+            fires_when = behavior.get("fires_when", "")
+        else:
+            text = str(behavior)
+            fires_when = ""
+        if not text:
+            continue
+        cmd = [sys.executable, str(EVOLVER), "behavior", agent_name, text,
+               "--rt", rt_id]
+        if fires_when:
+            cmd.extend(["--fires-when", fires_when])
         subprocess.run(
-            [sys.executable, str(EVOLVER), "behavior", agent_name, behavior],
-            capture_output=True, text=True, timeout=15,
+            cmd,
+            capture_output=True, text=True, timeout=30,
             encoding="utf-8", errors="replace", env=env,
         )
-        logger.info("Added behavior to %s: %s", agent_name, behavior[:60])
+        logger.info("Added behavior to %s%s: %s",
+                    agent_name,
+                    " [+fires_when]" if fires_when else "",
+                    text[:60])
 
     # 3. Remove behaviors
     for behavior in outcomes["remove_behaviors"]:
@@ -866,7 +899,9 @@ def _apply_outcomes(agent_name: str, outcomes: dict, rt_id: str):
     try:
         from evolver import confirm_behavior, decay_behaviors
         for behavior in outcomes["add_behaviors"]:
-            confirm_behavior(agent_name, behavior, rt_id=rt_id)
+            text = behavior["text"] if isinstance(behavior, dict) else str(behavior)
+            if text:
+                confirm_behavior(agent_name, text, rt_id=rt_id)
         # Apply one RT cycle of decay
         decay_result = decay_behaviors(agent_name, rt_id=rt_id)
         if decay_result.get("expired"):

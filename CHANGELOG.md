@@ -8,6 +8,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **JIT active-heuristics selection for agents.** Agents no longer read
+  their full learned-behaviors list every turn. At RT start the runner
+  semantic-matches the briefing against each behavior's `fires_when`
+  prose, picks the top 3-5 most relevant, and writes them to
+  `agents/{name}/active_heuristics_current.md`. The agent's
+  `load_agent_context()` reads that file and the selection lands at the
+  top of the system prompt (highest attention weight). Cleanup on RT end.
+  - `src/amatelier/engine/embeddings.py` (new) — pluggable embedder with
+    auto-detect fallback chain: OpenAI → Voyage → Gemini →
+    sentence-transformers → no-op. `set_embedder()` lets callers register
+    a custom provider. `Embedder` protocol is `runtime_checkable`.
+  - `src/amatelier/engine/evolver.py` — `save_behaviors()` auto-computes
+    `fires_when_embedding` for any behavior that has `fires_when` but no
+    embedding yet (idempotent). `add_learned_behavior()` gains an optional
+    `fires_when` parameter. CLI `behavior` subcommand gains `--fires-when`
+    and `--rt` flags.
+  - `src/amatelier/engine/roundtable_runner.py` — new
+    `select_active_heuristics(agent, briefing, top_k=5)` function. Ranking:
+    `cosine(briefing, fires_when_embedding) × confidence`. Falls back to
+    confidence-only when no embedder is configured.
+    `_write_active_heuristics` invoked before agent launches; cleanup in
+    the `finally` block.
+  - `src/amatelier/engine/claude_agent.py` + `gemini_agent.py` —
+    `load_agent_context()` prepends the active-heuristics file (placed
+    FIRST so it supersedes stale content in CLAUDE.md).
+  - `src/amatelier/engine/therapist.py` — parser accepts `FIRES_WHEN:` as
+    a follow-up field to `ADD BEHAVIOR:`; dispatch passes `--fires-when`
+    to the evolver CLI.
+  - `src/amatelier/agents/therapist/CLAUDE.md` — `SESSION OUTCOMES` format
+    documents the required `FIRES_WHEN` field with authoring guidance.
+  - `scripts/backfill_fires_when.py` (new) — one-time pass that authors
+    `fires_when` for all behaviors missing it, via Claude Sonnet (CLI),
+    then saves so embeddings populate automatically.
 - **Judge model escalation for Steward lookups.** The Judge can prefix a
   research request with `sonnet:` (e.g., `[[request: sonnet: trace X
   across Y]]`) to route the Steward subagent through the `sonnet_model`

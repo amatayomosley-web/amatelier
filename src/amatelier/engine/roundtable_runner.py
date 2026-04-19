@@ -365,6 +365,114 @@ def format_budget_status(budget: dict[str, int]) -> str:
     return ", ".join(f"{name}={remaining}" for name, remaining in budget.items())
 
 
+# ---------------------------------------------------------------------------
+# JIT active-heuristics injection
+#
+# For each agent, at RT start, semantic-match the briefing against each
+# stored behavior's `fires_when` field. Pick the top N most relevant and
+# write them to the agent's active_heuristics_current.md. The agent's
+# load_agent_context() reads that file and the heuristics become part of
+# the system prompt. After the RT, we clear the file so the next RT's
+# briefing gets a fresh selection.
+#
+# Design rationale: selection happens BEFORE agent launches (runner owns
+# briefing text). No therapist call on the hot path. Embedder is pluggable
+# (engine/embeddings.py). If no embedder is configured, falls back to
+# confidence-only ranking.
+# ---------------------------------------------------------------------------
+
+ACTIVE_HEURISTICS_TOP_K = 5
+ACTIVE_HEURISTICS_FILENAME = "active_heuristics_current.md"
+
+
+def _active_heuristics_path(agent_name: str) -> Path:
+    return SUITE_ROOT / "agents" / agent_name / ACTIVE_HEURISTICS_FILENAME
+
+
+def select_active_heuristics(
+    agent_name: str,
+    briefing_text: str,
+    top_k: int = ACTIVE_HEURISTICS_TOP_K,
+) -> list[dict]:
+    """Rank an agent's behaviors by relevance to the briefing.
+
+    Ranking: cosine(briefing, fires_when_embedding) * confidence.
+    Fallback when no embeddings are present: confidence alone.
+    Returns up to `top_k` behavior dicts in descending rank order.
+    """
+    try:
+        from evolver import load_behaviors
+        from embeddings import embed, cosine
+    except ImportError:
+        return []
+
+    behaviors = load_behaviors(agent_name)
+    if not behaviors:
+        return []
+
+    briefing_vec = embed(briefing_text) if briefing_text else None
+
+    scored: list[tuple[float, dict]] = []
+    for b in behaviors:
+        conf = float(b.get("confidence", 0.0))
+        if conf <= 0:
+            continue
+        b_vec = b.get("fires_when_embedding")
+        if briefing_vec and b_vec:
+            sim = cosine(briefing_vec, b_vec)
+            weight = max(sim, 0.0) * conf
+        else:
+            weight = conf
+        scored.append((weight, b))
+
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return [b for _, b in scored[:top_k]]
+
+
+def _render_active_heuristics(selected: list[dict]) -> str:
+    if not selected:
+        return ""
+    lines = [
+        "# Active Heuristics — auto-selected for this roundtable",
+        "",
+        "These rules from your learned-behaviors set were flagged as most",
+        "relevant to the current briefing. Use them reflexively. They are",
+        "loaded fresh each RT and supersede stale instructions if in conflict.",
+        "",
+    ]
+    for i, b in enumerate(selected, 1):
+        text = (b.get("text") or "").strip()
+        if not text:
+            continue
+        lines.append(f"{i}. {text}")
+    return "\n".join(lines) + "\n"
+
+
+def _write_active_heuristics(agent_name: str, briefing_text: str, rt_id: str) -> None:
+    selected = select_active_heuristics(agent_name, briefing_text)
+    if not selected:
+        _clear_active_heuristics(agent_name)
+        return
+    rendered = _render_active_heuristics(selected)
+    if not rendered:
+        _clear_active_heuristics(agent_name)
+        return
+    header = f"<!-- rt={rt_id} selected={len(selected)} -->\n"
+    path = _active_heuristics_path(agent_name)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(header + rendered, encoding="utf-8")
+    logger.info("Active heuristics: wrote %d rule(s) for %s", len(selected), agent_name)
+
+
+def _clear_active_heuristics(agent_name: str) -> None:
+    path = _active_heuristics_path(agent_name)
+    if path.exists():
+        try:
+            path.unlink()
+        except OSError:
+            pass
+
+
 def run_roundtable(
     topic: str,
     briefing_path: str,
@@ -559,6 +667,21 @@ def run_roundtable(
             logger.info("Entry fee: %s pays %d sparks (%s)", agent, fee, model)
         except Exception as e:
             logger.warning("Fee deduction failed for %s: %s (continuing)", agent, e)
+
+    # JIT behavioral injection: write the top-N "active heuristics" for each
+    # agent based on semantic match between the briefing and each behavior's
+    # `fires_when` field. The agent's load_agent_context() reads the written
+    # file at startup. Cleanup happens in the finally block at RT end.
+    _written_heuristics_for: list[str] = []
+    try:
+        for agent in list(all_workers) + ["judge"]:
+            try:
+                _write_active_heuristics(agent, briefing_text, rt_id)
+                _written_heuristics_for.append(agent)
+            except Exception as e:
+                logger.warning("active-heuristics write failed for %s: %s", agent, e)
+    except Exception as e:
+        logger.warning("active-heuristics phase error: %s", e)
 
     try:
         # Launch all workers. v0.4.0: dispatch on worker_registry backend field
@@ -1076,6 +1199,14 @@ def run_roundtable(
                                  name, proc.pid)
                 else:
                     logger.info("Terminated %s (exit %s)", name, proc.returncode)
+
+        # Clean up JIT active-heuristics files so a stale set can't leak
+        # into the next RT if the runner is invoked with a different briefing.
+        for agent in _written_heuristics_for:
+            try:
+                _clear_active_heuristics(agent)
+            except Exception as e:
+                logger.debug("active-heuristics cleanup failed for %s: %s", agent, e)
 
     # 7. Build digest with budget usage
     budget_usage = {
