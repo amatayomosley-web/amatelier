@@ -22,6 +22,7 @@ import uuid
 from pathlib import Path
 
 from scorer import load_metrics, save_metrics
+from sparks import log_spark_delta
 
 logger = logging.getLogger("store")
 
@@ -206,7 +207,13 @@ def purchase(agent_name: str, item_id: str) -> dict:
                     entry.get("status") == "completed"):
                 return {"error": f"{agent_name} already owns '{item['name']}'"}
 
-    # Deduct sparks
+    # Deduct sparks — log the audit row first so a save_metrics() failure
+    # can't leave the ledger and the balance diverged.
+    log_spark_delta(
+        agent_name, -item["cost"],
+        f"Store purchase: {item['name']} ({category}/{item_id})",
+        "store_purchase",
+    )
     metrics["sparks"] = balance - item["cost"]
     save_metrics(agent_name, metrics)
 
@@ -296,6 +303,11 @@ def submit_request(agent_name: str, request_type: str, description: str) -> dict
         metrics = load_metrics(agent_name)
         if metrics.get("sparks", 0) < 20:
             return {"error": f"{agent_name} needs 20 sparks for a private request (has {metrics.get('sparks', 0)})"}
+        log_spark_delta(
+            agent_name, -20,
+            f"Private marketplace request fee: {description[:80]}",
+            "request_fee",
+        )
         metrics["sparks"] -= 20
         save_metrics(agent_name, metrics)
 
@@ -469,6 +481,11 @@ def fulfill_request(fulfiller: str, request_idx: int, skill_name: str,
     # Pay the fulfiller (80% of reward — 20% house cut)
     fulfiller_pay = int(reward * 0.8)
     metrics = load_metrics(fulfiller)
+    log_spark_delta(
+        fulfiller, fulfiller_pay,
+        f"Marketplace fulfillment payout: {skill_name} (80% of {reward})",
+        "marketplace_payout",
+    )
     metrics["sparks"] = metrics.get("sparks", 0) + fulfiller_pay
     save_metrics(fulfiller, metrics)
 

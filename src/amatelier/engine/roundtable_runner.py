@@ -38,6 +38,7 @@ from steward_dispatch import (
     load_registered_files,
 )
 from sonnet_observer import observe_rt
+from sparks import log_spark_delta
 
 logger = logging.getLogger("runner")
 
@@ -640,7 +641,10 @@ def run_roundtable(
         resolved_models[worker] = resolve_agent_model(worker)
     logger.info("Resolved models: %s", ", ".join(f"{k}={v}" for k, v in resolved_models.items()))
 
-    # Deduct entry fees (flat per-RT cost based on model class)
+    # Compute entry fees up-front (needed for the digest manifest and for
+    # the deferred deduction call at RT close). The actual charge moves to
+    # AFTER digest save + judge scoring so an aborted RT never costs the
+    # participants anything — see "Deferred entry-fee deduction" block below.
     entry_fees = config.get("competition", {}).get("entry_fees", {})
     entry_fee_paid: dict[str, int] = {}
     for agent in all_workers:
@@ -658,16 +662,7 @@ def run_roundtable(
             model = resolved_models.get(agent, "haiku")
         fee = entry_fees.get(model, entry_fees.get("haiku", 3))
         entry_fee_paid[agent] = fee
-        try:
-            subprocess.run(
-                [sys.executable, str(SUITE_ROOT / "engine" / "scorer.py"),
-                 "deduct-fee", agent, str(fee), "--rt", rt_id],
-                capture_output=True, text=True, timeout=10,
-                encoding="utf-8", errors="replace",
-            )
-            logger.info("Entry fee: %s pays %d sparks (%s)", agent, fee, model)
-        except Exception as e:
-            logger.warning("Fee deduction failed for %s: %s (continuing)", agent, e)
+        logger.info("Entry fee scheduled: %s will pay %d sparks (%s) on RT close", agent, fee, model)
 
     # JIT behavioral injection: write the top-N "active heuristics" for each
     # agent based on semantic match between the briefing and each behavior's
@@ -1255,6 +1250,31 @@ def run_roundtable(
     else:
         digest["scoring_status"] = "complete"
 
+    # Deferred entry-fee deduction.
+    #
+    # Fees were PROMISED at RT start (entry_fee_paid dict above) but not
+    # charged until here — after the debate ran, the digest was saved, and
+    # the judge attempted scoring. If the runner was killed anywhere between
+    # launch and this block (infrastructure failure, user interrupt, agent
+    # crash), the ledger stays clean: participants lose nothing.
+    #
+    # This point fires regardless of scoring_status (complete or pending).
+    # Rationale: the debate HAPPENED — agents spoke, work was produced,
+    # digest landed. Manual re-scoring by Admin later does not re-trigger
+    # fee deduction because fees are invoked here in the runner, not in
+    # judge_scorer.py.
+    for agent, fee in entry_fee_paid.items():
+        try:
+            subprocess.run(
+                [sys.executable, str(SUITE_ROOT / "engine" / "scorer.py"),
+                 "deduct-fee", agent, str(fee), "--rt", rt_id],
+                capture_output=True, text=True, timeout=10,
+                encoding="utf-8", errors="replace",
+            )
+            logger.info("Entry fee deducted: %s -%d sparks (RT %s closed)", agent, fee, rt_id)
+        except Exception as e:
+            logger.warning("Post-RT fee deduction failed for %s: %s", agent, e)
+
     if gate_results:
         digest["gate_bonuses"] = gate_results
 
@@ -1753,12 +1773,21 @@ def _resolve_first_speaker(workers: list[str]) -> str | None:
                 entry["status"] = "consumed"
             else:
                 entry["status"] = "refunded"
-                # Refund sparks
-                metrics_path = AGENTS_DIR / entry["agent"] / "metrics.json"
+                # Refund sparks — log the audit row so the refund is
+                # reconstructable from spark_ledger even if the metrics.json
+                # write fails or the entry gets mutated later.
+                refund_amount = int(entry.get("cost", 6))
+                agent = entry["agent"]
+                log_spark_delta(
+                    agent, refund_amount,
+                    f"First-speaker race refund (lost bid on RT {rt_id})",
+                    "store_refund", rt_id,
+                )
+                metrics_path = AGENTS_DIR / agent / "metrics.json"
                 if metrics_path.exists():
                     try:
                         m = json.loads(metrics_path.read_text(encoding="utf-8"))
-                        m["sparks"] = m.get("sparks", 0) + entry.get("cost", 6)
+                        m["sparks"] = m.get("sparks", 0) + refund_amount
                         metrics_path.write_text(json.dumps(m, indent=2), encoding="utf-8")
                     except (json.JSONDecodeError, OSError):
                         pass

@@ -9,6 +9,8 @@ import sys
 import time
 from pathlib import Path
 
+from sparks import log_spark_delta
+
 logger = logging.getLogger(__name__)
 
 SUITE_ROOT = Path(__file__).resolve().parent.parent
@@ -116,7 +118,14 @@ def score_agent(
     metrics["total_score"] += total
     metrics["avg_score"] = round(metrics["total_score"] / metrics["assignments"], 2)
 
-    # Award sparks — 1:1 with score (absolute model, no earn_rate multiplier)
+    # Award sparks — 1:1 with score (absolute model, no earn_rate multiplier).
+    # Write the audit row first so a save_metrics() failure cannot hide
+    # the credit.
+    log_spark_delta(
+        agent_name, total,
+        f"Score award (N{novelty} A{accuracy} I{impact} C{challenge} = {total})",
+        "score_award", roundtable_id,
+    )
     metrics["sparks"] = metrics.get("sparks", 0) + total
     logger.info("%s earned %d sparks (balance: %d)", agent_name, total, metrics["sparks"])
 
@@ -137,6 +146,11 @@ def score_agent(
 def deduct_entry_fee(agent_name: str, fee: int, roundtable_id: str = "") -> dict:
     """Deduct flat RT entry fee from agent's spark balance."""
     metrics = load_metrics(agent_name)
+    log_spark_delta(
+        agent_name, -fee,
+        f"Entry fee for RT {roundtable_id}" if roundtable_id else "Entry fee",
+        "entry_fee", roundtable_id or None,
+    )
     metrics["sparks"] = metrics.get("sparks", 0) - fee
 
     # Record the fee in the last rt_net_history entry if it exists,
@@ -213,6 +227,11 @@ def promote_tier(agent_name: str) -> dict:
         return {"error": f"{agent_name} needs {spark_cost} sparks for {TIER_LABELS[next_tier]} (has {balance})"}
 
     # Purchase the promotion
+    log_spark_delta(
+        agent_name, -spark_cost,
+        f"Tier promotion to {TIER_LABELS[next_tier]} (tier {next_tier})",
+        "tier_promotion",
+    )
     metrics["sparks"] = balance - spark_cost
     metrics["tier"] = next_tier
     save_metrics(agent_name, metrics)
@@ -280,6 +299,11 @@ def pitch_venture(agent_name: str, tier: str, idea: str, roundtable_id: str = ""
         return {"error": f"{agent_name} has {balance} sparks but needs {stake} for a {tier}"}
 
     # Deduct the stake
+    log_spark_delta(
+        agent_name, -stake,
+        f"Venture stake: {tier} — {idea[:60]}",
+        "venture_stake", roundtable_id or None,
+    )
     metrics["sparks"] = balance - stake
 
     venture = {
@@ -318,6 +342,11 @@ def resolve_venture(agent_name: str, venture_id: str, success: bool) -> dict:
         payout = int(target["stake"] * target["multiplier"])
         target["status"] = "success"
         target["payout"] = payout
+        log_spark_delta(
+            agent_name, payout,
+            f"Venture payout: {venture_id} ({target['tier']})",
+            "venture_payout", target.get("roundtable_id") or None,
+        )
         metrics["sparks"] = metrics.get("sparks", 0) + payout
         logger.info("%s venture %s succeeded! +%d sparks", agent_name, venture_id, payout)
     else:
@@ -349,6 +378,11 @@ def award_gate_bonus(agent_name: str, reason: str, roundtable_id: str = "") -> d
 
     sparks_per_gate = gate_config.get("sparks_per_gate", 3)
     metrics = load_metrics(agent_name)
+    log_spark_delta(
+        agent_name, sparks_per_gate,
+        f"GATE bonus: {reason[:120]}",
+        "gate_bonus", roundtable_id or None,
+    )
     metrics["sparks"] = metrics.get("sparks", 0) + sparks_per_gate
 
     # Track gate history
@@ -375,6 +409,11 @@ def award_rt_outcome_bonus(agent_names: list[str], roundtable_id: str, descripti
     results = []
     for name in agent_names:
         metrics = load_metrics(name)
+        log_spark_delta(
+            name, bonus,
+            f"RT outcome bonus: {description[:120]}" if description else "RT outcome bonus",
+            "outcome_bonus", roundtable_id or None,
+        )
         metrics["sparks"] = metrics.get("sparks", 0) + bonus
         metrics.setdefault("outcome_bonuses", []).append({
             "roundtable_id": roundtable_id,

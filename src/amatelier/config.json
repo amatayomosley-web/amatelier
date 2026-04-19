@@ -1,5 +1,5 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "llm": {
     "mode": "auto",
     "note": "auto | claude-code | anthropic-sdk | openai-compat. Auto picks the first available: claude CLI on PATH > ANTHROPIC_API_KEY > OPENAI_API_KEY > OPENROUTER_API_KEY. Override via AMATELIER_MODE env var.",

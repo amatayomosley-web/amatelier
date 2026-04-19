@@ -7,8 +7,91 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-04-19
+
 ### Added
+- **Spark ledger audit trail.** New `engine/sparks.py` exposes
+  `log_spark_delta(agent, amount, reason, category, roundtable_id)` — the
+  single choke point through which every mutation of `metrics["sparks"]`
+  now writes an immutable row to the `spark_ledger` table (allocated in
+  `migrations/003_spark_ledger.sql` but previously unwritten). Eleven
+  mutation sites are instrumented across the economy:
+  - `scorer.py` — `score_agent` → `score_award`; `deduct_entry_fee` →
+    `entry_fee`; `promote_tier` → `tier_promotion`; `pitch_venture` →
+    `venture_stake`; `resolve_venture` → `venture_payout`;
+    `award_gate_bonus` → `gate_bonus`; `award_rt_outcome_bonus` →
+    `outcome_bonus`.
+  - `store.py` — `purchase` → `store_purchase`; `submit_request` (private
+    marketplace request) → `request_fee`; `fulfill_request` (marketplace
+    payout) → `marketplace_payout`.
+  - `roundtable_runner.py` — `_resolve_first_speaker` refund → `store_refund`.
+  `sparks.CATEGORIES` is a 15-member frozenset of canonical tags
+  (`opening_balance`, `score_award`, `entry_fee`, `gate_bonus`,
+  `outcome_bonus`, `tier_promotion`, `venture_stake`, `venture_payout`,
+  `store_purchase`, `store_refund`, `request_fee`, `marketplace_payout`,
+  `refund_aborted_rt`, `admin_grant`, `admin_penalty`). Drift detection
+  becomes a single query:
+  `SELECT SUM(amount) FROM spark_ledger WHERE agent_name=?` must equal
+  `metrics.json.sparks` — any mismatch is a bug.
+
 - **JIT active-heuristics selection for agents.** Agents no longer read
+  their full learned-behaviors list every turn. At RT start the runner
+  semantic-matches the briefing against each behavior's `fires_when`
+  prose, picks the top 3-5 most relevant, and writes them to
+  `agents/{name}/active_heuristics_current.md`. The agent's
+  `load_agent_context()` reads that file and the selection lands at the
+  top of the system prompt (highest attention weight). Cleanup on RT end.
+  - `src/amatelier/engine/embeddings.py` (new) — pluggable embedder with
+    auto-detect fallback chain: OpenAI → Voyage → Gemini →
+    sentence-transformers → no-op. `set_embedder()` lets callers register
+    a custom provider. `Embedder` protocol is `runtime_checkable`.
+  - `src/amatelier/engine/evolver.py` — `save_behaviors()` auto-computes
+    `fires_when_embedding` for any behavior that has `fires_when` but no
+    embedding yet (idempotent). `add_learned_behavior()` gains an optional
+    `fires_when` parameter. CLI `behavior` subcommand gains `--fires-when`
+    and `--rt` flags.
+  - `src/amatelier/engine/roundtable_runner.py` — new
+    `select_active_heuristics(agent, briefing, top_k=5)` function. Ranking:
+    `cosine(briefing, fires_when_embedding) × confidence`. Falls back to
+    confidence-only when no embedder is configured.
+    `_write_active_heuristics` invoked before agent launches; cleanup in
+    the `finally` block.
+  - `src/amatelier/engine/claude_agent.py` + `gemini_agent.py` —
+    `load_agent_context()` prepends the active-heuristics file (placed
+    FIRST so it supersedes stale content in CLAUDE.md).
+  - `src/amatelier/engine/therapist.py` — parser accepts `FIRES_WHEN:` as
+    a follow-up field to `ADD BEHAVIOR:`; dispatch passes `--fires-when`
+    to the evolver CLI.
+  - `src/amatelier/agents/therapist/CLAUDE.md` — `SESSION OUTCOMES` format
+    documents the required `FIRES_WHEN` field with authoring guidance.
+  - `scripts/backfill_fires_when.py` (new) — one-time pass that authors
+    `fires_when` for all behaviors missing it, via Claude Sonnet (CLI),
+    then saves so embeddings populate automatically.
+- **Judge model escalation for Steward lookups.** The Judge can prefix a
+  research request with `sonnet:` (e.g., `[[request: sonnet: trace X
+  across Y]]`) to route the Steward subagent through the `sonnet_model`
+  configured in `config.steward.sonnet_model` instead of the default
+  `haiku_model`. Designed for multi-step code tracing, regex+fallback
+  parsing, and cross-module reconciliation — lookups where haiku has
+  been empirically weaker. Worker requests with the same prefix are
+  ignored (escalation is judge-only, role-gated cost control).
+  - `src/amatelier/engine/steward_dispatch.py`: `StewardTask._run`
+    parses the `sonnet:` prefix before the deterministic check, strips
+    it from the request text, and selects `sonnet_model` when the
+    caller is the judge.
+  - `src/amatelier/agents/judge/CLAUDE.md` §4: documents the syntax
+    with three worked examples and the rationale for when to use it.
+
+### Fixed
+- **Entry fee is no longer charged for aborted RTs.** The `deduct-fee`
+  subprocess call in `roundtable_runner.py` moves from pre-launch (before
+  any agent spawns) to post-scoring (after `digest["scoring_status"]` is
+  set). If the runner is killed during debate — infrastructure failure,
+  user interrupt, agent crash — participants pay nothing. The up-front
+  loop still computes `entry_fee_paid` for the digest manifest; only the
+  actual subprocess fire moves. Manual re-runs of `judge_scorer.py` do
+  not re-trigger fees, because fees are invoked in the runner, not the
+  scorer. Agents no longer read
   their full learned-behaviors list every turn. At RT start the runner
   semantic-matches the briefing against each behavior's `fires_when`
   prose, picks the top 3-5 most relevant, and writes them to

@@ -15,7 +15,7 @@ import pytest
 def test_package_imports() -> None:
     import amatelier
 
-    assert amatelier.__version__ == "0.4.0"
+    assert amatelier.__version__ == "0.5.0"
     assert amatelier.AMATELIER_ROOT.exists()
     assert amatelier.REPO_ROOT.exists()
 
@@ -51,7 +51,7 @@ def test_config_json_schema() -> None:
     from amatelier import paths
 
     data = json.loads(paths.bundled_config().read_text(encoding="utf-8"))
-    assert data["version"] == "0.4.0"
+    assert data["version"] == "0.5.0"
     assert "llm" in data
     assert data["llm"]["mode"] in ("auto", "claude-code", "anthropic-sdk", "openai-compat")
     # Filter comment keys (prefixed _) — per worker_registry filtering logic.
@@ -102,7 +102,7 @@ def test_cli_version(capsys: pytest.CaptureFixture[str]) -> None:
     exit_code = main(["--version"])
     assert exit_code == 0
     captured = capsys.readouterr()
-    assert "0.4.0" in captured.out
+    assert "0.5.0" in captured.out
 
 
 def test_cli_help(capsys: pytest.CaptureFixture[str]) -> None:
