@@ -6,18 +6,18 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Amatayo Standard](https://img.shields.io/badge/Amatayo%20Standard-v1.0-blueviolet)](https://github.com/amatayomosley-web/amatelier/blob/main/CLAUDE.md)
 
-> A self-evolving multi-model AI team. Runs in [Claude Code](https://docs.anthropic.com/en/docs/claude-code) **or** with any API you bring.
+> A self-evolving multi-model AI team. Runs in [Claude Code](https://docs.anthropic.com/en/docs/claude-code), or with any API you bring.
 
 <p align="center">
   <img src="examples/sessions/2026-04-18-self-host-vs-api/screenshots/02-gate.svg" width="800" alt="Live roundtable watcher showing a Judge GATE moment">
 </p>
 
 <p align="center"><em>
-  A real roundtable — the Judge awards <strong>marcus</strong> a GATE mid-debate for reframing the self-host decision around ownable fine-tuned weights.<br/>
+  A real roundtable. The Judge awards <strong>marcus</strong> a GATE mid-debate for reframing the self-host decision around ownable fine-tuned weights.<br/>
   See the full <a href="examples/sessions/2026-04-18-self-host-vs-api/">recorded session</a> (transcript, digest, four screenshots, briefing).
 </em></p>
 
-Ten agents with distinct personalities compete in structured roundtable discussions, earn sparks, buy skills, and evolve through therapist-led debrief sessions. Cross-model — Claude Sonnet, Claude Haiku, and Gemini Flash by default; or any OpenAI-compatible provider you configure.
+Ten agents with distinct personalities compete in structured roundtable discussions, earn sparks, buy skills, and evolve through therapist-led debrief sessions. Cross-model by default: Claude Sonnet, Claude Haiku, and Gemini Flash; or any OpenAI-compatible provider you configure.
 
 **Full documentation:** [amatayomosley-web.github.io/amatelier](https://amatayomosley-web.github.io/amatelier/) · **LLM context:** [llms-full.txt](https://raw.githubusercontent.com/amatayomosley-web/amatelier/main/llms-full.txt)
 
@@ -52,11 +52,11 @@ Amatelier auto-detects three backends (`claude-code`, `anthropic-sdk`, `openai-c
 
 | Agent | Model | Role |
 |-------|-------|------|
-| Elena | Sonnet 4 | Worker — synthesis and architecture. |
-| Marcus | Sonnet 4 | Worker — challenge and exploit detection. |
-| Clare | Haiku 4.5 | Fast worker — concise, structural analysis. |
-| Simon | Haiku 4.5 | Fast worker — triage, fix sequencing. |
-| Naomi | Gemini Flash | Cross-model worker — catches Claude blind spots. |
+| Elena | Sonnet 4 | Synthesis and architecture worker. |
+| Marcus | Sonnet 4 | Challenge and exploit-detection worker. |
+| Clare | Haiku 4.5 | Fast worker for concise structural analysis. |
+| Simon | Haiku 4.5 | Fast worker for triage and fix sequencing. |
+| Naomi | Gemini Flash | Cross-model worker; catches Claude blind spots. |
 
 ---
 
@@ -64,14 +64,14 @@ Amatelier auto-detects three backends (`claude-code`, `anthropic-sdk`, `openai-c
 
 An 8-step workflow, orchestrated by the runner:
 
-1. **REQUEST** — You state a goal
-2. **BRIEF** — Admin writes a briefing file (`briefing-xxx.md`) delegating to Assistant
-3. **ROUNDTABLE** — Assistant spawns workers + Judge. Workers discuss in a live SQLite-backed chat; Judge moderates.
-4. **DIGEST** — Assistant compresses the transcript into a structured digest for Admin
-5. **DECIDE** — Admin reads digest, accepts / overrides / requests another round
-6. **EXECUTE** — Approved plan is built by workers in their own terminals
-7. **DISTILL** — CAPTURE / FIX / DERIVE skills are extracted from the transcript
-8. **DEBRIEF** — Therapist interviews each worker, updates their MEMORY and evolves their behaviors
+1. **REQUEST.** You state a goal.
+2. **BRIEF.** Admin writes a briefing file (`briefing-xxx.md`) delegating to Assistant.
+3. **ROUNDTABLE.** Assistant spawns workers plus Judge. Workers discuss in a live SQLite-backed chat; Judge moderates.
+4. **DIGEST.** Assistant compresses the transcript into a structured digest for Admin.
+5. **DECIDE.** Admin reads the digest and accepts, overrides, or requests another round.
+6. **EXECUTE.** Approved plan is built by workers in their own terminals.
+7. **DISTILL.** CAPTURE, FIX, and DERIVE skills are extracted from the transcript.
+8. **DEBRIEF.** Therapist interviews each worker, updates their MEMORY, and evolves their behaviors.
 
 ---
 
@@ -81,7 +81,7 @@ An 8-step workflow, orchestrated by the runner:
 
 ```bash
 export ANTHROPIC_API_KEY=<your key>
-export GEMINI_API_KEY=<your key>         # for Naomi; optional — use --skip-naomi to omit
+export GEMINI_API_KEY=<your key>         # for Naomi; optional, use --skip-naomi to omit
 amatelier roundtable --topic "Your topic" --briefing path/to/brief.md --budget 3 --summary
 ```
 
@@ -92,7 +92,7 @@ export OPENROUTER_API_KEY=<your key>
 amatelier roundtable --topic "Your topic" --briefing path/to/brief.md --budget 3 --summary
 ```
 
-OpenRouter gives you 100+ models under one key — Claude, GPT, Gemini, DeepSeek, Llama, everything.
+OpenRouter exposes 100+ models through a single API key, including Claude, GPT, Gemini, DeepSeek, and Llama.
 
 ### Already running Claude Code?
 
@@ -100,7 +100,7 @@ OpenRouter gives you 100+ models under one key — Claude, GPT, Gemini, DeepSeek
 amatelier roundtable --topic "Your topic" --briefing path/to/brief.md --budget 3 --summary
 ```
 
-No API keys needed — atelier uses your Claude Code session.
+No API keys needed; atelier uses your Claude Code session.
 
 ### Verify your setup
 
@@ -113,8 +113,8 @@ See the [install guide](docs/guides/install.md) for DevContainer, local Ollama, 
 
 ## Pip vs clone
 
-- **`pip install amatelier`** — self-contained, runs out of the box, bundled docs included. Ideal for users.
-- **`git clone`** — everything above plus `examples/` (sample briefings), `tests/`, CI workflows, LLM-facing docs. Ideal for contributors and remixers.
+- **`pip install amatelier`**: self-contained, runs out of the box, bundled docs included. Ideal for users.
+- **`git clone`**: everything above plus `examples/` (sample briefings), `tests/`, CI workflows, LLM-facing docs. Ideal for contributors and remixers.
 
 Develop from source:
 
@@ -126,7 +126,7 @@ make test
 amatelier roundtable --topic "hello" --briefing examples/briefings/hello-world.md --budget 1 --summary
 ```
 
-Or open in a DevContainer / GitHub Codespace — the `.devcontainer/` config handles everything.
+Or open in a DevContainer or GitHub Codespace. The `.devcontainer/` config handles the setup.
 
 ---
 
@@ -144,12 +144,12 @@ Each roundtable is a small market. Agents pay an entry fee, earn sparks by scori
 
 ### Scoring dimensions (Judge grades, 0–3 scale per dimension, or 10 for a grand insight)
 
-- **Novelty** — did you say something the group didn't already know?
-- **Accuracy** — is what you said correct and supported?
-- **Impact** — did it change the group's direction or the final output?
-- **Challenge** — did you push back on a weak consensus with evidence?
+- **Novelty.** Did you say something the group didn't already know?
+- **Accuracy.** Is what you said correct and supported?
+- **Impact.** Did it change the group's direction or the final output?
+- **Challenge.** Did you push back on a weak consensus with evidence?
 
-Typical contribution scores 1 in each. Average RT total is 4–6. A 10 in any single dimension requires a genuinely load-bearing insight — rare by design.
+Typical contribution scores 1 in each. Average RT total is 4–6. A 10 in any single dimension requires a genuinely load-bearing insight, which is rare by design.
 
 ### Penalties
 
@@ -162,8 +162,8 @@ Typical contribution scores 1 in each. Average RT total is 4–6. A 10 in any si
 
 ### Bonuses
 
-- **Gate bonus** — Judge can flag exceptional reframes with `GATE: agent — reason` (max 3 per RT, +3 sparks each)
-- **Venture bonus** — 5 sparks awarded when a proposal extracted from the RT is implemented
+- **Gate bonus.** Judge can flag exceptional reframes with `GATE: agent — reason` (max 3 per RT, +3 sparks each).
+- **Venture bonus.** 5 sparks awarded when a proposal extracted from the RT is implemented.
 
 See [`protocols/spark-economy.md`](protocols/spark-economy.md) and [`protocols/competition.md`](protocols/competition.md) for the full rules.
 
@@ -171,15 +171,15 @@ See [`protocols/spark-economy.md`](protocols/spark-economy.md) and [`protocols/c
 
 ## The Skill Store
 
-Agents spend sparks on purchasable skills and consumable items. Eight foundational skills ship in the catalog (`store/catalog.json`, templates in `store/skill_templates.py`). Skill delivery happens automatically after purchase — the skill content gets appended to the agent's `MEMORY.md`.
+Agents spend sparks on purchasable skills and consumable items. Eight foundational skills ship in the catalog (`store/catalog.json`, templates in `store/skill_templates.py`). Skill delivery happens automatically after purchase; the skill content gets appended to the agent's `MEMORY.md`.
 
 ### Skill distillation
 
 After each roundtable, a separate Sonnet call extracts skill candidates from the transcript:
 
-- **CAPTURE** — an observed technique worth remembering
-- **FIX** — an anti-pattern correction
-- **DERIVE** — a new concept synthesized from multiple contributions
+- **CAPTURE.** An observed technique worth remembering.
+- **FIX.** An anti-pattern correction.
+- **DERIVE.** A new concept synthesized from multiple contributions.
 
 Admin curates the best 3–5 per RT for the shared skill pool. DERIVE skills are also appended to `novel_concepts.json` with five-axis taxonomy classification (structural category, trigger phase, primary actor, problem nature, agent dynamic).
 
@@ -189,9 +189,9 @@ See [`protocols/distillation.md`](protocols/distillation.md).
 
 ## The Steward
 
-The Steward is an empirical-grounding system. Agents request data during debates using `[[request: ...]]` tags in their messages. The runner detects the tag, spawns an ephemeral subagent with `Read` / `Grep` / `Glob` tools, runs the lookup against files registered in the briefing, and injects the result back into the chat.
+The Steward is an empirical-grounding system. Agents request data during debates using `[[request: ...]]` tags in their messages. The runner detects the tag, spawns an ephemeral subagent with `Read`, `Grep`, and `Glob` tools, runs the lookup against files registered in the briefing, and injects the result back into the chat.
 
-This eliminates agents fabricating numbers or quoting files they haven't read. Every empirical claim must either cite a Steward research result or show inline mathematical derivation — the Judge enforces this distinction.
+This eliminates agents fabricating numbers or quoting files they haven't read. Every empirical claim must either cite a Steward research result or show inline mathematical derivation; the Judge enforces this distinction.
 
 Research window: before Round 1 begins, every worker gets 3 **free** concurrent Steward requests to ground their opening positions. Mid-debate requests cost against a per-agent budget (default 3 per RT).
 
@@ -203,9 +203,9 @@ See [`STEWARD.md`](STEWARD.md) for the full design.
 
 Opus-tier coaching after each roundtable. The Therapist runs a 2–4 turn private interview with each worker, using a structured framework:
 
-- **GROW + AAR** — Goal, Reality, Options, Way forward, then After-Action Review
-- **SBI feedback** — Situation, Behavior, Impact
-- **OARS motivational interviewing** — Open questions, Affirmations, Reflective listening, Summary
+- **GROW + AAR.** Goal, Reality, Options, Way forward, then After-Action Review.
+- **SBI feedback.** Situation, Behavior, Impact.
+- **OARS motivational interviewing.** Open questions, Affirmations, Reflective listening, Summary.
 
 Outputs per session:
 - Behavioral deltas (`behaviors.json`)
@@ -213,7 +213,7 @@ Outputs per session:
 - Session summary (`sessions/<rt_id>.md`)
 - Optional trait adjustments and goal aging
 
-Over dozens of roundtables, each agent's persona evolves — they develop specializations, learn which rhetorical moves work for them, and their instructions sharpen without direct engineering.
+Over dozens of roundtables, each agent's persona evolves. They develop specializations, learn which rhetorical moves work for them, and their instructions sharpen without direct engineering.
 
 See [`protocols/debrief.md`](protocols/debrief.md) and [`protocols/learning.md`](protocols/learning.md).
 
@@ -227,7 +227,7 @@ While a roundtable runs you can tail the chat in real time:
 python tools/watch_roundtable.py
 ```
 
-This opens the latest roundtable's SQLite table and streams new messages as they arrive. Shows speaker, message, and Judge interventions. Zero API cost — it's just reading the database.
+This opens the latest roundtable's SQLite table and streams new messages as they arrive. Shows speaker, message, and Judge interventions. Zero API cost; it's just reading the database.
 
 ---
 
@@ -235,23 +235,23 @@ This opens the latest roundtable's SQLite table and streams new messages as they
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full technical picture. Quick map:
 
-- **`engine/`** — Python orchestrators. `roundtable_runner.py` is the entry point.
-- **`roundtable-server/`** — SQLite-backed live chat layer (`db_client.py`, `server.py`) + diagnostics
-- **`agents/`** — Per-agent directories with `CLAUDE.md` (operating instructions) and `IDENTITY.md` (persona seed). Runtime state lives here too but is gitignored.
-- **`protocols/`** — 11 on-demand protocol docs loaded only when a given workflow needs them
-- **`store/`** — Skill catalog, spark economy state
-- **`tools/`** — Live watcher
-- **`tests/`** — Integration tests
-- **`shared-skills/`** — Curated distilled skills (post-Admin curation)
+- **`engine/`**: Python orchestrators. `roundtable_runner.py` is the entry point.
+- **`roundtable-server/`**: SQLite-backed live chat layer (`db_client.py`, `server.py`) plus diagnostics.
+- **`agents/`**: per-agent directories with `CLAUDE.md` (operating instructions) and `IDENTITY.md` (persona seed). Runtime state lives here too but is gitignored.
+- **`protocols/`**: 11 on-demand protocol docs loaded only when a given workflow needs them.
+- **`store/`**: skill catalog, spark economy state.
+- **`tools/`**: live watcher.
+- **`tests/`**: integration tests.
+- **`shared-skills/`**: curated distilled skills (post-Admin curation).
 
 ---
 
 ## Prerequisites
 
-- **Claude Code** — [install guide](https://docs.anthropic.com/en/docs/claude-code)
+- **Claude Code.** [Install guide](https://docs.anthropic.com/en/docs/claude-code).
 - **Python 3.10+**
-- **google-generativeai** ≥ 1.51.0 — for the Gemini (Naomi) agent
-- **Gemini API key** — free tier is sufficient for most usage
+- **google-generativeai** ≥ 1.51.0, for the Gemini (Naomi) agent.
+- **Gemini API key.** Free tier is sufficient for most usage.
 
 ```bash
 pip install google-generativeai
@@ -261,4 +261,4 @@ pip install google-generativeai
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
