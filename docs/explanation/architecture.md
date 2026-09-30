@@ -420,7 +420,7 @@ Structure (abridged):
     "timeout_seconds": 120,
     "max_response_tokens": 2000,
     "haiku_model": "claude-haiku-4-5-20251001",
-    "sonnet_model": "claude-sonnet-4-20250514"
+    "sonnet_model": "claude-sonnet-5-5"
   }
 }
 ```

@@ -151,7 +151,7 @@ Briefings without this section → Steward disabled for that RT.
 | Timeout | 120 seconds | `config.json → steward.timeout_seconds` |
 | Max response tokens | 2000 | `config.json → steward.max_response_tokens` |
 | Haiku model | claude-haiku-4-5-20251001 | `config.json → steward.haiku_model` |
-| Sonnet model | claude-sonnet-4-20250514 | `config.json → steward.sonnet_model` |
+| Sonnet model | claude-sonnet-5-5 | `config.json → steward.sonnet_model` |
 
 ## Implementation
 
