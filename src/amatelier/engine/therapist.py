@@ -781,33 +781,16 @@ def _build_agent_brief(agent_name: str, state: dict) -> str:
     except Exception as e:
         logger.warning("Private requests unavailable for %s: %s", agent_name, e)
 
-    # Model cost analysis
-    model_costs = {"haiku": 2, "flash": 2, "sonnet": 5, "opus": 10}
-    current_model = "haiku"  # default
-    config_path = SUITE_ROOT / "config.json"
-    if config_path.exists():
-        try:
-            cfg = json.loads(config_path.read_text(encoding="utf-8"))
-            worker_cfg = cfg.get("team", {}).get("workers", {}).get(agent_name, {})
-            model_str = worker_cfg.get("model", "")
-            if "opus" in model_str:
-                current_model = "opus"
-            elif "sonnet" in model_str:
-                current_model = "sonnet"
-            elif "gemini" in model_str and "pro" in model_str:
-                current_model = "opus"  # Gemini Pro ≈ Opus cost tier
-            elif "gemini" in model_str or "flash" in model_str:
-                current_model = "flash"
-        except (json.JSONDecodeError, OSError):
-            pass
-    # No automatic tier overrides — upgrades are request-based
-    cost_per_round = model_costs.get(current_model, 2)
+    # Model cost analysis — the entry fee the runner actually charges this seat
+    # (a hard-coded table used to price sonnet at 5 and flash at 2 against
+    # configured fees of 8 and 5, so net-negative agents read as healthy).
+    current_model, cost_per_round = _seat_fee(agent_name)
     avg_score = metrics.get("avg_score", 0)
     net_per_round = avg_score - cost_per_round
     cost_analysis = (
-        f"Running as: {current_model} (cost: -{cost_per_round} sparks/round)\n"
-        f"Avg score: {avg_score}/12 -> avg earning: +{avg_score} sparks/round\n"
-        f"Net per round: {'+' if net_per_round >= 0 else ''}{net_per_round:.1f} sparks\n"
+        f"Running as: {current_model} (entry fee: -{cost_per_round} sparks per RT)\n"
+        f"Avg score: {avg_score}/12 -> avg earning: +{avg_score} sparks per RT\n"
+        f"Net per RT: {'+' if net_per_round >= 0 else ''}{net_per_round:.1f} sparks\n"
     )
     if net_per_round < 0:
         cost_analysis += "WARNING: Operating at a loss. Consider downgrading model for non-specialty topics."
@@ -833,7 +816,7 @@ def _build_agent_brief(agent_name: str, state: dict) -> str:
 
     snapshot = f"""AGENT SNAPSHOT — {agent_name} (this is computed ground truth):
   Tier: {tier} ({tier_labels.get(tier, 'Unknown')}) | Assignments: {metrics.get('assignments', 0)}
-  Sparks: {metrics.get('sparks', 0)} | Avg Score: {avg_score}/12 | Net/round: {'+' if net_per_round >= 0 else ''}{net_per_round:.1f}
+  Sparks: {metrics.get('sparks', 0)} | Avg Score: {avg_score}/12 | Net per RT: {'+' if net_per_round >= 0 else ''}{net_per_round:.1f}
   Model: {current_model}
   Active skills: {active_skills_text}{retired_skills_text}
   Active behaviors: {behavior_count}"""
@@ -1376,6 +1359,47 @@ def _mark_private_requests_addressed(agent_name: str, resolution: str = "address
 
 # ── Session Runner ───────────────────────────────────────────────────────────
 
+def _load_active_config() -> dict:
+    """The config in force: the user's override if present, else the bundled one."""
+    try:
+        from amatelier import paths
+        user_cfg = paths.user_config_override()
+        src = user_cfg if user_cfg.exists() else paths.bundled_config()
+        return json.loads(src.read_text(encoding="utf-8")) if src.exists() else {}
+    except Exception:
+        return {}
+
+
+def _seat_fee(agent_name: str) -> tuple[str, int]:
+    """(tier, entry fee) for a seat, priced the way roundtable_runner.run_roundtable
+    charges it: naomi's tier follows gemini.model, every other seat's follows its
+    configured model; the fee is competition.entry_fees[tier]."""
+    cfg = _load_active_config()
+    fees = cfg.get("competition", {}).get("entry_fees", {})
+    if agent_name == "naomi":
+        m = str(cfg.get("gemini", {}).get("model", ""))
+        tier = "opus" if "pro" in m else ("sonnet" if "flash" in m and "3" in m else "flash")
+    else:
+        worker = cfg.get("team", {}).get("workers", {}).get(agent_name, {})
+        model_str = str(worker.get("model", "")) if isinstance(worker, dict) else ""
+        tier = next((t for t in ("opus", "sonnet", "haiku") if t in model_str), "sonnet")
+    fee = fees.get(tier, fees.get("haiku", 3))
+    return tier, int(fee) if isinstance(fee, (int, float)) else 0
+
+
+def _report_path(rt_id: str, digest: dict, target_agents: list[str]) -> Path:
+    """Where a therapist report goes: under the user data directory (never the
+    bundled package), therapist-<rt>.md for a run covering every worker and
+    therapist-<rt>-<agents>.md for a partial run, so parallel one-agent runs
+    don't overwrite each other."""
+    workers = sorted(n for n in digest.get("contributions", {})
+                     if n not in ("runner", "assistant", "judge"))
+    report_dir = WRITE_ROOT / "reports"
+    if workers and sorted(target_agents) == workers:
+        return report_dir / f"therapist-{rt_id}.md"
+    return report_dir / f"therapist-{rt_id}-{'-'.join(target_agents)}.md"
+
+
 def _resolve_agent_model(agent_name: str) -> str:
     """Resolve which model to use for the agent in the debrief.
 
@@ -1580,9 +1604,8 @@ def run_therapist(digest_path: str, agents: list[str] | None = None, max_turns: 
 
     # Generate and save the therapist report
     report = _generate_report(rt_id, digest, target_agents, results)
-    report_dir = SUITE_ROOT / "reports"
-    report_dir.mkdir(parents=True, exist_ok=True)
-    report_path = report_dir / f"therapist-{rt_id}.md"
+    report_path = _report_path(rt_id, digest, target_agents)
+    report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(report, encoding="utf-8")
     logger.info("Therapist report saved to %s", report_path)
 
