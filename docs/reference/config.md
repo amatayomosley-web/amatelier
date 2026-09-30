@@ -63,6 +63,7 @@ Controls which backend handles calls and how role names map to provider model ID
 |---|---|---|---|
 | `mode` | string | `"auto"` | `auto`, `claude-code`, `anthropic-sdk`, or `openai-compat`. Overridden by `AMATELIER_MODE`. `auto` runs the selection order (claude CLI > Anthropic key > OpenAI key > OpenRouter key). |
 | `note` | string | — | Human-readable comment. Ignored by the engine. |
+| `claude_cli_isolation` | bool | `true` | In `claude-code` mode, run every `claude` CLI call with `--setting-sources local` and all hooks disabled, so your own Claude Code hooks, settings and `CLAUDE.md` files never enter an agent's context. `false` restores the CLI's default setting sources. |
 | `model_map` | object | `{"sonnet": "claude-sonnet-4-20250514", "haiku": "claude-haiku-4-5-20251001", "opus": "claude-opus-4-20250514"}` | Role → model ID. Merged over `CLAUDE_DEFAULT_MAP` for `claude-code` and `anthropic-sdk` modes. |
 | `openai_compat` | object | see below | Config specific to OpenAI-compatible providers. |
 

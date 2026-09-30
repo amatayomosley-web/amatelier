@@ -887,10 +887,11 @@ def _call_llm(prompt: str, model: str) -> str:
     except Exception as e:
         logger.debug("Backend unavailable for therapist call, falling back to CLI: %s", e)
 
+    from amatelier.llm_backend import claude_cli_isolation_args
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
     result = subprocess.run(
-        ["claude", "-p", "--model", model,
+        ["claude", "-p", "--model", model, *claude_cli_isolation_args(),
          "--no-session-persistence", "--output-format", "text",
          "--disable-slash-commands", "--dangerously-skip-permissions",
          "--max-budget-usd", "5.00"],

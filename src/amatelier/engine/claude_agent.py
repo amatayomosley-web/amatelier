@@ -329,12 +329,14 @@ def call_claude(system_prompt: str, prompt: str, agent_name: str, model: str) ->
     agent_def_path = defs_dir / f"{agent_name}.json"
     agent_def_path.write_text(agent_def, encoding="utf-8")
 
+    from amatelier.llm_backend import claude_cli_isolation_args
     cmd = [
         "claude",
         "-p",
         "--model", model,
         "--agent", agent_name,
         "--agents", str(agent_def_path),
+        *claude_cli_isolation_args(),
         "--no-session-persistence",
         "--output-format", "text",
         "--disable-slash-commands",

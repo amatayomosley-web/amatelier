@@ -34,6 +34,7 @@ A self-evolving multi-model AI team. Ten persona agents debate topics in a SQLit
   transport: prompt on stdin; system prompt and agent definitions passed as files (--append-system-prompt-file, --agents <path>), never on the command line
   agent_context_limit: config roundtable.context_limit (default 60000 characters; a cut is logged)
   call_timeout: config roundtable.cli_timeout_seconds (default 600; the process tree is killed on timeout)
+  isolation: every claude CLI call carries amatelier.llm_backend.claude_cli_isolation_args() — --setting-sources local and --settings {"disableAllHooks": true} — so the user's hooks, settings and CLAUDE.md files never reach an agent; config llm.claude_cli_isolation false turns it off
   implementation: amatelier.llm_backend.ClaudeCLIBackend
   default_model_map: {sonnet: claude-sonnet-4-20250514, haiku: claude-haiku-4-5-20251001, opus: claude-opus-4-20250514}
 

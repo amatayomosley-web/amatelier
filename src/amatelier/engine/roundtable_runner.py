@@ -341,10 +341,11 @@ ROUND {round_num} TRANSCRIPT:
         logger.debug("Backend unavailable for haiku summary, falling back to CLI: %s", e)
 
     try:
+        from amatelier.llm_backend import claude_cli_isolation_args
         env = os.environ.copy()
         env["PYTHONIOENCODING"] = "utf-8"
         result = subprocess.run(
-            ["claude", "-p", "--model", "haiku",
+            ["claude", "-p", "--model", "haiku", *claude_cli_isolation_args(),
              "--no-session-persistence", "--output-format", "text",
              "--disable-slash-commands", "--dangerously-skip-permissions",
              "--max-budget-usd", "5.00"],
@@ -1740,10 +1741,11 @@ TRANSCRIPT:
 
     if raw is None:
         try:
+            from amatelier.llm_backend import claude_cli_isolation_args
             env = os.environ.copy()
             env["PYTHONIOENCODING"] = "utf-8"
             result = subprocess.run(
-                ["claude", "-p", "--model", "sonnet",
+                ["claude", "-p", "--model", "sonnet", *claude_cli_isolation_args(),
                  "--no-session-persistence", "--output-format", "text",
                  "--disable-slash-commands", "--dangerously-skip-permissions",
                  "--max-budget-usd", "5.00"],

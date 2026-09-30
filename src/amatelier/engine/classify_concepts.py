@@ -115,10 +115,11 @@ CONCEPTS:
         logger.debug("Backend unavailable for classify, falling back to CLI: %s", e)
 
     try:
+        from amatelier.llm_backend import claude_cli_isolation_args
         env = os.environ.copy()
         env["PYTHONIOENCODING"] = "utf-8"
         result = subprocess.run(
-            ["claude", "-p", "--model", "sonnet",
+            ["claude", "-p", "--model", "sonnet", *claude_cli_isolation_args(),
              "--no-session-persistence", "--output-format", "text",
              "--disable-slash-commands", "--dangerously-skip-permissions",
              "--max-budget-usd", "2.00"],

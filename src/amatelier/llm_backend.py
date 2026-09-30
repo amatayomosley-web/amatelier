@@ -158,7 +158,7 @@ class ClaudeCLIBackend:
         resolved = self._resolve(model)
         # The prompt goes on stdin and the system prompt in a file: neither
         # may sit on the command line, which Windows caps at 32,767 characters.
-        cmd = [self.binary, "-p", "--model", resolved]
+        cmd = [self.binary, "-p", "--model", resolved, *claude_cli_isolation_args()]
         if effort in ("low", "medium", "high", "max"):
             cmd.extend(["--effort", effort])
             logger.info("claude-code: --effort=%s", effort)
@@ -619,6 +619,29 @@ def _load_config() -> dict:
         return json.loads(src.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return {}
+
+
+# Options that keep the user's own Claude Code setup out of every claude CLI
+# call amatelier makes: no hooks at all, and no settings or CLAUDE.md memory
+# beyond the working folder's local settings. Without them each call ran the
+# user's hooks and loaded every CLAUDE.md above its working folder (a CLAUDE.md
+# in any parent folder loads as project memory), so the user's own
+# instructions entered the agents' context. `--setting-sources project,local`
+# alone is not enough: project hooks still run and that CLAUDE.md still loads.
+CLAUDE_CLI_ISOLATION_ARGS = [
+    "--setting-sources", "local",
+    "--settings", '{"disableAllHooks": true}',
+]
+
+
+def claude_cli_isolation_args() -> list[str]:
+    """CLI options that isolate an agent call from the user's own Claude Code setup.
+
+    Returns an empty list when config ``llm.claude_cli_isolation`` is false.
+    """
+    if _load_config().get("llm", {}).get("claude_cli_isolation", True) is False:
+        return []
+    return list(CLAUDE_CLI_ISOLATION_ARGS)
 
 
 def _auto_detect() -> str:

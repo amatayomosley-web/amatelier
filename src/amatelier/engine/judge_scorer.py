@@ -187,7 +187,8 @@ def _call_sonnet(prompt: str) -> str | None:
     env["PYTHONIOENCODING"] = "utf-8"
 
     try:
-        cmd = ["claude", "-p", "--model", "sonnet",
+        from amatelier.llm_backend import claude_cli_isolation_args
+        cmd = ["claude", "-p", "--model", "sonnet", *claude_cli_isolation_args(),
                "--no-session-persistence", "--output-format", "json",
                "--disable-slash-commands", "--dangerously-skip-permissions",
                "--max-budget-usd", "5.00"]

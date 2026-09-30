@@ -830,11 +830,12 @@ Observation rules:
 
 
 def _call_sonnet(prompt: str) -> str:
+    from amatelier.llm_backend import claude_cli_isolation_args
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
     try:
         result = subprocess.run(
-            ["claude", "-p", "--model", "sonnet",
+            ["claude", "-p", "--model", "sonnet", *claude_cli_isolation_args(),
              "--no-session-persistence", "--output-format", "text",
              "--disable-slash-commands", "--dangerously-skip-permissions",
              "--max-budget-usd", MAX_BUDGET_USD],
