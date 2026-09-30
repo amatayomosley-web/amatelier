@@ -31,6 +31,9 @@ A self-evolving multi-model AI team. Ten persona agents debate topics in a SQLit
   detection: shutil.which("claude") is not None
   prereqs: claude CLI binary on PATH
   provider: subprocess call to claude CLI
+  transport: prompt on stdin; system prompt and agent definitions passed as files (--append-system-prompt-file, --agents <path>), never on the command line
+  agent_context_limit: config roundtable.context_limit (default 60000 characters; a cut is logged)
+  call_timeout: config roundtable.cli_timeout_seconds (default 600; the process tree is killed on timeout)
   implementation: amatelier.llm_backend.ClaudeCLIBackend
   default_model_map: {sonnet: claude-sonnet-4-20250514, haiku: claude-haiku-4-5-20251001, opus: claude-opus-4-20250514}
 

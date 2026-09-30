@@ -50,7 +50,8 @@
   "roundtable": {
     "token_budget": 15000,
     "max_rounds": 3,
-    "context_limit": 8000,
+    "context_limit": 60000,
+    "cli_timeout_seconds": 600,
     "db_path": "roundtable-server/roundtable.db"
   },
   "competition": {

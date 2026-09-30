@@ -309,20 +309,32 @@ def call_claude(system_prompt: str, prompt: str, agent_name: str, model: str) ->
 
     # Legacy CLI path
     config = _load_config()
-    context_limit = config.get("roundtable", {}).get("context_limit", 8000)
+    rt_cfg = config.get("roundtable", {})
+    context_limit = rt_cfg.get("context_limit", 60000)
+    if len(system_prompt) > context_limit:
+        logger.warning("Context for %s cut from %d to %d chars (roundtable.context_limit)",
+                       agent_name, len(system_prompt), context_limit)
     agent_def = json.dumps({
         agent_name: {
             "description": f"Roundtable agent {agent_name}",
             "prompt": system_prompt[:context_limit],
         }
     })
+    # The definition goes in a file, not on the command line: Windows caps a
+    # command line at 32,767 characters and an agent's context is larger. In
+    # --print mode the CLI reads --agents from a file path. (The inline form,
+    # with an 8,000-character cap, cut every agent's identity short.)
+    defs_dir = WRITE_ROOT / "agent-defs"
+    defs_dir.mkdir(parents=True, exist_ok=True)
+    agent_def_path = defs_dir / f"{agent_name}.json"
+    agent_def_path.write_text(agent_def, encoding="utf-8")
 
     cmd = [
         "claude",
         "-p",
         "--model", model,
         "--agent", agent_name,
-        "--agents", agent_def,
+        "--agents", str(agent_def_path),
         "--no-session-persistence",
         "--output-format", "text",
         "--disable-slash-commands",
@@ -337,9 +349,10 @@ def call_claude(system_prompt: str, prompt: str, agent_name: str, model: str) ->
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
 
-    # Lowered from 180s — if a turn exceeds 120s the CLI is almost certainly
-    # throttled; we'd rather abort and retry than sit on a stalled handle.
-    cli_timeout = 120
+    # A turn that outlives this is killed with its whole process tree. Long
+    # debate turns on a full context legitimately run past two minutes, so the
+    # limit is configurable (roundtable.cli_timeout_seconds).
+    cli_timeout = rt_cfg.get("cli_timeout_seconds", 600)
 
     popen_kwargs: dict = dict(
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,

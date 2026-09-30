@@ -119,7 +119,8 @@ Runner-level budgets and the SQLite database location.
 |---|---|---|---|
 | `token_budget` | int | `15000` | Shared token pool per RT. Informational — not enforced by the runner in this release. |
 | `max_rounds` | int | `3` | Hard cap on debate rounds when `--max-rounds` is not passed. |
-| `context_limit` | int | `8000` | Tokens of prior RT context surfaced to each agent via `claude_agent.py`. |
+| `context_limit` | int | `60000` | Maximum characters of an agent's own context (identity, memory, recent RT context) passed to it in `claude-code` mode. A longer context is cut and the cut is logged. The context travels in a file, not on the command line. |
+| `cli_timeout_seconds` | int | `600` | Seconds a worker's `claude` CLI call may run in `claude-code` mode before its whole process tree is killed. |
 | `db_path` | string | `"roundtable-server/roundtable.db"` | Repo-relative path to the SQLite DB. Actual runtime path is resolved by `paths.user_db_path()` (platform user-data dir). This value is informational. |
 | `gemini_refresh_round` | int | `5` (code default) | Round number at which Naomi's Gemini process is recycled. Not in the bundled `config.json`; read via `config.get(..., 5)` fallback. Set explicitly to override. |
 
