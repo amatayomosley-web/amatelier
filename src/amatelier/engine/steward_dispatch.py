@@ -273,7 +273,7 @@ def spawn_steward_subagent(
     # Map model shorthand to full model ID
     model_map = {
         "haiku": "claude-haiku-4-5-20251001",
-        "sonnet": "claude-sonnet-4-20250514",
+        "sonnet": "claude-sonnet-5-5",
     }
     model_id = model_map.get(model, model)
 

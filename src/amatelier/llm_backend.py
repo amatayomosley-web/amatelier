@@ -54,9 +54,9 @@ class BackendUnavailable(RuntimeError):
 # ── Default role → model mapping ──────────────────────────────────────────────
 
 CLAUDE_DEFAULT_MAP = {
-    "sonnet": "claude-sonnet-4-20250514",
+    "sonnet": "claude-sonnet-5-5",
     "haiku": "claude-haiku-4-5-20251001",
-    "opus": "claude-opus-4-20250514",
+    "opus": "claude-opus-5-5",
 }
 
 # For openai-compat users on OpenRouter, the default map routes to Anthropic
