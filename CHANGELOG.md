@@ -12,9 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `llm.model_map`, `steward.sonnet_model` and the Steward's own model map) was `claude-sonnet-4-20250514`, which the
   API no longer serves ("Please migrate to a newer model"), so `sonnet` calls failed in `anthropic-sdk` mode and every
   Steward escalation to Sonnet failed in any mode. The default is now `claude-sonnet-5-5`, and the default `opus` is
-  `claude-opus-5-5` (the Claude CLI was silently remapping the old Opus 4 ID). Your own config override keeps whatever
-  model IDs you set. The OpenRouter defaults (`anthropic/claude-sonnet-4`, `anthropic/claude-opus-4`) are unchanged
-  and unverified.
+  `claude-opus-5-5` (the Claude CLI was silently remapping the old Opus 4 ID). A `config.json` in your user data dir
+  that still names either old ID (`amatelier team new`, `team remove` and `team import` copy the whole bundled config
+  there) now gets the current model instead, with one warning naming the file to update; a retired ID passed straight
+  to a backend is replaced the same way. Other model IDs you set are kept. The OpenRouter defaults
+  (`anthropic/claude-sonnet-4`, `anthropic/claude-opus-4`) are unchanged and unverified.
 
 ## [0.5.0] — 2026-04-19
 

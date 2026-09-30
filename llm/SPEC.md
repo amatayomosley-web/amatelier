@@ -33,6 +33,7 @@ A self-evolving multi-model AI team. Ten persona agents debate topics in a SQLit
   provider: subprocess call to claude CLI
   implementation: amatelier.llm_backend.ClaudeCLIBackend
   default_model_map: {sonnet: claude-sonnet-5-5, haiku: claude-haiku-4-5-20251001, opus: claude-opus-5-5}
+  retired_model_ids: {claude-sonnet-4-20250514: claude-sonnet-5-5, claude-opus-4-20250514: claude-opus-5-5}  # replaced in llm.model_map (one warning naming the config file) and when passed as a model
 
 - name: anthropic-sdk
   detection: bool(os.environ["ANTHROPIC_API_KEY"])
@@ -40,6 +41,7 @@ A self-evolving multi-model AI team. Ten persona agents debate topics in a SQLit
   provider: direct Anthropic HTTP API
   implementation: amatelier.llm_backend.AnthropicSDKBackend
   default_model_map: {sonnet: claude-sonnet-5-5, haiku: claude-haiku-4-5-20251001, opus: claude-opus-5-5}
+  retired_model_ids: {claude-sonnet-4-20250514: claude-sonnet-5-5, claude-opus-4-20250514: claude-opus-5-5}  # replaced in llm.model_map (one warning naming the config file) and when passed as a model
 
 - name: openai-compat
   detection: bool(os.environ["OPENAI_API_KEY"]) or bool(os.environ["OPENROUTER_API_KEY"])

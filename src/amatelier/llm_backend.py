@@ -59,6 +59,15 @@ CLAUDE_DEFAULT_MAP = {
     "opus": "claude-opus-5-5",
 }
 
+# Retired Claude model IDs and what replaces each. The API refuses Sonnet 4;
+# the Claude CLI swaps Opus 4 for Opus 5.5 on its own. A user config.json
+# copied from an older release (``amatelier team new``, ``team remove`` and
+# ``team import`` copy the whole bundled config) can still name them.
+_RETIRED_MODEL_IDS = {
+    "claude-sonnet-4-20250514": "claude-sonnet-5-5",
+    "claude-opus-4-20250514": "claude-opus-5-5",
+}
+
 # For openai-compat users on OpenRouter, the default map routes to Anthropic
 # models through OpenRouter's catalog. Users point at any provider by setting
 # llm.openai_compat.base_url + model_map in config.json.
@@ -128,7 +137,8 @@ class ClaudeCLIBackend:
 
     def _resolve(self, model: str) -> str:
         # CLI expects short names (sonnet/haiku/opus); some call sites pass
-        # full IDs, which we accept as-is.
+        # full IDs, which we accept as-is. A retired ID becomes its replacement.
+        model = _RETIRED_MODEL_IDS.get(model, model)
         short = model if model in ("sonnet", "haiku", "opus") else None
         if short:
             return short
@@ -218,10 +228,9 @@ class AnthropicSDKBackend:
         return self._client
 
     def _resolve(self, model: str) -> str:
-        # Accept short names or full IDs.
-        if model in self.model_map:
-            return self.model_map[model]
-        return model
+        # Accept short names or full IDs. A retired ID becomes its replacement.
+        resolved = self.model_map.get(model, model)
+        return _RETIRED_MODEL_IDS.get(resolved, resolved)
 
     def complete(
         self,
@@ -616,6 +625,27 @@ def _load_config() -> dict:
         return {}
 
 
+def _current_model_map(configured: dict[str, str]) -> dict[str, str]:
+    """Merge a configured Claude model map over the defaults, replacing retired IDs.
+
+    Logs one warning naming the user config file to update.
+    """
+    merged = {**CLAUDE_DEFAULT_MAP, **configured}
+    retired = {tier: mid for tier, mid in merged.items() if mid in _RETIRED_MODEL_IDS}
+    if not retired:
+        return merged
+    for tier, mid in retired.items():
+        merged[tier] = _RETIRED_MODEL_IDS[mid]
+    logger.warning(
+        "llm.model_map in %s names retired models (%s); using %s instead. "
+        "Update the file to stop this warning.",
+        paths.user_config_override(),
+        ", ".join(f"{tier}={mid}" for tier, mid in retired.items()),
+        ", ".join(f"{tier}={merged[tier]}" for tier in retired),
+    )
+    return merged
+
+
 def _auto_detect() -> str:
     """Return the best available mode based on environment."""
     # MockBackend is opt-in via AMATELIER_MODE=mock — never auto-detects.
@@ -676,11 +706,11 @@ def get_backend() -> LLMBackend:
 
     if mode == "claude-code":
         model_map = cfg.get("model_map", {}) or CLAUDE_DEFAULT_MAP
-        return ClaudeCLIBackend(model_map={**CLAUDE_DEFAULT_MAP, **model_map})
+        return ClaudeCLIBackend(model_map=_current_model_map(model_map))
 
     if mode == "anthropic-sdk":
         model_map = cfg.get("model_map", {}) or CLAUDE_DEFAULT_MAP
-        return AnthropicSDKBackend(model_map={**CLAUDE_DEFAULT_MAP, **model_map})
+        return AnthropicSDKBackend(model_map=_current_model_map(model_map))
 
     if mode == "openai-compat":
         oc = cfg.get("openai_compat", {})

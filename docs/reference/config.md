@@ -63,7 +63,7 @@ Controls which backend handles calls and how role names map to provider model ID
 |---|---|---|---|
 | `mode` | string | `"auto"` | `auto`, `claude-code`, `anthropic-sdk`, or `openai-compat`. Overridden by `AMATELIER_MODE`. `auto` runs the selection order (claude CLI > Anthropic key > OpenAI key > OpenRouter key). |
 | `note` | string | — | Human-readable comment. Ignored by the engine. |
-| `model_map` | object | `{"sonnet": "claude-sonnet-5-5", "haiku": "claude-haiku-4-5-20251001", "opus": "claude-opus-5-5"}` | Role → model ID. Merged over `CLAUDE_DEFAULT_MAP` for `claude-code` and `anthropic-sdk` modes. |
+| `model_map` | object | `{"sonnet": "claude-sonnet-5-5", "haiku": "claude-haiku-4-5-20251001", "opus": "claude-opus-5-5"}` | Role → model ID. Merged over `CLAUDE_DEFAULT_MAP` for `claude-code` and `anthropic-sdk` modes. The retired IDs `claude-sonnet-4-20250514` and `claude-opus-4-20250514` are replaced with `claude-sonnet-5-5` and `claude-opus-5-5`, with a warning naming the config file to update. |
 | `openai_compat` | object | see below | Config specific to OpenAI-compatible providers. |
 
 #### `llm.openai_compat`
