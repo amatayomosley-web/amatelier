@@ -341,10 +341,11 @@ ROUND {round_num} TRANSCRIPT:
         logger.debug("Backend unavailable for haiku summary, falling back to CLI: %s", e)
 
     try:
+        from amatelier.llm_backend import claude_cli_isolation_args
         env = os.environ.copy()
         env["PYTHONIOENCODING"] = "utf-8"
         result = subprocess.run(
-            ["claude", "-p", "--model", "haiku",
+            ["claude", "-p", "--model", "haiku", *claude_cli_isolation_args(),
              "--no-session-persistence", "--output-format", "text",
              "--disable-slash-commands", "--dangerously-skip-permissions",
              "--max-budget-usd", "5.00"],
@@ -633,6 +634,56 @@ def run_roundtable(
         logger.info("Restarted %s", agent_name)
         return True
 
+    def _force_restart(agent_name: str) -> bool:
+        """Kill the worker's process tree even if poll() says alive, then respawn.
+
+        On Windows a worker can be permanently blocked inside
+        subprocess.run/communicate when claude CLI grandchildren hold the
+        captured stdout/stderr pipes open — the python process is still
+        "alive" by poll() standards but will never speak again.
+        """
+        import sys as _sys
+        proc = agent_procs.get(agent_name)
+        if proc is None:
+            return False
+        pid = proc.pid
+        logger.warning("Force-restarting hung worker %s (PID %s)", agent_name, pid)
+        try:
+            if _sys.platform == "win32":
+                subprocess.run(
+                    ["taskkill", "/F", "/T", "/PID", str(pid)],
+                    capture_output=True, timeout=10,
+                )
+            else:
+                import os as _os
+                try:
+                    _os.killpg(_os.getpgid(pid), 9)
+                except Exception:
+                    proc.kill()
+        except Exception as exc:
+            logger.warning("force-kill of %s failed: %s", agent_name, exc)
+            try:
+                proc.kill()
+            except Exception:
+                pass
+        try:
+            proc.wait(timeout=5)
+        except Exception:
+            pass
+        if agent_name == "naomi":
+            agent_procs[agent_name] = _launch_gemini(agent_name)
+        elif agent_name == "judge":
+            agent_procs[agent_name] = _launch_claude(agent_name, "sonnet")
+        else:
+            model = resolved_models.get(agent_name, resolve_agent_model(agent_name))
+            agent_procs[agent_name] = _launch_claude(agent_name, model)
+        logger.info("Force-restarted %s", agent_name)
+        return True
+
+    # Per-worker hang counter — reset each round by the health audit.
+    # _call_speaker increments when wait_for_single_speaker gives up.
+    worker_hangs_this_round: dict[str, int] = {}
+
     # Resolve models from tier
     resolved_models: dict[str, str] = {}
     for worker in workers:
@@ -714,6 +765,8 @@ def run_roundtable(
             spoke, msgs = wait_for_single_speaker(agent, timeout_seconds=speaker_timeout)
             all_messages_so_far.extend(msgs)
             if not spoke:
+                # Attribute this hang — health audit force-restarts at round end.
+                worker_hangs_this_round[agent] = worker_hangs_this_round.get(agent, 0) + 1
                 _check_and_restart(agent)
             return spoke
 
@@ -1046,6 +1099,20 @@ def run_roundtable(
                 logger.info("HEALTH AUDIT: Restarted %s", restarted)
                 time.sleep(3)  # Give restarted agents time to connect
 
+            # Force-restart hung-but-alive workers — the Windows subprocess
+            # deadlock case. Any worker that failed to speak at least once
+            # this round gets its process tree killed and a fresh Popen
+            # spawned.
+            force_restarted = []
+            for agent_hung, hang_count in list(worker_hangs_this_round.items()):
+                if hang_count > 0 and agent_hung not in restarted:
+                    if _force_restart(agent_hung):
+                        force_restarted.append(agent_hung)
+            if force_restarted:
+                logger.info("HEALTH AUDIT: Force-restarted hung %s", force_restarted)
+                time.sleep(3)
+            worker_hangs_this_round.clear()
+
             # Abort if unrecoverable — kill RT and report failure
             judge_alive = "judge" not in dead_agents or "judge" in restarted
             dead_workers = [a for a in dead_agents if a != "judge" and a not in restarted]
@@ -1108,15 +1175,29 @@ def run_roundtable(
                        f"RT ABORTED by health audit: {abort_reason}")
                 db_cmd("close")
 
-                # Kill all agent processes
+                # Kill all agent processes — tree-kill so grandchildren die too.
+                import sys as _sys_abort
                 for name, proc in agent_procs.items():
                     if proc.poll() is None:
                         try:
-                            proc.terminate()
+                            if _sys_abort.platform == "win32":
+                                subprocess.run(
+                                    ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                                    capture_output=True, timeout=10,
+                                )
+                            else:
+                                import os as _os_abort
+                                try:
+                                    _os_abort.killpg(_os_abort.getpgid(proc.pid), 9)
+                                except Exception:
+                                    proc.kill()
                             proc.wait(timeout=10)
                         except Exception:
-                            proc.kill()
-                        logger.info("Terminated %s", name)
+                            try:
+                                proc.kill()
+                            except Exception:
+                                pass
+                        logger.info("Terminated %s tree", name)
 
                 raise RuntimeError(f"RT aborted by health audit (round {round_num}): {abort_reason}")
 
@@ -1175,16 +1256,28 @@ def run_roundtable(
             transcript = tx_result.get("transcript", [])
 
     finally:
-        # Kill all agent processes — verify they're actually dead
+        # Kill all agent processes AND their descendant trees. Previous
+        # proc.terminate()/kill() only target the direct child — on Windows
+        # any claude.exe or node.exe grandchildren mid-call survive. taskkill
+        # /F /T walks the whole tree.
+        import sys as _sys
         for name, proc in agent_procs.items():
             if proc.poll() is None:
+                pid = proc.pid
                 try:
-                    proc.terminate()
+                    if _sys.platform == "win32":
+                        subprocess.run(
+                            ["taskkill", "/F", "/T", "/PID", str(pid)],
+                            capture_output=True, timeout=10,
+                        )
+                    else:
+                        import os as _os
+                        try:
+                            _os.killpg(_os.getpgid(pid), 9)
+                        except Exception:
+                            proc.kill()
                     proc.wait(timeout=5)
                 except Exception:
-                    pass
-                # Force kill if still alive
-                if proc.poll() is None:
                     try:
                         proc.kill()
                         proc.wait(timeout=5)
@@ -1192,9 +1285,9 @@ def run_roundtable(
                         pass
                 if proc.poll() is None:
                     logger.error("CLEANUP: Failed to kill %s (PID %s) — process may be orphaned",
-                                 name, proc.pid)
+                                 name, pid)
                 else:
-                    logger.info("Terminated %s (exit %s)", name, proc.returncode)
+                    logger.info("Terminated %s tree (exit %s)", name, proc.returncode)
 
         # Clean up JIT active-heuristics files so a stale set can't leak
         # into the next RT if the runner is invoked with a different briefing.
@@ -1648,10 +1741,11 @@ TRANSCRIPT:
 
     if raw is None:
         try:
+            from amatelier.llm_backend import claude_cli_isolation_args
             env = os.environ.copy()
             env["PYTHONIOENCODING"] = "utf-8"
             result = subprocess.run(
-                ["claude", "-p", "--model", "sonnet",
+                ["claude", "-p", "--model", "sonnet", *claude_cli_isolation_args(),
                  "--no-session-persistence", "--output-format", "text",
                  "--disable-slash-commands", "--dangerously-skip-permissions",
                  "--max-budget-usd", "5.00"],

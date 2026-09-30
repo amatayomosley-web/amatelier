@@ -37,9 +37,11 @@ import logging
 import os
 import shutil
 import subprocess
+import tempfile
 import time
 from dataclasses import dataclass, field
 from functools import lru_cache
+from pathlib import Path
 from typing import Protocol
 
 from amatelier import paths
@@ -154,23 +156,26 @@ class ClaudeCLIBackend:
         del json_mode
         start = time.monotonic()
         resolved = self._resolve(model)
-        cmd = [
-            self.binary,
-            "-p", prompt,
-            "--model", resolved,
-            "--append-system-prompt", system,
-        ]
+        # The prompt goes on stdin and the system prompt in a file: neither
+        # may sit on the command line, which Windows caps at 32,767 characters.
+        cmd = [self.binary, "-p", "--model", resolved, *claude_cli_isolation_args()]
         if effort in ("low", "medium", "high", "max"):
             cmd.extend(["--effort", effort])
             logger.info("claude-code: --effort=%s", effort)
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=timeout,
-        )
+        with tempfile.TemporaryDirectory(prefix="amatelier-cli-") as tmp:
+            if system:
+                system_path = Path(tmp) / "system.txt"
+                system_path.write_text(system, encoding="utf-8")
+                cmd.extend(["--append-system-prompt-file", str(system_path)])
+            result = subprocess.run(
+                cmd,
+                input=prompt,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=timeout,
+            )
         elapsed_ms = (time.monotonic() - start) * 1000
         if result.returncode != 0:
             raise RuntimeError(
@@ -614,6 +619,29 @@ def _load_config() -> dict:
         return json.loads(src.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return {}
+
+
+# Options that keep the user's own Claude Code setup out of every claude CLI
+# call amatelier makes: no hooks at all, and no settings or CLAUDE.md memory
+# beyond the working folder's local settings. Without them each call ran the
+# user's hooks and loaded every CLAUDE.md above its working folder (a CLAUDE.md
+# in any parent folder loads as project memory), so the user's own
+# instructions entered the agents' context. `--setting-sources project,local`
+# alone is not enough: project hooks still run and that CLAUDE.md still loads.
+CLAUDE_CLI_ISOLATION_ARGS = [
+    "--setting-sources", "local",
+    "--settings", '{"disableAllHooks": true}',
+]
+
+
+def claude_cli_isolation_args() -> list[str]:
+    """CLI options that isolate an agent call from the user's own Claude Code setup.
+
+    Returns an empty list when config ``llm.claude_cli_isolation`` is false.
+    """
+    if _load_config().get("llm", {}).get("claude_cli_isolation", True) is False:
+        return []
+    return list(CLAUDE_CLI_ISOLATION_ARGS)
 
 
 def _auto_detect() -> str:

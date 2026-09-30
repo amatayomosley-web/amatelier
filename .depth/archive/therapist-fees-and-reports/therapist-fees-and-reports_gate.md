@@ -1,0 +1,20 @@
+TASK: therapist-fees-and-reports
+SCOPE: non-trivial
+FILES: src/amatelier/engine/therapist.py, src/amatelier/agents/opus-admin/CLAUDE.md, src/amatelier/agents/templates/curated-five/admin/CLAUDE.md, src/amatelier/agents/templates/empty/admin/CLAUDE.md, src/amatelier/agents/templates/minimal/admin/CLAUDE.md, tests/test_therapist_fees.py
+REPLACES: `model_costs = {"haiku": 2, "flash": 2, "sonnet": 5, "opus": 10}` — therapist.py _build_agent_brief priced a seat with a hard-coded table (sonnet 5, flash 2) against configured entry fees of 8 and 5, read from the bundled config only, and told agents their "net per round"; now _seat_fee prices the seat the way roundtable_runner.run_roundtable charges it (competition.entry_fees by tier; naomi's tier from gemini.model), from the user's config override when present, and the brief says "per RT". Also run_therapist wrote reports into the bundled package folder (SUITE_ROOT/reports), which the two-layer rule forbids, and every run to one file, so parallel one-agent runs overwrote each other; now _report_path writes under the user data directory, one file per partial run (therapist-<rt>-<agents>.md)
+MIGRATION: the four admin persona seeds that say where therapist reports are saved now name the user data directory and the per-agent file form; users see the new text after `amatelier refresh-seeds` or a fresh install
+CALLERS: src/amatelier/engine/therapist.py -> _build_agent_brief calls _seat_fee; src/amatelier/engine/therapist.py -> run_therapist calls _report_path
+DOC_GROUNDING: CLAUDE.md — "Two-layer paths (critical)": runtime code must not write under src/amatelier/, all mutable state goes under user_data_dir(); "Tests required"
+USER_PATH: src/amatelier/engine/therapist.py run_therapist -> therapist.run_session -> therapist._build_agent_brief -> therapist._seat_fee
+RED_STATE: src/amatelier/engine/therapist.py `_build_agent_brief()` shows a sonnet seat a cost of 5 and a flash seat 2 while the runner charges 8 and 5 (config competition.entry_fees), so agents are told they are "HEALTHY" while net-negative; `run_therapist()` writes reports/therapist-<rt>.md under SUITE_ROOT (the bundled layer) and a parallel one-agent run leaves only the last agent's report
+RED_TYPE: USER-OBSERVABLE
+GREEN_CONDITION: tests/test_therapist_fees.py passes, showing that _seat_fee returns ("sonnet", 8) for a sonnet worker, ("haiku", 5) for a haiku worker and ("sonnet", 8) for naomi on a Gemini 3 Flash model, that _build_agent_brief shows "entry fee: -8" for a sonnet worker, and that _report_path returns a path under the user data directory with therapist-<rt>-simon.md for a simon-only run and therapist-<rt>.md for a full run; `make test` passes
+OMISSIONS: src/amatelier/engine/therapist.py _resolve_agent_model() is unchanged (it already reads the worker registry); the interviewee's context (src/amatelier/engine/therapist.py run_session, the first 4,000 characters of the agent's CLAUDE.md) is unchanged
+CASE_TRACE:
+- case_id: green; finding: seats are priced like the runner charges them, the brief shows the real fee and net per RT, reports land under the user data directory with one file per partial run; trace_run: python -m pytest tests/test_therapist_fees.py; trace_output: tests/test_therapist_fees.py (3 passed; full suite 61 passed); reproducibility: confirmed 2 of 2 runs
+- case_id: red; finding: the same tests fail on the committed therapist; trace_run: git stash of therapist.py, pytest tests/test_therapist_fees.py, stash pop; trace_output: tests/test_therapist_fees.py (3 failed); reproducibility: confirmed 1 of 1 runs
+FRAME_ASSUMPTIONS:
+- The fee to show an agent is the fee the runner charges it. Reason: roundtable_runner.run_roundtable computes entry_fee_paid from competition.entry_fees by the seat's tier, and _seat_fee repeats that computation.
+SUPPRESSED_PATHS:
+- Importing the runner's fee code into the therapist. Why suppressed: the therapist avoids importing roundtable_runner (circular import, noted at _resolve_agent_model); the small computation is mirrored instead.
+PREMISE_CHECK: No documented premise.

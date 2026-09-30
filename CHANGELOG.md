@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Claude CLI isolation.** Every `claude` CLI call amatelier makes in `claude-code` mode now runs with
+  `--setting-sources local` and all hooks disabled (`amatelier.llm_backend.claude_cli_isolation_args()`), so your
+  own Claude Code hooks, settings and `CLAUDE.md` files never enter an agent's context. Before, each call ran your
+  hooks and loaded every `CLAUDE.md` above its working folder (a `CLAUDE.md` in a parent folder loads as project
+  memory, so excluding the user setting source alone is not enough). New config key `llm.claude_cli_isolation`
+  (default `true`) turns it off.
+
+### Fixed
+- **Agent context was cut at 8,000 characters in `claude-code` mode.** The agent definition went inline on the
+  command line with its prompt cut at `roundtable.context_limit` 8000, and `ClaudeCLIBackend.complete` put the
+  prompt and system prompt on the command line too, where Windows caps the whole line at 32,767 characters. The
+  definition now goes to the CLI as a file under the user data directory, the backend's prompt on stdin and its
+  system prompt in a temporary file. `roundtable.context_limit` now defaults to `60000` (a cut is logged), and the
+  new `roundtable.cli_timeout_seconds` (default `600`) replaces a hard-coded worker timeout.
+- **Hung workers on Windows.** A worker blocked on a CLI call whose `claude`/`node` grandchildren held its pipes
+  open now has its whole process tree killed on timeout; the runner force-restarts a worker that failed to speak
+  in a round and tree-kills workers on abort and at shutdown. Failed CLI calls are logged per agent, and a worker
+  saves its session transcript on abnormal exit.
+- **The scorer saw about half of each debate.** It cut messages at 1,200 characters, the transcript at 20,000
+  and the briefing at 3,000, so the later phases never reached it. It now scores the whole debate against the
+  whole briefing. Agents are scored under random reviewer labels with their names scrubbed from the text and the
+  briefing, the judge's own posts are labelled Moderator, and a research-window post is scored only when it makes
+  a `[[request:]]`.
+- **The therapist quoted the wrong entry fee.** It priced seats from a hard-coded table (Sonnet 5, Flash 2)
+  instead of `competition.entry_fees`; it now quotes the fee the runner charges and the net per RT. Its reports
+  were written into the installed package folder and a parallel one-agent run overwrote the others; they now go
+  under the user data directory, one file per partial run.
+
 ## [0.5.0] — 2026-04-19
 
 ### Added

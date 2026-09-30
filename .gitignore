@@ -65,3 +65,6 @@ src/atelier/store/ledger.json
 
 # Runtime-generated analytics/reports (writes from engine.analytics)
 src/amatelier/reports/
+
+# local depth-gate session marker
+.depth/.gate_owner.json

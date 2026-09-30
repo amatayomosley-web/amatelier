@@ -23,6 +23,31 @@ from db import get_active_roundtable, init_read_cursor, is_roundtable_open, list
 
 logger = logging.getLogger(__name__)
 
+# Windows subprocess-tree hang fix.
+# subprocess.run(timeout=) with capture_output does not actually time out
+# when the claude CLI spawns node.exe grandchildren that inherit the
+# captured stdout/stderr pipes. _force_kill_tree walks the tree on Windows
+# so the inherited handles close and communicate() can return.
+_IS_WINDOWS = sys.platform == "win32"
+
+
+def _force_kill_tree(pid: int) -> None:
+    """Kill a process and every descendant. Windows-first, POSIX fallback."""
+    if _IS_WINDOWS:
+        try:
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(pid)],
+                capture_output=True, timeout=10,
+            )
+        except Exception as exc:
+            logger.warning("taskkill failed for pid %s: %s", pid, exc)
+    else:
+        try:
+            os.killpg(os.getpgid(pid), 9)
+        except Exception as exc:
+            logger.warning("killpg failed for pid %s: %s", pid, exc)
+
+
 SUITE_ROOT = Path(__file__).resolve().parent.parent
 
 # Amatayo Standard dual-layer paths: bundled assets stay in SUITE_ROOT
@@ -35,6 +60,26 @@ except Exception:
     WRITE_ROOT = SUITE_ROOT
 
 WORKSPACE_ROOT = SUITE_ROOT.parent.parent.parent
+
+
+def _log_call_error(agent_name: str, exc: BaseException, stderr_excerpt: str = "") -> None:
+    """Append a per-agent call error line to roundtable-server/logs/<agent>_calls.log.
+
+    The Popen-captured stderr doesn't survive runner shutdown — a dedicated
+    log file makes rate-limit / hang / crash modes diagnosable after the fact.
+    """
+    try:
+        log_dir = WRITE_ROOT / "roundtable-server" / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = log_dir / f"{agent_name}_calls.log"
+        ts = time.strftime("%Y-%m-%d %H:%M:%S")
+        line = f"[{ts}] {type(exc).__name__}: {exc}"
+        if stderr_excerpt:
+            line += f" | stderr: {stderr_excerpt.strip()[:400]}"
+        with log_path.open("a", encoding="utf-8") as fh:
+            fh.write(line + "\n")
+    except Exception:
+        pass
 
 
 def _load_config() -> dict:
@@ -264,20 +309,34 @@ def call_claude(system_prompt: str, prompt: str, agent_name: str, model: str) ->
 
     # Legacy CLI path
     config = _load_config()
-    context_limit = config.get("roundtable", {}).get("context_limit", 8000)
+    rt_cfg = config.get("roundtable", {})
+    context_limit = rt_cfg.get("context_limit", 60000)
+    if len(system_prompt) > context_limit:
+        logger.warning("Context for %s cut from %d to %d chars (roundtable.context_limit)",
+                       agent_name, len(system_prompt), context_limit)
     agent_def = json.dumps({
         agent_name: {
             "description": f"Roundtable agent {agent_name}",
             "prompt": system_prompt[:context_limit],
         }
     })
+    # The definition goes in a file, not on the command line: Windows caps a
+    # command line at 32,767 characters and an agent's context is larger. In
+    # --print mode the CLI reads --agents from a file path. (The inline form,
+    # with an 8,000-character cap, cut every agent's identity short.)
+    defs_dir = WRITE_ROOT / "agent-defs"
+    defs_dir.mkdir(parents=True, exist_ok=True)
+    agent_def_path = defs_dir / f"{agent_name}.json"
+    agent_def_path.write_text(agent_def, encoding="utf-8")
 
+    from amatelier.llm_backend import claude_cli_isolation_args
     cmd = [
         "claude",
         "-p",
         "--model", model,
         "--agent", agent_name,
-        "--agents", agent_def,
+        "--agents", str(agent_def_path),
+        *claude_cli_isolation_args(),
         "--no-session-persistence",
         "--output-format", "text",
         "--disable-slash-commands",
@@ -291,16 +350,38 @@ def call_claude(system_prompt: str, prompt: str, agent_name: str, model: str) ->
 
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
-    result = subprocess.run(
-        cmd, input=prompt,
-        capture_output=True, text=True, timeout=180,
+
+    # A turn that outlives this is killed with its whole process tree. Long
+    # debate turns on a full context legitimately run past two minutes, so the
+    # limit is configurable (roundtable.cli_timeout_seconds).
+    cli_timeout = rt_cfg.get("cli_timeout_seconds", 600)
+
+    popen_kwargs: dict = dict(
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         cwd=str(WORKSPACE_ROOT), encoding="utf-8", errors="replace", env=env,
     )
+    if _IS_WINDOWS:
+        popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        popen_kwargs["start_new_session"] = True
 
-    if result.returncode != 0:
-        raise RuntimeError(f"claude CLI failed (exit {result.returncode}): {result.stderr[:500]}")
+    proc = subprocess.Popen(cmd, **popen_kwargs)
+    try:
+        stdout, stderr = proc.communicate(input=prompt, timeout=cli_timeout)
+    except subprocess.TimeoutExpired:
+        _force_kill_tree(proc.pid)
+        try:
+            proc.wait(timeout=5)
+        except Exception:
+            pass
+        raise
 
-    return result.stdout.strip()
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"claude CLI failed (exit {proc.returncode}): {(stderr or '')[:500]}"
+        )
+
+    return (stdout or "").strip()
 
 
 def _strip_meta(response: str, agent_name: str) -> str:
@@ -393,6 +474,30 @@ def run_agent(agent_name: str, model: str):
     all_messages: list[dict] = []
     responded_signals: set[str] = set()  # Track "YOUR TURN" signals we already responded to
     last_judged_worker: str | None = None  # Track last worker the Judge responded to
+    _session_saved = {"done": False}
+
+    def _save_session(tag: str = "clean") -> None:
+        """Write session transcript. Called on clean close AND on abort."""
+        try:
+            session_dir = WRITE_ROOT / "agents" / agent_name / "sessions"
+            session_dir.mkdir(parents=True, exist_ok=True)
+            session_file = session_dir / f"{time.strftime('%Y-%m-%d_%H%M%S')}_{tag}.json"
+            session_file.write_text(json.dumps({
+                "roundtable_id": rt_id,
+                "agent": agent_name,
+                "model": model,
+                "messages": all_messages,
+                "timestamp": time.time(),
+                "exit_tag": tag,
+            }, indent=2), encoding="utf-8")
+            logger.info("Session saved to %s", session_file)
+        except Exception as save_exc:
+            logger.warning("Session save failed: %s", save_exc)
+        _session_saved["done"] = True
+
+    # Fallback save on abnormal termination (SIGTERM, taskkill from runner).
+    import atexit
+    atexit.register(lambda: None if _session_saved["done"] else _save_session("abort"))
 
     while True:
         rt_open = is_roundtable_open(rt_id)
@@ -464,7 +569,9 @@ def run_agent(agent_name: str, model: str):
 
                     time.sleep(3)
                 except Exception as e:
+                    stderr_excerpt = getattr(e, "stderr", "") or ""
                     logger.error("Claude CLI error: %s", e)
+                    _log_call_error(agent_name, e, str(stderr_excerpt))
                     time.sleep(15)
 
         if not rt_open:
@@ -474,19 +581,7 @@ def run_agent(agent_name: str, model: str):
         time.sleep(2)
 
     logger.info("Roundtable %s closed. %s exiting.", rt_id, agent_name)
-
-    # Save session transcript
-    session_dir = WRITE_ROOT / "agents" / agent_name / "sessions"
-    session_dir.mkdir(parents=True, exist_ok=True)
-    session_file = session_dir / f"{time.strftime('%Y-%m-%d_%H%M%S')}.json"
-    session_file.write_text(json.dumps({
-        "roundtable_id": rt_id,
-        "agent": agent_name,
-        "model": model,
-        "messages": all_messages,
-        "timestamp": time.time(),
-    }, indent=2), encoding="utf-8")
-    logger.info("Session saved to %s", session_file)
+    _save_session("clean")
 
 
 if __name__ == "__main__":

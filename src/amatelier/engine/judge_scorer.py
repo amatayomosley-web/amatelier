@@ -20,6 +20,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import random
+import re
 import subprocess
 import sys
 import time
@@ -114,31 +116,69 @@ Format:
 }}"""
 
 
-def _format_transcript(transcript: list[dict]) -> str:
-    """Format transcript for the Judge prompt.
+def _format_transcript(transcript: list[dict]) -> tuple[str, dict[str, str]]:
+    """Format the whole debate for the Judge, blinded.
 
-    Caps per-message length and total transcript size to keep the prompt
-    within Sonnet's reliable processing window (~20K chars transcript).
+    Returns (text, anon_to_agent). Each worker is scored under a random
+    "Reviewer A/B/..." label and its name is scrubbed from every message
+    (agents address each other by name); _parse_scores maps the labels back.
+    The judge's own posts are labelled Moderator. A worker's research-window
+    post counts only if it makes a [[request:]] — the window is for lookups,
+    so debate posted there earns nothing. Every phase is included: the old
+    1,200-per-message / 20,000-total caps dropped the floor phase entirely.
     """
-    MAX_MSG = 1200
-    MAX_TOTAL = 20000
+    MAX_MSG = 8000      # ceiling per message (a cut is logged)
+    MAX_TOTAL = 200000  # ceiling for the whole debate (a cut is logged)
+
+    workers_seen: list[str] = []
+    for msg in transcript:
+        agent = msg.get("agent", "unknown")
+        if agent not in ("runner", "assistant", "judge") and agent not in workers_seen:
+            workers_seen.append(agent)
+    shuffled = list(workers_seen)
+    random.shuffle(shuffled)  # random order, so labels carry no rank
+    agent_to_anon = {agent: f"Reviewer {chr(65 + i)}" for i, agent in enumerate(shuffled)}
+    anon_to_agent = {v: k for k, v in agent_to_anon.items()}
+
     lines = []
     total = 0
+    in_research_window = False
     for msg in transcript:
         agent = msg.get("agent", "unknown")
         text = msg.get("message", "")
-        # Skip runner signals and empty messages
-        if agent in ("runner", "assistant") or not text.strip():
+        if agent == "runner":
+            if "--- RESEARCH WINDOW ---" in text:
+                in_research_window = True
+            elif text.lstrip().startswith("ROUND "):
+                in_research_window = False
+            continue
+        if agent == "assistant" or not text.strip():
+            continue
+        if in_research_window and agent != "judge" and "[[request:" not in text:
             continue
         if len(text) > MAX_MSG:
+            logger.warning("Scorer transcript: a %s message cut from %d to %d chars",
+                           agent, len(text), MAX_MSG)
             text = text[:MAX_MSG] + "\n[...truncated...]"
-        line = f"[{agent}]: {text}"
+        label = "Moderator" if agent == "judge" else agent_to_anon.get(agent, "Reviewer X")
+        line = f"[{label}]: {_anonymize_text(text, anon_to_agent)}"
         if total + len(line) > MAX_TOTAL:
+            logger.warning("Scorer transcript cut at %d chars (MAX_TOTAL)", total)
             lines.append("[...transcript truncated for length...]")
             break
         lines.append(line)
         total += len(line)
-    return "\n\n".join(lines)
+    return "\n\n".join(lines), anon_to_agent
+
+
+def _anonymize_text(text: str, anon_to_agent: dict[str, str]) -> str:
+    """Replace each worker's name (whole word, any case) with its reviewer label."""
+    if not anon_to_agent:
+        return text
+    agent_to_anon = {agent.lower(): anon for anon, agent in anon_to_agent.items()}
+    names = sorted(agent_to_anon, key=len, reverse=True)
+    pattern = re.compile(r"\b(" + "|".join(re.escape(n) for n in names) + r")\b", re.IGNORECASE)
+    return pattern.sub(lambda m: agent_to_anon[m.group(1).lower()], text)
 
 
 def _get_judge_effort() -> str | None:
@@ -187,7 +227,8 @@ def _call_sonnet(prompt: str) -> str | None:
     env["PYTHONIOENCODING"] = "utf-8"
 
     try:
-        cmd = ["claude", "-p", "--model", "sonnet",
+        from amatelier.llm_backend import claude_cli_isolation_args
+        cmd = ["claude", "-p", "--model", "sonnet", *claude_cli_isolation_args(),
                "--no-session-persistence", "--output-format", "json",
                "--disable-slash-commands", "--dangerously-skip-permissions",
                "--max-budget-usd", "5.00"]
@@ -215,8 +256,14 @@ def _call_sonnet(prompt: str) -> str | None:
         return None
 
 
-def _parse_scores(raw: str, expected_agents: list[str]) -> dict | None:
-    """Parse and validate Judge JSON response. Returns parsed dict or None."""
+def _parse_scores(
+    raw: str, expected_agents: list[str], anon_to_agent: dict[str, str] | None = None,
+) -> dict | None:
+    """Parse and validate Judge JSON response. Returns parsed dict or None.
+
+    With ``anon_to_agent``, reviewer labels ("Reviewer A") are mapped back to
+    real agent names before validation.
+    """
     # Strip markdown fences if present
     text = raw.strip()
     if text.startswith("```"):
@@ -235,6 +282,10 @@ def _parse_scores(raw: str, expected_agents: list[str]) -> dict | None:
     if not isinstance(scores, dict):
         logger.error("Response missing 'scores' dict")
         return None
+
+    if anon_to_agent:
+        scores = {anon_to_agent.get(label, label): s for label, s in scores.items()}
+        data["scores"] = scores
 
     # Validate and clamp each agent's scores
     for agent in expected_agents:
@@ -281,10 +332,18 @@ def judge_score(
     Caller (runner) must handle "failed" status by notifying Admin.
     There is no silent fallback.
     """
-    formatted_transcript = _format_transcript(transcript)
+    formatted_transcript, anon_to_agent = _format_transcript(transcript)
+
+    # The whole briefing, names scrubbed like the transcript (it was cut at
+    # 3,000 characters, which dropped most of the canon and any priorities).
+    brief_max = 60000
+    scored_briefing = _anonymize_text(briefing_text, anon_to_agent)
+    if len(scored_briefing) > brief_max:
+        logger.warning("Scorer briefing cut from %d to %d chars", len(scored_briefing), brief_max)
+        scored_briefing = scored_briefing[:brief_max]
     prompt = JUDGE_PROMPT.format(
-        briefing=briefing_text[:3000],  # Cap briefing
-        transcript=formatted_transcript,  # Already capped by _format_transcript
+        briefing=scored_briefing,
+        transcript=formatted_transcript,
     )
 
     logger.info("Calling Sonnet Judge for RT %s (%d workers, ~%d chars prompt)",
@@ -302,18 +361,18 @@ def judge_score(
         trace_file.write_text(raw, encoding="utf-8")
         logger.info("Judge trace saved: %s", trace_file.name)
 
-        parsed = _parse_scores(raw, workers)
+        parsed = _parse_scores(raw, workers, anon_to_agent)
         if parsed:
             # S4: adversarial verification on exceptional scores
             parsed = _adversarial_verification(parsed, workers, briefing_text[:1000])
             return _record_scores(parsed, workers, rt_id)
 
-    # Retry once — shorter prompt focusing on structure
+    # Retry once — shorter instructions, same blinded transcript
     logger.warning("First attempt failed, retrying with condensed prompt")
     retry_prompt = (
-        f"Score these roundtable debate agents: {', '.join(workers)}.\n\n"
-        f"Topic: {briefing_text[:1000]}\n\n"
-        f"Transcript (condensed):\n{formatted_transcript[:15000]}\n\n"
+        f"Score these roundtable debate reviewers: {', '.join(sorted(anon_to_agent))}.\n\n"
+        f"Topic: {_anonymize_text(briefing_text[:1000], anon_to_agent)}\n\n"
+        f"Transcript:\n{formatted_transcript}\n\n"
         f"Score each on novelty, accuracy, impact, challenge (0/1/2/3/10). "
         f"Respond with ONLY valid JSON: {{\"scores\": {{\"agent\": {{\"novelty\": N, \"accuracy\": N, "
         f"\"impact\": N, \"challenge\": N, \"reasoning\": \"...\", \"grand_insight\": null}}}}}}"
@@ -324,7 +383,7 @@ def judge_score(
         trace_file = trace_dir / f"{time.strftime('%Y%m%d_%H%M%S')}_{rt_id}_retry.txt"
         trace_file.write_text(raw, encoding="utf-8")
 
-        parsed = _parse_scores(raw, workers)
+        parsed = _parse_scores(raw, workers, anon_to_agent)
         if parsed:
             parsed = _adversarial_verification(parsed, workers, briefing_text[:1000])
             return _record_scores(parsed, workers, rt_id)

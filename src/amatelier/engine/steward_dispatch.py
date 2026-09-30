@@ -353,12 +353,14 @@ def spawn_steward_subagent(
     except Exception as e:
         logger.debug("Backend probe failed, proceeding to CLI path: %s", e)
 
+    from amatelier.llm_backend import claude_cli_isolation_args
     cmd = [
         "claude",
         "-p",
         "--model", model_id,
         "--agent", "steward",
         "--agents", agent_def,
+        *claude_cli_isolation_args(),
         "--no-session-persistence",
         "--output-format", "text",
         "--disable-slash-commands",

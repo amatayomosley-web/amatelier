@@ -256,7 +256,7 @@ python engine/analytics.py engagement
 python engine/analytics.py update
 ```
 
-Therapist reports are saved to `reports/therapist-{rt_id}.md` after each roundtable.
+Therapist reports are saved under the user data directory, in `reports/therapist-{rt_id}.md` after each roundtable (or `reports/therapist-{rt_id}-{agent}.md` when debriefs run one agent at a time).
 
 ## Efficiency Rules
 
