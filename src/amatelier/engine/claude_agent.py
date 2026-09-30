@@ -23,7 +23,7 @@ from db import get_active_roundtable, init_read_cursor, is_roundtable_open, list
 
 logger = logging.getLogger(__name__)
 
-# Windows subprocess-tree hang fix — see claude-suite RT-4 post-mortem.
+# Windows subprocess-tree hang fix.
 # subprocess.run(timeout=) with capture_output does not actually time out
 # when the claude CLI spawns node.exe grandchildren that inherit the
 # captured stdout/stderr pipes. _force_kill_tree walks the tree on Windows
