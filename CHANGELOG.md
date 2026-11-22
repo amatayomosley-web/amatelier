@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] — 2026-11-21
+
 ### Fixed
+- **Docs named retired model IDs.** `docs/guides/define-your-team.md` and `docs/reference/cli.md` showed
+  `claude-3-5-sonnet-latest` / `claude-3-opus-latest`; they now show the IDs the bundled config defaults to.
+- **`amatelier.__version__` matches the package version** (0.5.1 shipped reporting 0.5.0).
 - **Default Sonnet model no longer served.** The default `sonnet` model (`CLAUDE_DEFAULT_MAP`, the bundled
   `llm.model_map`, `steward.sonnet_model` and the Steward's own model map) was `claude-sonnet-4-20250514`, which the
   API no longer serves ("Please migrate to a newer model"), so `sonnet` calls failed in `anthropic-sdk` mode and every
