@@ -15,7 +15,7 @@ import pytest
 def test_package_imports() -> None:
     import amatelier
 
-    assert amatelier.__version__ == "0.5.0"
+    assert amatelier.__version__ == "0.5.2"
     assert amatelier.AMATELIER_ROOT.exists()
     assert amatelier.REPO_ROOT.exists()
 
@@ -102,7 +102,7 @@ def test_cli_version(capsys: pytest.CaptureFixture[str]) -> None:
     exit_code = main(["--version"])
     assert exit_code == 0
     captured = capsys.readouterr()
-    assert "0.5.0" in captured.out
+    assert "0.5.2" in captured.out
 
 
 def test_cli_help(capsys: pytest.CaptureFixture[str]) -> None:
