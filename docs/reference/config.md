@@ -63,7 +63,7 @@ Controls which backend handles calls and how role names map to provider model ID
 |---|---|---|---|
 | `mode` | string | `"auto"` | `auto`, `claude-code`, `anthropic-sdk`, or `openai-compat`. Overridden by `AMATELIER_MODE`. `auto` runs the selection order (claude CLI > Anthropic key > OpenAI key > OpenRouter key). |
 | `note` | string | — | Human-readable comment. Ignored by the engine. |
-| `model_map` | object | `{"sonnet": "claude-sonnet-4-20250514", "haiku": "claude-haiku-4-5-20251001", "opus": "claude-opus-4-20250514"}` | Role → model ID. Merged over `CLAUDE_DEFAULT_MAP` for `claude-code` and `anthropic-sdk` modes. |
+| `model_map` | object | `{"sonnet": "claude-sonnet-5-5", "haiku": "claude-haiku-4-5-20251001", "opus": "claude-opus-5-5"}` | Role → model ID. Merged over `CLAUDE_DEFAULT_MAP` for `claude-code` and `anthropic-sdk` modes. The retired IDs `claude-sonnet-4-20250514` and `claude-opus-4-20250514` are replaced with `claude-sonnet-5-5` and `claude-opus-5-5`, with a warning naming the config file to update. |
 | `openai_compat` | object | see below | Config specific to OpenAI-compatible providers. |
 
 #### `llm.openai_compat`
@@ -79,7 +79,7 @@ Defaults built into the code:
 
 | Map | `sonnet` | `haiku` | `opus` |
 |---|---|---|---|
-| `CLAUDE_DEFAULT_MAP` | `claude-sonnet-4-20250514` | `claude-haiku-4-5-20251001` | `claude-opus-4-20250514` |
+| `CLAUDE_DEFAULT_MAP` | `claude-sonnet-5-5` | `claude-haiku-4-5-20251001` | `claude-opus-5-5` |
 | `OPENROUTER_DEFAULT_MAP` | `anthropic/claude-sonnet-4` | `anthropic/claude-haiku-4-5` | `anthropic/claude-opus-4` |
 | `OPENAI_DEFAULT_MAP` | `gpt-4o` | `gpt-4o-mini` | `gpt-4o` |
 
@@ -101,8 +101,8 @@ Roster with model assignments. Each non-worker slot carries stage and completion
 
 | Worker | Model | Rationale |
 |---|---|---|
-| `elena` | `claude-sonnet-4-20250514` | Synthesis, architecture. |
-| `marcus` | `claude-sonnet-4-20250514` | Challenge, exploit detection. |
+| `elena` | `claude-sonnet-5-5` | Synthesis, architecture. |
+| `marcus` | `claude-sonnet-5-5` | Challenge, exploit detection. |
 | `clare` | `claude-haiku-4-5-20251001` | Concise structural analysis. |
 | `simon` | `claude-haiku-4-5-20251001` | Triage, fix sequencing. |
 | `naomi` | `gemini-3-flash-preview` | Cross-cutting, novel framing. |
@@ -253,7 +253,7 @@ Ephemeral subagent dispatched by the runner when a `[[request:]]` tag appears in
 | `timeout_seconds` | int | `120` | Per-invocation wall-clock timeout. |
 | `max_response_tokens` | int | `2000` | Upper bound on tokens the steward may emit. |
 | `haiku_model` | string | `"claude-haiku-4-5-20251001"` | Model used for routine steward tasks. |
-| `sonnet_model` | string | `"claude-sonnet-4-20250514"` | Model used when Haiku is insufficient. |
+| `sonnet_model` | string | `"claude-sonnet-5-5"` | Model used when Haiku is insufficient. |
 | `note` | string | — | Comment. |
 
 ---

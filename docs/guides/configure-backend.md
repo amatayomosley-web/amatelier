@@ -60,7 +60,7 @@ Expected:
   [OK] anthropic-sdk  (ANTHROPIC_API_KEY env var)
 ```
 
-**Model map.** Defaults route to `claude-sonnet-4-20250514` (sonnet), `claude-haiku-4-5-20251001` (haiku), and `claude-opus-4-20250514` (opus). Override via `llm.model_map` in `config.json`.
+**Model map.** Defaults route to `claude-sonnet-5-5` (sonnet), `claude-haiku-4-5-20251001` (haiku), and `claude-opus-5-5` (opus). Override via `llm.model_map` in `config.json`.
 
 **Caveat.** The `anthropic` package must be installed. It ships as a dependency — if you see `anthropic SDK not installed`, run `pip install anthropic`.
 
