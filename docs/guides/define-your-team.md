@@ -207,7 +207,7 @@ Worker model assignment is a tradeoff — Sonnet and Opus reason better, Haiku m
 The `--model` flag accepts shorthand (resolved by the backend) or explicit provider model IDs:
 
 - **Shorthand** (resolved per backend): `opus`, `sonnet`, `haiku`
-- **Anthropic full IDs**: `claude-3-5-sonnet-latest`, `claude-3-5-haiku-latest`, `claude-3-opus-latest`
+- **Anthropic full IDs**: `claude-sonnet-5-5`, `claude-haiku-4-5-20251001`, `claude-opus-5-5`
 - **Gemini**: `gemini-3-flash-preview`, `gemini-1.5-pro-latest`
 - **OpenAI via openai-compat**: `gpt-4o`, `gpt-4o-mini`, or any OpenRouter model slug
 
