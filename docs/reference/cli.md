@@ -260,7 +260,7 @@ amatelier team new NAME [--model MODEL] [--backend BACKEND] [--role ROLE]
 | Arg / Flag | Type | Default | Required | Description |
 |---|---|---|---|---|
 | `name` | positional | — | yes | Unique worker name. Lowercase, alphanumeric plus hyphens. Must not collide with an existing worker. |
-| `--model` | string | `sonnet` | no | Model shorthand (`opus`, `sonnet`, `haiku`) or explicit provider model ID (`gpt-4o`, `gemini-3-flash-preview`, `claude-3-5-sonnet-latest`, etc.). |
+| `--model` | string | `sonnet` | no | Model shorthand (`opus`, `sonnet`, `haiku`) or explicit provider model ID (`gpt-4o`, `gemini-3-flash-preview`, `claude-sonnet-5-5`, etc.). |
 | `--backend` | string | `claude` | no | One of `claude`, `gemini`, `openai-compat`. Must match the model family. |
 | `--role` | string | `""` | no | Free-form one-line role description. Display only — shown in `team list`. |
 
